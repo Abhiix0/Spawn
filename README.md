@@ -1,16 +1,16 @@
-# DevBootstrap 
+# Spawn 
 
 > Eliminate repetitive project setup. Go from zero to a fully structured dev environment in seconds.
 
-DevBootstrap is a local CLI tool that automates the tedious parts of starting a new Python project — creating directories, writing boilerplate files, initializing Git, and setting up a `uv` virtual environment — all through a clean, interactive terminal interface.
+Spawn is a local CLI tool that automates the tedious parts of starting a new Python project — creating directories, writing boilerplate files, initializing Git, and setting up a `uv` virtual environment — all through a clean, interactive terminal interface.
 
 ---
 
-## Why DevBootstrap?
+## Why Spawn?
 
 Every new project starts the same way: create folders, add a README, set up `.gitignore`, init Git, create a virtual environment... It's repetitive, error-prone, and inconsistent across projects.
 
-DevBootstrap collapses all of that into a single command.
+Spawn collapses all of that into a single command.
 
 ---
 
@@ -43,8 +43,8 @@ DevBootstrap collapses all of that into a single command.
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/DevBootstrap.git
-cd DevBootstrap
+git clone https://github.com/your-username/spawn.git
+cd spawn
 
 # Install with uv
 uv sync
@@ -60,7 +60,7 @@ pip install .
 ### Create a new project
 
 ```bash
-devbootstrap create
+spawn create
 ```
 
 You'll be walked through three prompts:
@@ -78,7 +78,7 @@ Choose template: 2
 Initialize Git? [Y/n]: Y
 ```
 
-DevBootstrap will then:
+Spawn will then:
 1. Create the project directory with the template's folder structure
 2. Generate `README.md` and `.gitignore`
 3. Run `git init` (if selected)
@@ -87,7 +87,7 @@ DevBootstrap will then:
 ### Check version
 
 ```bash
-devbootstrap version
+spawn version
 ```
 
 ---
@@ -147,9 +147,9 @@ my-project/
 ## Project Structure
 
 ```
-devbootstrap/
+spawn/
 ├── src/
-│   └── devbootstrap/
+│   └── spawn/
 │       ├── cli/
 │       │   ├── app.py          # Typer app & command definitions
 │       │   └── prompts.py      # Interactive prompts logic
@@ -208,8 +208,8 @@ devbootstrap/
 
 Contributions are welcome! The template architecture is designed to be easily extensible — adding a new template is as simple as:
 
-1. Create a new file in `src/devbootstrap/templates/`
+1. Create a new file in `src/spawn/templates/`
 2. Subclass `BaseTemplate` with your `name` and `folders`
-3. Register it in `src/devbootstrap/core/registry.py`
+3. Register it in `src/spawn/core/registry.py`
 
 ---

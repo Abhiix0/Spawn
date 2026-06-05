@@ -1,4 +1,4 @@
-from devbootstrap.templates.base import BaseTemplate
+from spawn.templates.base import BaseTemplate
 
 
 class PythonScriptTemplate(BaseTemplate):

@@ -1,6 +1,6 @@
 README_CONTENT = """# {project_name}
 
-Project generated with DevBootstrap.
+Project generated with Spawn.
 """
 
 GITIGNORE_CONTENT = """__pycache__/

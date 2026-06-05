@@ -1,6 +1,6 @@
 import typer
 
-from devbootstrap.core.models import ProjectConfig
+from spawn.core.models import ProjectConfig
 
 
 def get_project_config() -> ProjectConfig:

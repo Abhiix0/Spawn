@@ -1,13 +1,13 @@
-from devbootstrap.templates.base import BaseTemplate
+from spawn.templates.base import BaseTemplate
 
 
-class DataScienceTemplate(BaseTemplate):
+class MLProjectTemplate(BaseTemplate):
     def __init__(self):
         super().__init__(
-            name="Data Science",
+            name="ML Project",
             folders=[
                 "data",
-                "notebooks",
+                "models",
                 "src",
                 "docs",
                 "tests",
