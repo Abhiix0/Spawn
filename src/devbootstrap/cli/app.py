@@ -1,12 +1,16 @@
 import typer
+from devbootstrap.cli.prompts import get_project_config
+from devbootstrap.generators.project_generator import ProjectGenerator
 
 app = typer.Typer()
 
 
 @app.command()
-def create():
-    """Create a new project."""
-    typer.echo("Project creation coming soon...")
+def create() -> None:
+    config = get_project_config()
+
+    generator = ProjectGenerator()
+    generator.generate(config)
 
 
 @app.command()
