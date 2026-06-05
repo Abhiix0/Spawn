@@ -6,6 +6,7 @@ from devbootstrap.templates.files import (
 from devbootstrap.core.models import ProjectConfig
 from devbootstrap.core.registry import get_template
 from devbootstrap.utils.git import initialize_git
+from devbootstrap.utils.uv import initialize_uv
 
 
 class ProjectGenerator:
@@ -37,6 +38,7 @@ class ProjectGenerator:
         if config.use_git:
             print("Initializing Git...")
             initialize_git(project_path)
+        initialize_uv(project_path)
 
         print(f"Created project: {config.name}")
         print(f"Template: {template.name}")
