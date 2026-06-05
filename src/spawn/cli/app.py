@@ -1,6 +1,6 @@
 import typer
-from devbootstrap.cli.prompts import get_project_config
-from devbootstrap.generators.project_generator import ProjectGenerator
+from spawn.cli.prompts import get_project_config
+from spawn.generators.project_generator import ProjectGenerator
 
 app = typer.Typer()
 
@@ -16,7 +16,7 @@ def create() -> None:
 @app.command()
 def version():
     """Show application version."""
-    typer.echo("DevBootstrap v0.1.0")
+    typer.echo("Spawn v0.1.0")
 
 
 def main():

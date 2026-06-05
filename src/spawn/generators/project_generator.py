@@ -1,12 +1,12 @@
 from pathlib import Path
-from devbootstrap.templates.files import (
+from spawn.templates.files import (
     README_CONTENT,
     GITIGNORE_CONTENT,
 )
-from devbootstrap.core.models import ProjectConfig
-from devbootstrap.core.registry import get_template
-from devbootstrap.utils.git import initialize_git
-from devbootstrap.utils.uv import initialize_uv
+from spawn.core.models import ProjectConfig
+from spawn.core.registry import get_template
+from spawn.utils.git import initialize_git
+from spawn.utils.uv import initialize_uv
 
 
 class ProjectGenerator:
