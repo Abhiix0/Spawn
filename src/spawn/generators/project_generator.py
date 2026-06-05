@@ -7,6 +7,7 @@ from spawn.core.models import ProjectConfig
 from spawn.core.registry import get_template
 from spawn.utils.git import initialize_git
 from spawn.utils.uv import initialize_uv
+from spawn.utils.success import show_success
 
 
 class ProjectGenerator:
@@ -40,6 +41,9 @@ class ProjectGenerator:
             initialize_git(project_path)
         initialize_uv(project_path)
 
-        print(f"Created project: {config.name}")
-        print(f"Template: {template.name}")
+        show_success(
+          project_name=config.name,
+          template_name=template.name,
+          use_git=config.use_git,
+        )
 
