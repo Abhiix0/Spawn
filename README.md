@@ -1,4 +1,4 @@
-# 🚀 Spawn
+# Spawn
 > Eliminate repetitive project setup. Go from zero to a fully structured dev environment in seconds.
 
 Spawn is a local CLI tool that automates the tedious parts of starting a new Python project — creating directories, writing boilerplate files, initializing Git, and setting up a `uv` virtual environment — all through a clean, interactive terminal interface.
@@ -24,16 +24,19 @@ Spawn collapses all of that into a single command.
 
 ---
 
-## Installation
+## Quick Start
 
 **Prerequisites:** Python 3.12+, [`uv`](https://github.com/astral-sh/uv), and `git` on your PATH.
 
 ```bash
-git clone https://github.com/your-username/spawn.git
-cd spawn
-uv sync
-```
+git clone https://github.com/Abhiix0/Spawn.git
+cd Spawn
 
+uv sync
+uv tool install .
+
+spawn create
+```
 ---
 
 ## Usage
