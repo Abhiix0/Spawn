@@ -5,12 +5,17 @@ from devbootstrap.templates.ml_project import MLProjectTemplate
 
 
 TEMPLATES = {
-    "python": PythonScriptTemplate(),
-    "fastapi": FastAPITemplate(),
-    "data-science": DataScienceTemplate(),
-    "ml": MLProjectTemplate(),
+    "python": PythonScriptTemplate,
+    "fastapi": FastAPITemplate,
+    "data-science": DataScienceTemplate,
+    "ml": MLProjectTemplate,
 }
 
 
 def get_template(template_name: str):
-    return TEMPLATES.get(template_name)
+    template_class = TEMPLATES.get(template_name)
+
+    if template_class is None:
+        return None
+
+    return template_class()
