@@ -1,5 +1,4 @@
-# Spawn 
-
+# 🚀 Spawn
 > Eliminate repetitive project setup. Go from zero to a fully structured dev environment in seconds.
 
 Spawn is a local CLI tool that automates the tedious parts of starting a new Python project — creating directories, writing boilerplate files, initializing Git, and setting up a `uv` virtual environment — all through a clean, interactive terminal interface.
@@ -16,73 +15,73 @@ Spawn collapses all of that into a single command.
 
 ## Features
 
-- **Interactive CLI** — guided prompts walk you through project setup step by step
-- **4 built-in templates** — Python Script, FastAPI, Data Science, ML Project
-- **Auto Git init** — optionally run `git init` on project creation
-- **Auto `uv` init** — automatically runs `uv init --bare` and `uv venv` for clean environment management
-- **Boilerplate generation** — `README.md` and `.gitignore` created automatically
-- **Fast** — entire setup completes in under 30 seconds
-
----
-
-## Tech Stack
-
-| Tool | Role |
-|---|---|
-| Python 3.12+ | Core language |
-| [Typer](https://typer.tiangolo.com/) | CLI framework |
-| [Rich](https://rich.readthedocs.io/) | Terminal UI |
-| [uv](https://github.com/astral-sh/uv) | Python environment management |
-| Git | Version control initialization |
+- **Interactive CLI** — beautiful prompt-driven setup powered by Rich
+- **4 project templates** — Python Script, FastAPI, Data Science, ML Project
+- **Git integration** — optionally runs `git init` on project creation
+- **uv integration** — automatically runs `uv init --bare` and `uv venv`
+- **Smart next steps** — shows template-specific commands to get coding immediately
+- **Error handling** — clean, readable error messages when Git or uv aren't found
 
 ---
 
 ## Installation
 
-**Prerequisites:** Python 3.12+, `uv`, and `git` installed and available on your PATH.
+**Prerequisites:** Python 3.12+, [`uv`](https://github.com/astral-sh/uv), and `git` on your PATH.
 
 ```bash
-# Clone the repo
 git clone https://github.com/your-username/spawn.git
 cd spawn
-
-# Install with uv
 uv sync
-
-# Or install via pip
-pip install .
 ```
 
 ---
 
 ## Usage
 
-### Create a new project
+### Create a project
 
 ```bash
 spawn create
 ```
 
-You'll be walked through three prompts:
+You'll see an interactive prompt:
 
 ```
-Project Name: my-cool-project
+╭─────────────────────────────────────────────╮
+│                 🚀 Spawn                   │
+│  Create development environments in seconds │
+╰─────────────────────────────────────────────╯
 
-Available Templates:
- [1] python
- [2] fastapi
- [3] data-science
- [4] ml
+Project Name: my-project
 
-Choose template: 2
+  #  Template
+  1  Python Script
+  2  FastAPI
+  3  Data Science
+  4  ML Project
+
+Choose Template [1-4]: 2
 Initialize Git? [Y/n]: Y
 ```
 
-Spawn will then:
-1. Create the project directory with the template's folder structure
-2. Generate `README.md` and `.gitignore`
-3. Run `git init` (if selected)
-4. Run `uv init --bare` and `uv venv`
+On completion, Spawn shows a summary and your next steps:
+
+```
+╭─────── ✨ Project Created Successfully ───────╮
+│  Project     my-project                       │
+│  Template    FastAPI                          │
+│  Git         ✓ Enabled                        │
+│  UV          ✓ Initialized                    │
+│  Virtual Env ✓ Created                        │
+╰───────────────────────────────────────────────╯
+
+🚀 Next Steps
+╭───────────────────────────────────╮
+│  cd my-project                    │
+│  uv add fastapi uvicorn           │
+│  uv run uvicorn app.main:app --reload │
+╰───────────────────────────────────╯
+```
 
 ### Check version
 
@@ -92,10 +91,9 @@ spawn version
 
 ---
 
-## Project Templates
+## Templates
 
-### `[1] python` — Python Script
-
+### `[1]` Python Script
 ```
 my-project/
 ├── README.md
@@ -103,9 +101,11 @@ my-project/
 ├── src/
 └── tests/
 ```
+Next steps: `uv run python main.py`
 
-### `[2] fastapi` — FastAPI App
+---
 
+### `[2]` FastAPI
 ```
 my-project/
 ├── README.md
@@ -115,9 +115,11 @@ my-project/
 ├── tests/
 └── docs/
 ```
+Next steps: `uv add fastapi uvicorn` → `uv run uvicorn app.main:app --reload`
 
-### `[3] data-science` — Data Science Project
+---
 
+### `[3]` Data Science
 ```
 my-project/
 ├── README.md
@@ -128,9 +130,11 @@ my-project/
 ├── docs/
 └── tests/
 ```
+Next steps: `uv add pandas numpy matplotlib`
 
-### `[4] ml` — ML Project
+---
 
+### `[4]` ML Project
 ```
 my-project/
 ├── README.md
@@ -141,75 +145,55 @@ my-project/
 ├── docs/
 └── tests/
 ```
+Next steps: `uv add pandas numpy scikit-learn`
 
 ---
 
-## Project Structure
+## Examples
 
-```
-spawn/
-├── src/
-│   └── spawn/
-│       ├── cli/
-│       │   ├── app.py          # Typer app & command definitions
-│       │   └── prompts.py      # Interactive prompts logic
-│       ├── core/
-│       │   ├── models.py       # ProjectConfig dataclass
-│       │   └── registry.py     # Template registry / lookup
-│       ├── generators/
-│       │   └── project_generator.py  # Orchestrates project creation
-│       ├── templates/
-│       │   ├── base.py         # BaseTemplate dataclass
-│       │   ├── files.py        # README & .gitignore content
-│       │   ├── python_script.py
-│       │   ├── fastapi.py
-│       │   ├── data_science.py
-│       │   └── ml_project.py
-│       └── utils/
-│           ├── git.py          # git init wrapper
-│           └── uv.py           # uv init + uv venv wrappers
-├── tests/
-├── pyproject.toml
-└── README.md
+```bash
+# Spin up a FastAPI project with Git
+spawn create
+# → name: api-server, template: 2, git: Y
+
+# Spin up a data science project without Git
+spawn create
+# → name: analysis, template: 3, git: N
+
+# Check installed version
+spawn version
+# → Spawn v0.1.0
 ```
 
 ---
 
-## V1 Scope
+## Roadmap
 
-**Included:**
-- Interactive CLI
-- 4 project templates
-- Git initialization
-- `uv` environment initialization
-- `README.md` and `.gitignore` generation
-
-**Not included in V1:**
-- GitHub repository creation
-- Dockerfile generation
-- Makefile generation
-- CI/CD setup
-- Automatic package installation
-
----
-
-## Roadmap (V2)
-
-- GitHub API integration — create and push to remote repos automatically
+- GitHub API integration — create and push to a remote repo automatically
 - Project templates marketplace — community-contributed templates
 - Docker support — generate `Dockerfile` and `docker-compose.yml`
 - Makefile support
-- Starter dependency packs — install common deps per template
-- Config file support — save your preferences for faster reuse
+- Starter dependency packs — install common deps per template automatically
+- Config file support — save preferences for even faster reuse
 
 ---
 
 ## Contributing
 
-Contributions are welcome! The template architecture is designed to be easily extensible — adding a new template is as simple as:
+Adding a new template takes 3 steps:
 
-1. Create a new file in `src/spawn/templates/`
-2. Subclass `BaseTemplate` with your `name` and `folders`
-3. Register it in `src/spawn/core/registry.py`
+1. Create `src/spawn/templates/your_template.py` and subclass `BaseTemplate`
+2. Register it in `src/spawn/core/registry.py`
+3. Add its next steps to `src/spawn/utils/next_steps.py`
+
+Run tests before submitting:
+
+```bash
+uv run pytest
+```
 
 ---
+
+## License
+
+This project is open source. See [LICENSE](LICENSE) for details.
