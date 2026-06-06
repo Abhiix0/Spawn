@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 Spawn
+#  Spawn
 
 **Stop repeating yourself. Start building.**
 
@@ -42,12 +42,12 @@ It's repetitive. It's error-prone. It's inconsistent. And you haven't even writt
 
 | Feature | What it does |
 |---|---|
-| 🎨 **Interactive CLI** | Beautiful prompt-driven setup powered by [Rich](https://github.com/Textualize/rich) |
-| 📁 **4 Project Templates** | Python Script, FastAPI, Data Science, ML Project |
-| 🌿 **Git Integration** | Optionally runs `git init` automatically |
-| ⚡ **uv Integration** | Runs `uv init --bare` and `uv venv` for you |
-| 🗺️ **Smart Next Steps** | Shows the exact commands to run after setup |
-| 🛡️ **Error Handling** | Clear, readable messages if Git or uv aren't found |
+|  **Interactive CLI** | Beautiful prompt-driven setup powered by [Rich](https://github.com/Textualize/rich) |
+|  **4 Project Templates** | Python Script, FastAPI, Data Science, ML Project |
+|  **Git Integration** | Optionally runs `git init` automatically |
+|  **uv Integration** | Runs `uv init --bare` and `uv venv` for you |
+|  **Smart Next Steps** | Shows the exact commands to run after setup |
+|  **Error Handling** | Clear, readable messages if Git or uv aren't found |
 
 ---
 
@@ -95,7 +95,7 @@ Spawn will guide you through an interactive prompt:
 
 ```
 ╭─────────────────────────────────────────────╮
-│                 🚀 Spawn                    │
+│                    Spawn                    │
 │  Create development environments in seconds │
 ╰─────────────────────────────────────────────╯
 
@@ -115,7 +115,7 @@ Initialize Git? [Y/n]: Y
 When it's done, you'll see a clean summary and exactly what to do next:
 
 ```
-╭─────── ✨ Project Created Successfully ───────╮
+╭───────    Project Created Successfully ───────╮
 │  Project     my-project                       │
 │  Template    FastAPI                          │
 │  Git         ✓ Enabled                        │
@@ -123,7 +123,7 @@ When it's done, you'll see a clean summary and exactly what to do next:
 │  Virtual Env ✓ Created                        │
 ╰───────────────────────────────────────────────╯
 
-🚀 Next Steps
+ Next Steps
 ╭───────────────────────────────────────────────────╮
 │  cd my-project                                    │
 │  uv add fastapi uvicorn                           │
@@ -303,8 +303,6 @@ This project is open source under the [MIT License](LICENSE). Use it, fork it, b
 ---
 
 <div align="center">
-
-Made with ❤️ to eliminate boilerplate forever.
 
 **[⭐ Star on GitHub](https://github.com/Abhiix0/Spawn)** · **[🐛 Report a Bug](https://github.com/Abhiix0/Spawn/issues)** · **[💡 Request a Feature](https://github.com/Abhiix0/Spawn/issues)**
 
