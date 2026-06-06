@@ -1,20 +1,27 @@
-# Virtual Environments
-.venv/
-venv/
-
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
 
-# Build
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Environment Variables
+.env
+.env.*
+
+# Build Artifacts
 build/
 dist/
 *.egg-info/
 
 # Testing
 .pytest_cache/
+.ruff_cache/
 .coverage
+htmlcov/
 
 # IDE
 .vscode/
