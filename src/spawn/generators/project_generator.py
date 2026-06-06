@@ -9,14 +9,14 @@ from spawn.utils.git import initialize_git
 from spawn.utils.uv import initialize_uv
 from spawn.utils.success import show_success
 from spawn.utils.next_steps import show_next_steps
-
+from spawn.core.exceptions import SpawnError
 
 class ProjectGenerator:
     def generate(self, config: ProjectConfig) -> None:
         template = get_template(config.template)
 
         if template is None:
-            raise ValueError(f"Unknown template: {config.template}")
+            raise SpawnError(f"Unknown template: {config.template}")
 
         project_path = Path(config.name)
 

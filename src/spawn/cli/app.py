@@ -5,13 +5,13 @@ from rich.panel import Panel
 from spawn.cli.prompts import get_project_config
 from spawn.generators.project_generator import ProjectGenerator
 from spawn.utils.console import console
+from spawn.core.exceptions import SpawnError
 
 app = typer.Typer()
 
 
 @app.command()
 def create() -> None:
-
     console.print(
         Panel.fit(
             "Create development environments in seconds",
@@ -22,13 +22,14 @@ def create() -> None:
     config = get_project_config()
 
     generator = ProjectGenerator()
-    try:
-     generator.generate(config)
 
-    except Exception as e:
-      console.print(
-        f"[red]❌ {e}[/red]"
-    )
+    try:
+        generator.generate(config)
+
+    except SpawnError as e:
+        console.print(
+            f"[red]❌ {e}[/red]"
+        )
 
 
 @app.command()

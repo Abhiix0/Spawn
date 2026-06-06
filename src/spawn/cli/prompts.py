@@ -3,6 +3,8 @@ from rich.table import Table
 
 from spawn.utils.console import console
 from spawn.core.models import ProjectConfig
+from spawn.utils.validators import validate_project_name
+from spawn.core.exceptions import SpawnError
 
 
 TEMPLATE_CHOICES = {
@@ -14,7 +16,18 @@ TEMPLATE_CHOICES = {
 
 
 def get_project_config() -> ProjectConfig:
-    project_name = typer.prompt("Project Name")
+    while True:
+        project_name = typer.prompt("Project Name")
+
+        try:
+            validate_project_name(project_name)
+            break
+
+        except SpawnError as e:
+            typer.secho(
+                str(e),
+                fg=typer.colors.RED,
+            )
 
     table = Table(title="Available Templates")
 
