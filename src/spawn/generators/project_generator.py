@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from spawn.templates.files import (
     README_CONTENT,
     GITIGNORE_CONTENT,
@@ -12,51 +13,61 @@ from spawn.utils.next_steps import show_next_steps
 from spawn.core.exceptions import SpawnError
 from spawn.utils.console import console
 
+
 class ProjectGenerator:
     def generate(self, config: ProjectConfig) -> None:
         template = get_template(config.template)
 
         if template is None:
-            raise SpawnError(f"Unknown template: {config.template}")
+            raise SpawnError(
+                f"Unknown template: {config.template}"
+            )
 
         project_path = Path(config.name)
 
         if project_path.exists():
-           raise SpawnError(
-            f"Directory '{config.name}' already exists."
-           )
+            raise SpawnError(
+                f"Directory '{config.name}' already exists."
+            )
 
         project_path.mkdir()
 
         for folder in template.folders:
-            (project_path / folder).mkdir(exist_ok=True)
+            (project_path / folder).mkdir(
+                exist_ok=True
+            )
 
         readme_path = project_path / "README.md"
 
         readme_path.write_text(
-          README_CONTENT.format(project_name=config.name)
+            README_CONTENT.format(
+                project_name=config.name
+            ),
+            encoding="utf-8",
         )
 
         gitignore_path = project_path / ".gitignore"
 
         gitignore_path.write_text(
-          GITIGNORE_CONTENT
+            GITIGNORE_CONTENT,
+            encoding="utf-8",
         )
 
         if config.use_git:
             console.print(
-              "[yellow]Initializing Git...[/yellow]"
+                "[yellow]Initializing Git...[/yellow]"
             )
             initialize_git(project_path)
+
         initialize_uv(project_path)
 
         show_success(
-          project_name=config.name,
-          template_name=template.name,
-          use_git=config.use_git,
+            project_name=config.name,
+            template_name=template.name,
+            use_git=config.use_git,
         )
 
         show_next_steps(
-          config.name,
-          config.template,
+            config.name,
+            config.template,
         )
