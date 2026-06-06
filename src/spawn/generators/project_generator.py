@@ -10,6 +10,7 @@ from spawn.utils.uv import initialize_uv
 from spawn.utils.success import show_success
 from spawn.utils.next_steps import show_next_steps
 from spawn.core.exceptions import SpawnError
+from spawn.utils.console import console
 
 class ProjectGenerator:
     def generate(self, config: ProjectConfig) -> None:
@@ -38,7 +39,9 @@ class ProjectGenerator:
         )
 
         if config.use_git:
-            print("Initializing Git...")
+            console.print(
+              "[yellow]Initializing Git...[/yellow]"
+            )
             initialize_git(project_path)
         initialize_uv(project_path)
 
