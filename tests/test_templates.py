@@ -1,3 +1,4 @@
+from spawn.templates.fastapi import FastAPITemplate
 
 
 def test_fastapi_template():
