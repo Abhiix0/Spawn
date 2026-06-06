@@ -35,7 +35,8 @@ def create() -> None:
 @app.command()
 def version():
     """Show application version."""
-    typer.echo("Spawn v0.1.0")
+    from spawn import __version__
+    typer.echo(f"Spawn v{__version__}")
 
 
 def main():
