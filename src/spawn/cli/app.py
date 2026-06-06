@@ -39,6 +39,13 @@ def version():
     typer.echo(f"Spawn v{__version__}")
 
 
+@app.command()
+def doctor():
+    """Check project health and best practices."""
+    from spawn.utils.doctor import run_health_check
+    run_health_check()
+
+
 def main():
     app()
 
