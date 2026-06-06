@@ -9,7 +9,6 @@ from spawn.core.registry import get_template
 from spawn.utils.git import initialize_git
 from spawn.utils.uv import initialize_uv
 from spawn.utils.success import show_success
-from spawn.utils.next_steps import show_next_steps
 from spawn.core.exceptions import SpawnError
 from spawn.utils.console import console
 
@@ -65,9 +64,5 @@ class ProjectGenerator:
             project_name=config.name,
             template_name=template.name,
             use_git=config.use_git,
-        )
-
-        show_next_steps(
-            config.name,
-            config.template,
+            template=config.template,
         )

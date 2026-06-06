@@ -1,9 +1,4 @@
-from rich.panel import Panel
-
-from spawn.utils.console import console
-
-
-def show_next_steps(project_name: str, template: str) -> None:
+def show_next_steps(project_name: str, template: str) -> str:
     commands = {
         "python": [
             f"cd {project_name}",
@@ -26,12 +21,4 @@ def show_next_steps(project_name: str, template: str) -> None:
 
     steps = commands.get(template, [])
 
-    content = "\n".join(steps)
-
-    console.print(
-        Panel(
-            content,
-            title="🚀 Next Steps",
-            border_style="green",
-        )
-    )
+    return "\n".join(steps)
