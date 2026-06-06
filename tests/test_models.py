@@ -1,7 +1,7 @@
 from spawn.core.models import ProjectConfig
 
 
-def test_project_config():
+def test_project_config_values():
     config = ProjectConfig(
         name="demo",
         template="python",
