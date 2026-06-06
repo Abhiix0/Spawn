@@ -21,7 +21,12 @@ class ProjectGenerator:
 
         project_path = Path(config.name)
 
-        project_path.mkdir(exist_ok=True)
+        if project_path.exists():
+           raise SpawnError(
+            f"Directory '{config.name}' already exists."
+           )
+
+        project_path.mkdir()
 
         for folder in template.folders:
             (project_path / folder).mkdir(exist_ok=True)
