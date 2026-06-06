@@ -28,14 +28,3 @@ def show_success(
             border_style="green",
         )
     )
-
-    console.print()
-
-    console.print("[bold]Next Steps[/bold]")
-    console.print(f"  [cyan]cd[/cyan] {project_name}")
-    console.print("  [cyan]code .[/cyan]")
-    console.print("  [cyan]git status[/cyan]")
-
-    console.print()
-    console.print("[bold green]🚀 Ready to build something awesome.[/bold green]")
-    console.print()
