@@ -148,7 +148,7 @@ class ProjectHealthChecker:
                 elif "ruff>=" in content or '"ruff"' in content:
                     passed = True
                     config_location = "pyproject.toml (dependency)"
-            except Exception:
+            except (OSError, ValueError):
                 pass
 
         message = (
@@ -189,7 +189,7 @@ class ProjectHealthChecker:
                 if "[pytest]" in content or "[tool:pytest]" in content:
                     passed = True
                     config_location = "setup.cfg"
-            except Exception:
+            except (OSError, ValueError):
                 pass
         
         if not passed and pyproject_path.exists():
@@ -201,7 +201,7 @@ class ProjectHealthChecker:
                 elif "pytest>=" in content or '"pytest"' in content:
                     passed = True
                     config_location = "pyproject.toml (dependency)"
-            except Exception:
+            except (OSError, ValueError):
                 pass
 
         message = (
