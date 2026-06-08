@@ -1,9 +1,12 @@
 import typer
 
 from rich.panel import Panel
+from rich.prompt import Confirm, Prompt
 
 from spawn.cli.prompts import get_project_config
 from spawn.generators.project_generator import ProjectGenerator
+from spawn.github.publisher import GitHubPublisher
+from spawn.github.exceptions import GitHubPublishError
 from spawn.utils.console import console
 from spawn.core.exceptions import SpawnError
 
@@ -25,10 +28,43 @@ def create() -> None:
 
     try:
         project_path = generator.generate(
-           config
+            config
         )
 
     except SpawnError as e:
+        console.print(
+            f"[red]❌ {e}[/red]"
+        )
+        return
+
+    if not config.use_git:
+        return
+
+    publish_to_github = Confirm.ask(
+        "\nPublish to GitHub?",
+        default=False,
+    )
+
+    if not publish_to_github:
+        return
+
+    repo_url = Prompt.ask(
+        "Repository URL"
+    )
+
+    publisher = GitHubPublisher()
+
+    try:
+        publisher.publish(
+            project_path,
+            repo_url,
+        )
+
+        console.print(
+            "[green]🚀 Published successfully![/green]"
+        )
+
+    except GitHubPublishError as e:
         console.print(
             f"[red]❌ {e}[/red]"
         )
