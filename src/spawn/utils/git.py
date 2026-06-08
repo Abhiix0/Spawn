@@ -23,3 +23,77 @@ def initialize_git(project_path: Path) -> None:
         raise SpawnError(
             "Failed to initialize Git repository."
         )
+
+def run_git_command(
+    project_path: Path,
+    *args: str,
+) -> None:
+    """
+    Execute a git command inside a project.
+    """
+
+    try:
+        subprocess.run(
+            ["git", *args],
+            cwd=project_path,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    except subprocess.CalledProcessError as exc:
+        raise SpawnError(
+            exc.stderr.strip()
+            or "Git command failed."
+        ) from exc
+
+def add_all(project_path: Path) -> None:
+    run_git_command(
+        project_path,
+        "add",
+        ".",
+    )
+
+def commit(
+    project_path: Path,
+    message: str,
+) -> None:
+    run_git_command(
+        project_path,
+        "commit",
+        "-m",
+        message,
+    )
+
+def rename_main_branch(
+    project_path: Path,
+) -> None:
+    run_git_command(
+        project_path,
+        "branch",
+        "-M",
+        "main",
+    )
+
+def add_remote(
+    project_path: Path,
+    repo_url: str,
+) -> None:
+    run_git_command(
+        project_path,
+        "remote",
+        "add",
+        "origin",
+        repo_url,
+    )
+
+def push_origin_main(
+    project_path: Path,
+) -> None:
+    run_git_command(
+        project_path,
+        "push",
+        "-u",
+        "origin",
+        "main",
+    )
