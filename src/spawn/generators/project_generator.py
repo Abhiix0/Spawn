@@ -14,7 +14,7 @@ from spawn.utils.console import console
 
 
 class ProjectGenerator:
-    def generate(self, config: ProjectConfig) -> None:
+    def generate(self, config: ProjectConfig) -> Path:
         template = get_template(config.template)
 
         if template is None:
@@ -66,3 +66,5 @@ class ProjectGenerator:
             use_git=config.use_git,
             template=config.template,
         )
+
+        return project_path
