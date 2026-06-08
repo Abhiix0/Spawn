@@ -97,3 +97,20 @@ def push_origin_main(
         "origin",
         "main",
     )
+
+def remote_exists(
+    project_path: Path,
+) -> bool:
+    """Check if a remote named 'origin' already exists in the repository."""
+    try:
+        result = subprocess.run(
+            ["git", "remote"],
+            cwd=project_path,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return "origin" in result.stdout.splitlines()
+
+    except subprocess.CalledProcessError:
+        return False
