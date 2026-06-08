@@ -24,7 +24,9 @@ def create() -> None:
     generator = ProjectGenerator()
 
     try:
-        generator.generate(config)
+        project_path = generator.generate(
+           config
+        )
 
     except SpawnError as e:
         console.print(
