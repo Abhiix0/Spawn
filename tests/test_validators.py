@@ -29,3 +29,18 @@ def test_invalid_project_name_with_space():
 def test_invalid_project_name_with_special_character():
     with pytest.raises(SpawnError):
         validate_project_name("my*project")
+
+
+def test_invalid_project_name_empty_string():
+    with pytest.raises(SpawnError):
+        validate_project_name("")
+
+
+def test_invalid_project_name_single_hyphen():
+    with pytest.raises(SpawnError):
+        validate_project_name("-")
+
+
+def test_invalid_project_name_only_hyphens():
+    with pytest.raises(SpawnError):
+        validate_project_name("--")
