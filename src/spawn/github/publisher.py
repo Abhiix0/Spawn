@@ -6,6 +6,17 @@ from spawn.github.validators import (
 from spawn.github.exceptions import (
     GitHubPublishError,
 )
+from spawn.core.exceptions import SpawnError
+
+from spawn.utils.git import (
+    add_all,
+    commit,
+    rename_main_branch,
+    add_remote,
+    push_origin_main,
+    remote_exists,
+    is_git_repository,
+)
 
 
 class GitHubPublisher:
@@ -25,4 +36,34 @@ class GitHubPublisher:
                 "Invalid GitHub repository URL."
             )
 
-        # Publishing workflow arrives in Sprint 2
+        if not is_git_repository(project_path):
+            raise GitHubPublishError(
+                "Project is not a Git repository."
+            )
+
+        if remote_exists(project_path):
+            raise GitHubPublishError(
+                "Origin remote already exists."
+            )
+
+        try:
+            add_all(project_path)
+
+            commit(
+                project_path,
+                "Initial commit",
+            )
+
+            rename_main_branch(project_path)
+
+            add_remote(
+                project_path,
+                repo_url,
+            )
+
+            push_origin_main(project_path)
+
+        except SpawnError as exc:
+            raise GitHubPublishError(
+                str(exc)
+            ) from exc
