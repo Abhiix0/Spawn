@@ -52,6 +52,9 @@ def create() -> None:
         )
 
     if not config.use_git:
+        console.print(
+            "\n[yellow]ℹ GitHub publishing requires Git. Skipping.[/yellow]"
+        )
         return
 
     publish_to_github = Confirm.ask(
