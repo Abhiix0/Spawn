@@ -41,6 +41,11 @@ def run_git_command(
             text=True,
         )
 
+    except FileNotFoundError:
+        raise SpawnError(
+            "Git is not installed or not available in PATH."
+        )
+
     except subprocess.CalledProcessError as exc:
         raise SpawnError(
             exc.stderr.strip()
