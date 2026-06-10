@@ -50,7 +50,7 @@ It's repetitive. It's error-prone. It's inconsistent. And you haven't even writt
 |  **Smart Next Steps** | Shows the exact commands to run after setup |
 |  **Error Handling** | Clear, readable messages if Git or uv aren't found |
 |  **GitHub Publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
-|  **spawn doctor** | Checks your dev environment and scores it out of 100 |
+|  **spawn doctor** | Scans your current project directory for health indicators and scores it out of 100 |
 
 ---
 
@@ -258,15 +258,33 @@ my-project/
 spawn doctor
 ```
 
-Spawn scans your dev environment and gives it a score out of 100:
+`spawn doctor` scans your current project directory and checks for essential project health indicators — documentation, version control, test setup, linting, deployment config, and more. Each check is weighted and tallied into a score out of 100.
 
 ```
-╭─────── 🩺 Spawn Doctor ───────╮
-│  Python        ✓ 3.12.3       │
-│  uv            ✓ 0.4.1        │
-│  Git           ✓ 2.43.0       │
-│  Score         95 / 100       │
-╰───────────────────────────────╯
+╭─────────────── 🏥 Project Health Report ───────────────╮
+│                                                          │
+│  Documentation                                           │
+│  ✓ README.md — Documentation file present               │
+│  ⚠ LICENSE — Missing LICENSE file                       │
+│                                                          │
+│  Version Control                                         │
+│  ✓ Git Repository — Git initialized                     │
+│  ✓ .gitignore — Git ignore configured                   │
+│                                                          │
+│  Quality                                                 │
+│  ✓ Tests — Test directory configured                    │
+│  ✓ Ruff — Ruff configured in pyproject.toml             │
+│  ✓ Pytest — Pytest configured in pyproject.toml         │
+│                                                          │
+│  Deployment                                              │
+│  ⚠ Dockerfile — Missing Dockerfile                      │
+│  ✓ GitHub Actions — GitHub Actions configured (1 workflow) │
+│                                                          │
+│  Configuration                                           │
+│  ⚠ .env.example — Missing .env.example                  │
+│                                                          │
+│  Project Score: 70/100 (70%)                            │
+╰──────────────────────────────────────────────────────────╯
 ```
 
 ---
