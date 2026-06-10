@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from spawn.templates.files import (
@@ -30,33 +31,38 @@ class ProjectGenerator:
 
         project_path.mkdir()
 
-        for folder in template.folders:
-            (project_path / folder).mkdir(
-                exist_ok=True
+        try:
+            for folder in template.folders:
+                (project_path / folder).mkdir(
+                    exist_ok=True
+                )
+
+            readme_path = project_path / "README.md"
+
+            readme_path.write_text(
+                README_CONTENT.format(
+                    project_name=config.name
+                ),
+                encoding="utf-8",
             )
 
-        readme_path = project_path / "README.md"
+            gitignore_path = project_path / ".gitignore"
 
-        readme_path.write_text(
-            README_CONTENT.format(
-                project_name=config.name
-            ),
-            encoding="utf-8",
-        )
-
-        gitignore_path = project_path / ".gitignore"
-
-        gitignore_path.write_text(
-            GITIGNORE_CONTENT,
-            encoding="utf-8",
-        )
-
-        if config.use_git:
-            console.print(
-                "[yellow]Initializing Git...[/yellow]"
+            gitignore_path.write_text(
+                GITIGNORE_CONTENT,
+                encoding="utf-8",
             )
-            initialize_git(project_path)
 
-        initialize_uv(project_path)
+            if config.use_git:
+                console.print(
+                    "[yellow]Initializing Git...[/yellow]"
+                )
+                initialize_git(project_path)
+
+            initialize_uv(project_path)
+
+        except BaseException:
+            shutil.rmtree(project_path, ignore_errors=True)
+            raise
 
         return project_path

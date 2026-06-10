@@ -117,3 +117,51 @@ def test_existing_directory_raises_error(
 
     with pytest.raises(SpawnError):
         generator.generate(config)
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_uv_failure_cleans_up_directory(
+    mock_uv,
+    tmp_path,
+):
+    mock_uv.side_effect = SpawnError("uv not found")
+
+    project_dir = tmp_path / "demo"
+
+    config = ProjectConfig(
+        name=str(project_dir),
+        template="python",
+        use_git=False,
+    )
+
+    generator = ProjectGenerator()
+
+    with pytest.raises(SpawnError):
+        generator.generate(config)
+
+    assert not project_dir.exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+@patch("spawn.generators.project_generator.initialize_git")
+def test_git_failure_cleans_up_directory(
+    mock_git,
+    mock_uv,
+    tmp_path,
+):
+    mock_git.side_effect = SpawnError("Git is not installed or not available in PATH.")
+
+    project_dir = tmp_path / "demo"
+
+    config = ProjectConfig(
+        name=str(project_dir),
+        template="python",
+        use_git=True,
+    )
+
+    generator = ProjectGenerator()
+
+    with pytest.raises(SpawnError):
+        generator.generate(config)
+
+    assert not project_dir.exists()
