@@ -53,6 +53,13 @@ class ProjectGenerator:
                 encoding="utf-8",
             )
 
+            for relative_path, content_template in template.starter_files:
+                file_path = project_path / relative_path
+                file_path.write_text(
+                    content_template.format(project_name=config.name),
+                    encoding="utf-8",
+                )
+
             if config.use_git:
                 console.print(
                     "[yellow]Initializing Git...[/yellow]"

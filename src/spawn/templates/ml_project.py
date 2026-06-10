@@ -1,4 +1,5 @@
 from spawn.templates.base import BaseTemplate
+from spawn.templates.files import ML_MAIN_CONTENT
 
 
 class MLProjectTemplate(BaseTemplate):
@@ -11,5 +12,8 @@ class MLProjectTemplate(BaseTemplate):
                 "src",
                 "docs",
                 "tests",
+            ],
+            starter_files=[
+                ("main.py", ML_MAIN_CONTENT),
             ],
         )

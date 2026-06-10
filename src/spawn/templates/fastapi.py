@@ -1,4 +1,5 @@
 from spawn.templates.base import BaseTemplate
+from spawn.templates.files import FASTAPI_MAIN_CONTENT
 
 
 class FastAPITemplate(BaseTemplate):
@@ -10,5 +11,8 @@ class FastAPITemplate(BaseTemplate):
                 "src",
                 "tests",
                 "docs",
+            ],
+            starter_files=[
+                ("app/main.py", FASTAPI_MAIN_CONTENT),
             ],
         )

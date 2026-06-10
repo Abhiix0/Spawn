@@ -170,3 +170,98 @@ def test_git_failure_cleans_up_directory(
         generator.generate(config)
 
     assert not (tmp_path / "demo").exists()
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_python_template_creates_main(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="python",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    assert (tmp_path / "demo" / "main.py").exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_fastapi_template_creates_main(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="fastapi",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    assert (tmp_path / "demo" / "app" / "main.py").exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_data_science_template_creates_main(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="data-science",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    assert (tmp_path / "demo" / "main.py").exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_ml_template_creates_main(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="ml",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    assert (tmp_path / "demo" / "main.py").exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_starter_file_contains_project_name(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="my-app",
+        template="python",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    content = (tmp_path / "my-app" / "main.py").read_text(encoding="utf-8")
+    assert "my-app" in content
