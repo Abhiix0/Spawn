@@ -514,3 +514,20 @@ class TestRunHealthCheck:
         captured = capsys.readouterr()
         # Should produce output
         assert len(captured.out) > 0 or len(captured.err) > 0
+
+    def test_doctor_with_valid_path(tmp_path):
+        """Test doctor command accepts a valid path argument."""
+        from spawn.utils.doctor import ProjectHealthChecker
+        checker = ProjectHealthChecker(tmp_path)
+        checks = checker.run_all_checks()
+        assert isinstance(checks, list)
+        assert len(checks) == 10
+
+    def test_doctor_with_invalid_path(tmp_path):
+        """Test doctor raises correctly on non-existent path."""
+        from spawn.utils.doctor import ProjectHealthChecker
+        from pathlib import Path
+        checker = ProjectHealthChecker(Path("/nonexistent/path/xyz"))
+        checks = checker.run_all_checks()
+        # All checks should fail gracefully, not crash
+        assert all(not check.passed for check in checks)
