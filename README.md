@@ -12,7 +12,7 @@ Spawn is a local CLI tool that transforms one command into a complete Python pro
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![uv](https://img.shields.io/badge/Powered%20by-uv-orange?style=flat-square)](https://github.com/astral-sh/uv)
 
-<img src="assets/preview.png" alt="Spawn Preview" width="600"/>
+<img src="assets/preview.png" alt="Spawn Preview" width="450"/>
 
 </div>
 
