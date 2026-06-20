@@ -91,16 +91,14 @@ A few things already in progress — GitHub publishing, Docker support, a templa
 Every great tool gets better with the people who use it. If something bugs you, something's missing, or you have an idea — you're in the right place. Here's how adding a new template works:
 
 1. **Create the template** in `src/spawn/templates/your_template.py`.
-   Subclass BaseTemplate and define the folder structure.
+   Subclass `BaseTemplate` and define the folder structure.
 2. **Register it** in `src/spawn/core/registry.py`.
    Add your template to the registry so Spawn can find it.
 3. **Add next steps** in `src/spawn/utils/next_steps.py`.
    Tell users what to do after the project is created.
 
-The code is readable — you'll know what to do once you're in there.
-
 Not sure where to start? Check the [open issues](https://github.com/Abhiix0/Spawn/issues).
 
 ---
 
-MIT License — use it, fork it, build on it.
+[![MIT License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE) — use it, fork it, build on it.
