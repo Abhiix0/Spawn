@@ -117,6 +117,11 @@ def remote_exists(
         )
         return "origin" in result.stdout.splitlines()
 
+    except FileNotFoundError:
+        raise SpawnError(
+            "Git is not installed or not available in PATH."
+        )
+
     except subprocess.CalledProcessError:
         return False
 

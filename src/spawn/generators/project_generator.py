@@ -29,12 +29,13 @@ class ProjectGenerator:
                 f"Directory '{config.name}' already exists."
             )
 
-        project_path.mkdir()
-
         try:
+            project_path.mkdir()
+
             for folder in template.folders:
                 (project_path / folder).mkdir(
-                    exist_ok=True
+                    parents=True,
+                    exist_ok=True,
                 )
 
             readme_path = project_path / "README.md"
@@ -67,6 +68,10 @@ class ProjectGenerator:
                 initialize_git(project_path)
 
             initialize_uv(project_path)
+
+        except OSError as e:
+            shutil.rmtree(project_path, ignore_errors=True)
+            raise SpawnError(str(e)) from e
 
         except BaseException:
             shutil.rmtree(project_path, ignore_errors=True)

@@ -265,3 +265,111 @@ def test_starter_file_contains_project_name(
 
     content = (tmp_path / "my-app" / "main.py").read_text(encoding="utf-8")
     assert "my-app" in content
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 additions
+# ---------------------------------------------------------------------------
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_mkdir_failure_raises_spawn_error_not_raw_exception(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    """project_path.mkdir() raising PermissionError must surface as SpawnError."""
+    from pathlib import Path
+
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="python",
+        use_git=False,
+    )
+
+    original_mkdir = Path.mkdir
+
+    def _failing_mkdir(self, *args, **kwargs):
+        # Only fail on the top-level project directory creation
+        if self.name == "demo" and not kwargs.get("exist_ok", False):
+            raise PermissionError("Permission denied: 'demo'")
+        return original_mkdir(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", _failing_mkdir)
+
+    generator = ProjectGenerator()
+
+    with pytest.raises(SpawnError):
+        generator.generate(config)
+
+    # Partial directory must not be left behind
+    assert not (tmp_path / "demo").exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_write_text_failure_raises_spawn_error_and_cleans_up(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    """A write_text OSError mid-generation must wrap as SpawnError and remove the dir."""
+    from pathlib import Path
+
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="python",
+        use_git=False,
+    )
+
+    original_write_text = Path.write_text
+
+    call_count = 0
+
+    def _failing_write_text(self, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        # Fail on the second write_text call (after README succeeds)
+        if call_count == 2:
+            raise OSError("No space left on device")
+        return original_write_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", _failing_write_text)
+
+    generator = ProjectGenerator()
+
+    with pytest.raises(SpawnError, match="No space left on device"):
+        generator.generate(config)
+
+    assert not (tmp_path / "demo").exists()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_nested_folder_path_is_created(
+    mock_uv,
+    tmp_path,
+    monkeypatch,
+):
+    """A template that declares a nested folder like 'src/api' must create it."""
+    monkeypatch.chdir(tmp_path)
+
+    from spawn.templates.base import BaseTemplate
+
+    nested_template = BaseTemplate(
+        name="Nested Test",
+        folders=["src/api"],
+        starter_files=[],
+    )
+
+    with patch("spawn.generators.project_generator.get_template", return_value=nested_template):
+        config = ProjectConfig(
+            name="demo",
+            template="nested",
+            use_git=False,
+        )
+        ProjectGenerator().generate(config)
+
+    assert (tmp_path / "demo" / "src" / "api").is_dir()
