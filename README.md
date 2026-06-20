@@ -2,26 +2,33 @@
 
 # Spawn
 
-> Your next project is one command away.
+> Eliminate repetitive project setup. Go from zero to a fully structured dev environment in seconds.
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat-square)](https://python.org)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![uv](https://img.shields.io/badge/Powered%20by-uv-orange?style=flat-square)](https://github.com/astral-sh/uv)
 
-![Spawn Preview](assets/preview.png)
-
 </div>
 
 ---
 
-Every Python project starts the same way — not with code, but with setup.
+## The Problem Spawn Solves
 
-Directories. Git. A virtual environment. A `.gitignore`. Commands you've typed a hundred times that have nothing to do with what you're actually trying to build.
+Every new Python project starts with the same manual ritual:
 
-**Spawn eliminates that entirely.**
+```
+mkdir my-project
+cd my-project
+mkdir src tests docs
+touch README.md .gitignore
+git init
+python -m venv .venv
+source .venv/bin/activate
+...
+```
 
-One command. An interactive prompt. A fully structured project waiting for you on the other side — with Git initialized, a virtual environment ready, and the exact next steps printed so you never have to guess.
+It's repetitive. It's error-prone. It's inconsistent. And you haven't even written a single line of *real* code yet.
 
 ```bash
 spawn create
@@ -39,23 +46,15 @@ That's it. You pick the template. Spawn handles the rest.
 
 ---
 
-## But What About After Setup?
-
-Most tools stop once the scaffolding is done. Spawn doesn't.
-
-```bash
-spawn doctor
-```
-
-Run it inside any project — not just ones Spawn created. It scans for the things that actually matter: documentation, version control, test configuration, linting, deployment setup, and more. Everything gets scored.
-
-You'll know exactly where your project stands and what it's missing — without digging through folders yourself.
-
----
-
 ## Get Started
 
-**Prerequisites:** Python 3.12+, [uv](https://github.com/astral-sh/uv), Git
+Before using Spawn, make sure you have these installed:
+
+- **Python 3.12+** — [Download here](https://python.org/downloads)
+- **uv** — A fast Python package manager. [Install guide](https://github.com/astral-sh/uv)
+- **Git** — [Download here](https://git-scm.com/downloads)
+
+> **First time with uv?** Run `pip install uv` or check their [quickstart](https://github.com/astral-sh/uv#getting-started). It's a faster alternative to pip and venv combined.
 
 ```bash
 git clone https://github.com/Abhiix0/Spawn.git
@@ -64,31 +63,143 @@ uv sync
 uv tool install .
 ```
 
-Run `spawn create` — the rest explains itself.
-
-Want to verify everything works after cloning? Run:
-
-```bash
-uv run pytest
-```
-
-If something breaks, [open an issue](https://github.com/Abhiix0/Spawn/issues).
+You can now run `spawn` from anywhere on your machine.
 
 ---
 
-## Under the Hood *(kind of)*
+## Commands
 
-Spawn isn't magic. It's just everything you'd do manually, done right, done fast, done consistently — powered by [uv](https://github.com/astral-sh/uv) and built to stay out of your way.
+### `spawn create` — Start a new project
 
-4 templates. Each one opinionated enough to be useful, flexible enough to make your own.
+Spawn walks you through an interactive prompt:
+
+```
+╭─────────────────────────────────────────────╮
+│                    Spawn                    │
+│  Create development environments in seconds │
+╰─────────────────────────────────────────────╯
+
+Project Name: my-project
+
+  #  Template
+  1  Python Script
+  2  FastAPI
+  3  Data Science
+  4  ML Project
+
+Choose Template [1-4]: 2
+
+Initialize Git? [Y/n]: Y
+```
+
+When it's done, you get a clean summary and exactly what to run next:
+
+```
+╭───────    Project Created Successfully ───────╮
+│  Project     my-project                       │
+│  Template    FastAPI                          │
+│  Git         ✓ Enabled                        │
+│  UV          ✓ Initialized                    │
+│  Virtual Env ✓ Created                        │
+╰───────────────────────────────────────────────╯
+
+ Next Steps
+╭───────────────────────────────────────────────────╮
+│  cd my-project                                    │
+│  uv add fastapi uvicorn                           │
+│  uv run uvicorn app.main:app --reload             │
+╰───────────────────────────────────────────────────╯
+```
+
+**4 templates to choose from:**
+
+| # | Template | Best for |
+|---|---|---|
+| 1 | Python Script | Automation scripts, utilities, one-off tools |
+| 2 | FastAPI | REST APIs, microservices, backend web apps |
+| 3 | Data Science | EDA, reporting, Jupyter notebooks |
+| 4 | ML Project | Model training, feature engineering, experiments |
+
+---
+
+### `spawn doctor` — Check your project's health
+
+Run it inside any project — not just ones Spawn created. It scans for the things that actually matter and scores everything out of 100.
+
+```
+╭─────────────── 🏥 Project Health Report ───────────────╮
+│                                                          │
+│  Documentation                                           │
+│  ✓ README.md — Documentation file present               │
+│  ⚠ LICENSE — Missing LICENSE file                       │
+│                                                          │
+│  Version Control                                         │
+│  ✓ Git Repository — Git initialized                     │
+│  ✓ .gitignore — Git ignore configured                   │
+│                                                          │
+│  Quality                                                 │
+│  ✓ Tests — Test directory configured                    │
+│  ✓ Ruff — Ruff configured in pyproject.toml             │
+│  ✓ Pytest — Pytest configured in pyproject.toml         │
+│                                                          │
+│  Deployment                                              │
+│  ⚠ Dockerfile — Missing Dockerfile                      │
+│  ✓ GitHub Actions — GitHub Actions configured           │
+│                                                          │
+│  Configuration                                           │
+│  ⚠ .env.example — Missing .env.example                  │
+│                                                          │
+│  Project Score: 70/100 (70%)                            │
+╰──────────────────────────────────────────────────────────╯
+```
+
+You'll know exactly where your project stands and what it's missing — without digging through folders yourself.
+
+---
+
+### `spawn publish` — Push to GitHub
+
+After project creation, if Git was enabled, Spawn will ask:
+
+```
+Publish to GitHub? [y/N]:
+```
+
+Paste your existing empty GitHub repository URL and Spawn handles the rest — stages all files, creates the initial commit, sets the branch to `main`, adds the remote, and pushes.
+
+```
+🚀 Published successfully!
+```
+
+> The repository must already exist on GitHub. Spawn connects to it — it does not create it.
+
+---
+
+### `spawn version` — Check your version
+
+```bash
+spawn version
+# → Spawn v0.2.0
+```
 
 ---
 
 ## What's Coming
 
-A few things already in progress — GitHub publishing, Docker support, a template marketplace, config file support, and more. The full roadmap is in the repo.
+- [x] **GitHub publishing** — connect and push to an existing GitHub repo
+- [ ] **Project templates marketplace** — community-contributed templates
+- [ ] **Docker support** — generate `Dockerfile` and `docker-compose.yml`
+- [ ] **Makefile support** — common task automation out of the box
+- [ ] **Starter dependency packs** — auto-install common packages per template
+- [ ] **Config file support** — save your preferences for even faster reuse
 
-Every great tool gets better with the people who use it. If something bugs you, something's missing, or you have an idea — you're in the right place. Here's how adding a new template works:
+---
+
+## Contributing
+
+Every great tool gets better with the people who use it. If something bugs you, something's missing, or you have an idea — you're in the right place.
+
+Adding a new template is a good first contribution and easier than it looks:
 
 1. **Create the template** in `src/spawn/templates/your_template.py`.
    Subclass `BaseTemplate` and define the folder structure.
@@ -96,6 +207,12 @@ Every great tool gets better with the people who use it. If something bugs you, 
    Add your template to the registry so Spawn can find it.
 3. **Add next steps** in `src/spawn/utils/next_steps.py`.
    Tell users what to do after the project is created.
+
+Before submitting a PR, make sure all tests pass:
+
+```bash
+uv run pytest
+```
 
 Not sure where to start? Check the [open issues](https://github.com/Abhiix0/Spawn/issues).
 
