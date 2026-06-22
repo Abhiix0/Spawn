@@ -1,12 +1,12 @@
 import typer
 
-from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
 from spawn.cli.prompts import get_project_config
 from spawn.generators.project_generator import ProjectGenerator
 from spawn.github.publisher import GitHubPublisher
 from spawn.github.exceptions import GitHubPublishError
+from spawn.utils.banner import show_banner
 from spawn.utils.success import show_success
 from spawn.utils.console import console
 from spawn.core.exceptions import SpawnError
@@ -17,12 +17,7 @@ app = typer.Typer()
 
 @app.command()
 def create() -> None:
-    console.print(
-        Panel.fit(
-            "Create development environments in seconds",
-            title="🚀 Spawn",
-        )
-    )
+    show_banner()
 
     config = get_project_config()
 
