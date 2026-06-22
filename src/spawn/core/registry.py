@@ -4,6 +4,7 @@ from spawn.templates.python_script import PythonScriptTemplate
 from spawn.templates.fastapi_template import FastAPITemplate
 from spawn.templates.data_science import DataScienceTemplate
 from spawn.templates.ml_project import MLProjectTemplate
+from spawn.templates.backend_api import BackendAPITemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -40,6 +41,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="ML Project",
         description="Machine learning project with models and data directories",
         template_class=MLProjectTemplate,
+    ),
+    "backend-api": TemplateMetadata(
+        slug="backend-api",
+        display_name="Backend API",
+        description="Production-ready FastAPI backend with routes and config",
+        template_class=BackendAPITemplate,
+        available_frameworks=[],
     ),
 }
 

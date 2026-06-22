@@ -9,6 +9,14 @@ class BaseTemplate:
     starter_files: list[tuple[str, str]] = field(default_factory=list)
     # Each tuple: (relative_path_string, content_template_string)
 
+    def get_readme_content(self, context: dict) -> str | None:
+        """
+        Return custom README content for this template, or None to use the
+        shared README. Subclasses override this to provide template-specific
+        README content.
+        """
+        return None
+
     def generate(self, project_path: Path, context: dict) -> None:
         """
         Create the template's folder structure and starter files.
