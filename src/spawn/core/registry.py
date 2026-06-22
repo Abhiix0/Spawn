@@ -47,7 +47,7 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="Backend API",
         description="Production-ready FastAPI backend with routes and config",
         template_class=BackendAPITemplate,
-        available_frameworks=[],
+        available_frameworks=["fastapi"],
     ),
 }
 

@@ -11,7 +11,8 @@ from spawn.templates.backend_api.content import (
 
 
 class BackendAPITemplate(BaseTemplate):
-    def __init__(self):
+    def __init__(self, framework: str | None = None):
+        self.framework = framework
         super().__init__(
             name="Backend API",
             folders=[
