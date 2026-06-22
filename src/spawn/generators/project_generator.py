@@ -35,14 +35,12 @@ class ProjectGenerator:
             context = {"project_name": config.name}
             template.generate(project_path, context)
 
-            readme_path = project_path / "README.md"
+            readme_content = template.get_readme_content(context)
+            if readme_content is None:
+                readme_content = README_CONTENT.format(project_name=config.name)
 
-            readme_path.write_text(
-                README_CONTENT.format(
-                    project_name=config.name
-                ),
-                encoding="utf-8",
-            )
+            readme_path = project_path / "README.md"
+            readme_path.write_text(readme_content, encoding="utf-8")
 
             gitignore_path = project_path / ".gitignore"
 

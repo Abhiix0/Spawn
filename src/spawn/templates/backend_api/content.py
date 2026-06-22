@@ -63,8 +63,7 @@ Generated with [Spawn](https://github.com/your-org/spawn).
 Install dependencies and start the development server:
 
 ```bash
-uv sync
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 ## Running Tests
