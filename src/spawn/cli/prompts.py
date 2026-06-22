@@ -90,6 +90,40 @@ def get_project_config() -> ProjectConfig:
 
         selected_framework = framework_map[fw_choice]
 
+    # --- Extras selection (only for templates that declare extras) ----------
+    selected_extras: list[str] = []
+    # re-use meta already fetched above
+    if meta and meta.available_extras:
+        extras = meta.available_extras
+        extras_map = {
+            str(i): slug
+            for i, slug in enumerate(extras, start=1)
+        }
+
+        extras_table = Table(title="Available Extras")
+        extras_table.add_column("#", justify="center")
+        extras_table.add_column("Extra")
+
+        for i, slug in enumerate(extras, start=1):
+            extras_table.add_row(str(i), slug)
+
+        console.print(extras_table)
+        console.print(
+            "Enter numbers separated by commas, or press Enter to skip"
+        )
+
+        raw = typer.prompt("Extras", default="")
+
+        parsed: list[str] = []
+        seen: set[str] = set()
+        for token in raw.split(","):
+            token = token.strip()
+            if token in extras_map and token not in seen:
+                parsed.append(extras_map[token])
+                seen.add(token)
+
+        selected_extras = parsed
+
     # -----------------------------------------------------------------------
 
     use_git = typer.confirm(
@@ -102,4 +136,5 @@ def get_project_config() -> ProjectConfig:
         template=template,
         use_git=use_git,
         framework=selected_framework,
+        extras=selected_extras,
     )

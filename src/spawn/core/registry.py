@@ -15,6 +15,7 @@ class TemplateMetadata:
     description: str
     template_class: type
     available_frameworks: list[str] = field(default_factory=list)
+    available_extras: list[str] = field(default_factory=list)
 
 
 TEMPLATES: dict[str, TemplateMetadata] = {
@@ -48,6 +49,7 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         description="Production-ready FastAPI backend with routes and config",
         template_class=BackendAPITemplate,
         available_frameworks=["fastapi"],
+        available_extras=["ruff", "pytest"],
     ),
 }
 

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -7,3 +7,4 @@ class ProjectConfig:
     template: str
     use_git: bool
     framework: str | None = None
+    extras: list[str] = field(default_factory=list)

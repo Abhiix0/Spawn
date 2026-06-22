@@ -11,8 +11,13 @@ from spawn.templates.backend_api.content import (
 
 
 class BackendAPITemplate(BaseTemplate):
-    def __init__(self, framework: str | None = None):
+    def __init__(
+        self,
+        framework: str | None = None,
+        extras: list[str] | None = None,
+    ):
         self.framework = framework
+        self.extras = extras or []
         super().__init__(
             name="Backend API",
             folders=[
