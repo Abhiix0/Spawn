@@ -1,5 +1,5 @@
 from spawn.templates.python_script import PythonScriptTemplate
-from spawn.templates.fastapi import FastAPITemplate
+from spawn.templates.fastapi_template import FastAPITemplate
 from spawn.templates.data_science import DataScienceTemplate
 from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.base import BaseTemplate

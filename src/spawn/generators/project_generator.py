@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from spawn.templates.files import (
+from spawn.templates.shared_content import (
     README_CONTENT,
     GITIGNORE_CONTENT,
 )

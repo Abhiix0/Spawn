@@ -1,19 +1,19 @@
 from spawn.templates.base import BaseTemplate
-from spawn.templates.files import ML_MAIN_CONTENT
+from spawn.templates.data_science.content import DATA_SCIENCE_MAIN_CONTENT
 
 
-class MLProjectTemplate(BaseTemplate):
+class DataScienceTemplate(BaseTemplate):
     def __init__(self):
         super().__init__(
-            name="ML Project",
+            name="Data Science",
             folders=[
                 "data",
-                "models",
+                "notebooks",
                 "src",
                 "docs",
                 "tests",
             ],
             starter_files=[
-                ("main.py", ML_MAIN_CONTENT),
+                ("main.py", DATA_SCIENCE_MAIN_CONTENT),
             ],
         )

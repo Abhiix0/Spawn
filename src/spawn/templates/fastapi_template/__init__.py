@@ -1,5 +1,5 @@
 from spawn.templates.base import BaseTemplate
-from spawn.templates.files import FASTAPI_MAIN_CONTENT
+from spawn.templates.fastapi_template.content import FASTAPI_MAIN_CONTENT
 
 
 class FastAPITemplate(BaseTemplate):

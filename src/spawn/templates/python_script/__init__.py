@@ -1,5 +1,5 @@
 from spawn.templates.base import BaseTemplate
-from spawn.templates.files import PYTHON_MAIN_CONTENT
+from spawn.templates.python_script.content import PYTHON_MAIN_CONTENT
 
 
 class PythonScriptTemplate(BaseTemplate):
