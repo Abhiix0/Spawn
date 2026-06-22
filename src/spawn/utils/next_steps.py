@@ -17,6 +17,10 @@ def show_next_steps(project_name: str, template: str) -> str:
             f"cd {project_name}",
             "uv add pandas numpy scikit-learn",
         ],
+        "backend-api": [
+            f"cd {project_name}",
+            "uv run uvicorn app.main:app --reload",
+        ],
     }
 
     steps = commands.get(template, [])
