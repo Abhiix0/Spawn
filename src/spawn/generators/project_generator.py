@@ -32,11 +32,8 @@ class ProjectGenerator:
         try:
             project_path.mkdir()
 
-            for folder in template.folders:
-                (project_path / folder).mkdir(
-                    parents=True,
-                    exist_ok=True,
-                )
+            context = {"project_name": config.name}
+            template.generate(project_path, context)
 
             readme_path = project_path / "README.md"
 
@@ -53,13 +50,6 @@ class ProjectGenerator:
                 GITIGNORE_CONTENT,
                 encoding="utf-8",
             )
-
-            for relative_path, content_template in template.starter_files:
-                file_path = project_path / relative_path
-                file_path.write_text(
-                    content_template.format(project_name=config.name),
-                    encoding="utf-8",
-                )
 
             if config.use_git:
                 console.print(
