@@ -53,3 +53,28 @@ def test_get_metadata_returns_metadata():
 
 def test_get_metadata_returns_none_for_unknown():
     assert get_metadata("banana") is None
+
+
+def test_backend_api_in_list_templates():
+    templates = list_templates()
+    slugs = [t.slug for t in templates]
+    assert "backend-api" in slugs
+
+
+def test_backend_api_metadata():
+    from spawn.core.registry import get_metadata
+    meta = get_metadata("backend-api")
+    assert meta is not None
+    assert meta.slug == "backend-api"
+    assert meta.display_name == "Backend API"
+    assert "fastapi" in meta.available_frameworks
+    assert "ruff" in meta.available_extras
+    assert "pytest" in meta.available_extras
+
+
+def test_backend_api_template_exists():
+    from spawn.templates.backend_api import BackendAPITemplate
+    template = get_template("backend-api")
+    assert template is not None
+    assert isinstance(template, BackendAPITemplate)
+    assert template.name == "Backend API"
