@@ -130,3 +130,61 @@ def test_all_template_choices(mock_confirm, choice, expected_template):
     ):
         config = get_project_config()
     assert config.template == expected_template
+
+
+# ---------------------------------------------------------------------------
+# Backend API — framework and extras prompt flow
+# ---------------------------------------------------------------------------
+
+
+@patch("spawn.cli.prompts.typer.confirm", return_value=False)
+@patch(
+    "spawn.cli.prompts.typer.prompt",
+    side_effect=[
+        "my-api",   # project name
+        "5",        # template: backend-api
+        "1",        # framework: fastapi
+        "1,2",      # extras: ruff + pytest
+    ],
+)
+def test_backend_api_with_framework_and_extras(mock_prompt, mock_confirm):
+    config = get_project_config()
+    assert config.name == "my-api"
+    assert config.template == "backend-api"
+    assert config.framework == "fastapi"
+    assert "ruff" in config.extras
+    assert "pytest" in config.extras
+
+
+@patch("spawn.cli.prompts.typer.confirm", return_value=True)
+@patch(
+    "spawn.cli.prompts.typer.prompt",
+    side_effect=[
+        "my-api",   # project name
+        "5",        # template: backend-api
+        "1",        # framework: fastapi
+        "",         # extras: skipped
+    ],
+)
+def test_backend_api_with_no_extras(mock_prompt, mock_confirm):
+    config = get_project_config()
+    assert config.template == "backend-api"
+    assert config.framework == "fastapi"
+    assert config.extras == []
+
+
+@patch("spawn.cli.prompts.typer.confirm", return_value=False)
+@patch(
+    "spawn.cli.prompts.typer.prompt",
+    side_effect=[
+        "my-api",
+        "5",
+        "1",
+        "1,9,2",    # 9 is out of range — should be ignored, ruff+pytest kept
+    ],
+)
+def test_backend_api_extras_invalid_entry_ignored(mock_prompt, mock_confirm):
+    config = get_project_config()
+    assert "ruff" in config.extras
+    assert "pytest" in config.extras
+    assert len(config.extras) == 2
