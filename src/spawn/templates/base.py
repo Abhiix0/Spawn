@@ -9,6 +9,14 @@ class BaseTemplate:
     starter_files: list[tuple[str, str]] = field(default_factory=list)
     # Each tuple: (relative_path_string, content_template_string)
 
+    def get_dependencies(self) -> list[str]:
+        """Return packages to install after uv init. Subclasses override."""
+        return []
+
+    def post_install(self, project_path: Path) -> None:
+        """Run post-install actions after packages are installed. Subclasses override."""
+        pass
+
     def get_readme_content(self, context: dict) -> str | None:
         """
         Return custom README content for this template, or None to use the

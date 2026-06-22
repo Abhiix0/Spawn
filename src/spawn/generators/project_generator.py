@@ -6,16 +6,16 @@ from spawn.templates.shared_content import (
     GITIGNORE_CONTENT,
 )
 from spawn.core.models import ProjectConfig
-from spawn.core.registry import get_template
+from spawn.core.registry import get_template, instantiate_template
 from spawn.utils.git import initialize_git
-from spawn.utils.uv import initialize_uv
+from spawn.utils.uv import initialize_uv, install_packages
 from spawn.core.exceptions import SpawnError
 from spawn.utils.console import console
 
 
 class ProjectGenerator:
     def generate(self, config: ProjectConfig) -> Path:
-        template = get_template(config.template)
+        template = instantiate_template(config)
 
         if template is None:
             raise SpawnError(
@@ -58,6 +58,15 @@ class ProjectGenerator:
                 initialize_git(project_path)
 
             initialize_uv(project_path)
+
+            deps = template.get_dependencies()
+            if deps:
+                console.print(
+                    "[yellow]Installing dependencies...[/yellow]"
+                )
+                install_packages(project_path, deps)
+
+            template.post_install(project_path)
 
         except OSError as e:
             shutil.rmtree(project_path, ignore_errors=True)

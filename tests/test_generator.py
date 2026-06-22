@@ -364,7 +364,7 @@ def test_nested_folder_path_is_created(
         starter_files=[],
     )
 
-    with patch("spawn.generators.project_generator.get_template", return_value=nested_template):
+    with patch("spawn.generators.project_generator.instantiate_template", return_value=nested_template):
         config = ProjectConfig(
             name="demo",
             template="nested",
@@ -373,3 +373,122 @@ def test_nested_folder_path_is_created(
         ProjectGenerator().generate(config)
 
     assert (tmp_path / "demo" / "src" / "api").is_dir()
+
+
+# ---------------------------------------------------------------------------
+# Phase 5D extras flow tests
+# ---------------------------------------------------------------------------
+
+
+def test_backend_api_extras_reach_template():
+    """extras from ProjectConfig must be forwarded to BackendAPITemplate."""
+    from spawn.core.registry import instantiate_template
+    from spawn.templates.backend_api import BackendAPITemplate
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
+    )
+
+    template = instantiate_template(config)
+
+    assert isinstance(template, BackendAPITemplate)
+    assert template.extras == ["ruff", "pytest"]
+    assert template.framework == "fastapi"
+
+
+def test_backend_api_extras_in_dependencies():
+    """ruff, pytest, and httpx must appear in get_dependencies() when selected."""
+    from spawn.core.registry import instantiate_template
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
+    )
+
+    template = instantiate_template(config)
+    deps = template.get_dependencies()
+
+    assert "ruff" in deps
+    assert "pytest" in deps
+    assert "httpx" in deps
+
+
+def test_backend_api_no_extras_excludes_optional_deps():
+    """Without extras, ruff/pytest/httpx must NOT appear in dependencies."""
+    from spawn.core.registry import instantiate_template
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=[],
+    )
+
+    template = instantiate_template(config)
+    deps = template.get_dependencies()
+
+    assert "ruff" not in deps
+    assert "pytest" not in deps
+    assert "httpx" not in deps
+    assert "fastapi" in deps
+    assert "uvicorn[standard]" in deps
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_generator_passes_extras_to_install_packages(
+    mock_uv,
+    mock_install,
+    tmp_path,
+    monkeypatch,
+):
+    """ProjectGenerator must call install_packages with the full dependency list."""
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
+    )
+
+    from spawn.templates.backend_api import BackendAPITemplate
+    with patch.object(BackendAPITemplate, "post_install"):
+        ProjectGenerator().generate(config)
+
+    assert mock_install.called
+    installed = mock_install.call_args[0][1]  # second positional arg: packages list
+    assert "ruff" in installed
+    assert "pytest" in installed
+    assert "httpx" in installed
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_python_template_never_calls_install_packages(
+    mock_uv,
+    mock_install,
+    tmp_path,
+    monkeypatch,
+):
+    """Python template has no dependencies — install_packages must not be called."""
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="python",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    mock_install.assert_not_called()
