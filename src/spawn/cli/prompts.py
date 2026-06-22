@@ -3,16 +3,9 @@ from rich.table import Table
 
 from spawn.utils.console import console
 from spawn.core.models import ProjectConfig
+from spawn.core.registry import list_templates
 from spawn.utils.validators import validate_project_name
 from spawn.core.exceptions import SpawnError
-
-
-TEMPLATE_CHOICES = {
-    "1": "python",
-    "2": "fastapi",
-    "3": "data-science",
-    "4": "ml",
-}
 
 
 def get_project_config() -> ProjectConfig:
@@ -29,28 +22,35 @@ def get_project_config() -> ProjectConfig:
                 fg=typer.colors.RED,
             )
 
+    templates = list_templates()
+
+    choice_map = {
+        str(i): meta.slug
+        for i, meta in enumerate(templates, start=1)
+    }
+
     table = Table(title="Available Templates")
 
     table.add_column("#", justify="center")
     table.add_column("Template")
+    table.add_column("Description")
 
-    table.add_row("1", "Python Script")
-    table.add_row("2", "FastAPI")
-    table.add_row("3", "Data Science")
-    table.add_row("4", "ML Project")
+    for i, meta in enumerate(templates, start=1):
+        table.add_row(str(i), meta.display_name, meta.description)
 
     console.print(table)
 
-    choice = typer.prompt("Choose Template [1-4]")
+    valid_range = len(templates)
+    choice = typer.prompt(f"Choose Template [1-{valid_range}]")
 
-    while choice not in TEMPLATE_CHOICES:
+    while choice not in choice_map:
         typer.secho(
             "Invalid choice. Please select a valid number.",
             fg=typer.colors.RED,
         )
-        choice = typer.prompt("Choose Template [1-4]")
+        choice = typer.prompt(f"Choose Template [1-{valid_range}]")
 
-    template = TEMPLATE_CHOICES[choice]
+    template = choice_map[choice]
 
     use_git = typer.confirm(
         "Initialize Git?",
