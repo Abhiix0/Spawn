@@ -6,3 +6,4 @@ class ProjectConfig:
     name: str
     template: str
     use_git: bool
+    framework: str | None = None
