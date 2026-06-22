@@ -69,7 +69,7 @@ uv run uvicorn app.main:app --reload
 ## Running Tests
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ## Endpoints
