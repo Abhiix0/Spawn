@@ -138,7 +138,7 @@ health_bp = Blueprint("health", __name__)
 
 @health_bp.route("/")
 def health_check():
-    return jsonify({"status": "running"})
+    return jsonify({{"status": "running"}})
 """
 
 FLASK_RUN_CONTENT = """\
@@ -166,7 +166,7 @@ def client():
 def test_health_check(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.get_json() == {"status": "running"}
+    assert response.get_json() == {{"status": "running"}}
 """
 
 FLASK_ENV_EXAMPLE_CONTENT = """\
@@ -268,7 +268,9 @@ ROOT_URLCONF = "config.urls"
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {}
+DATABASES = {{}}
+
+STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 """
@@ -304,7 +306,7 @@ from django.http import JsonResponse
 
 
 def health_check(request):
-    return JsonResponse({"status": "running"})
+    return JsonResponse({{"status": "running"}})
 """
 
 DJANGO_HEALTH_URLS_CONTENT = """\
@@ -327,7 +329,7 @@ class HealthCheckTestCase(TestCase):
     def test_health_check(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, {"status": "running"})
+        self.assertJSONEqual(response.content, {{"status": "running"}})
 """
 
 DJANGO_README_CONTENT = """\
