@@ -48,10 +48,10 @@ TEMPLATES: dict[str, TemplateMetadata] = {
     "backend-api": TemplateMetadata(
         slug="backend-api",
         display_name="Backend API",
-        description="Production-ready FastAPI backend with routes and config",
+        description="Production-ready backend with FastAPI, Flask, or Django",
         template_class=BackendAPITemplate,
-        available_frameworks=["fastapi"],
-        available_extras=["ruff", "pytest"],
+        available_frameworks=["fastapi", "flask", "django"],
+        available_extras=["ruff", "pytest", "docker", "github-actions"],
     ),
 }
 

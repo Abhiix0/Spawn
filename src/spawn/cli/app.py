@@ -44,6 +44,7 @@ def create() -> None:
             template_name=template.name,
             use_git=config.use_git,
             template=config.template,
+            framework=config.framework,
         )
 
     if not config.use_git:

@@ -1,4 +1,22 @@
-def show_next_steps(project_name: str, template: str) -> str:
+def show_next_steps(project_name: str, template: str, framework: str | None = None) -> str:
+    if template == "backend-api":
+        if framework == "flask":
+            steps = [
+                f"cd {project_name}",
+                "uv run python run.py",
+            ]
+        elif framework == "django":
+            steps = [
+                f"cd {project_name}",
+                "uv run python manage.py runserver",
+            ]
+        else:
+            steps = [
+                f"cd {project_name}",
+                "uv run uvicorn app.main:app --reload",
+            ]
+        return "\n".join(steps)
+
     commands = {
         "python": [
             f"cd {project_name}",
@@ -17,12 +35,7 @@ def show_next_steps(project_name: str, template: str) -> str:
             f"cd {project_name}",
             "uv add pandas numpy scikit-learn",
         ],
-        "backend-api": [
-            f"cd {project_name}",
-            "uv run uvicorn app.main:app --reload",
-        ],
     }
 
     steps = commands.get(template, [])
-
     return "\n".join(steps)

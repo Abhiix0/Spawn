@@ -12,6 +12,7 @@ def show_success(
     template_name: str,
     use_git: bool,
     template: str,
+    framework: str | None = None,
 ) -> None:
 
     git_status = "[green]✓ Enabled[/green]" if use_git else "[yellow]○ Disabled[/yellow]"
@@ -23,7 +24,7 @@ def show_success(
     table.add_row("[bold cyan]UV[/bold cyan]", "[green]✓ Initialized[/green]")
     table.add_row("[bold cyan]Virtual Env[/bold cyan]", "[green]✓ Created[/green]")
 
-    next_steps_content = show_next_steps(project_name, template)
+    next_steps_content = show_next_steps(project_name, template, framework)
 
     next_steps_text = Text()
     next_steps_text.append("\n Next Steps\n", style="bold cyan")
