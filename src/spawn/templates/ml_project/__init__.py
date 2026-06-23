@@ -16,4 +16,9 @@ class MLProjectTemplate(BaseTemplate):
             starter_files=[
                 ("main.py", ML_MAIN_CONTENT),
             ],
+            next_steps=[
+                "cd {project_name}",
+                "uv add pandas numpy scikit-learn",
+                "uv run python main.py",
+            ],
         )

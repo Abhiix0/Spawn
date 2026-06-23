@@ -4,15 +4,13 @@ from rich.table import Table
 from rich.text import Text
 
 from spawn.utils.console import console
-from spawn.utils.next_steps import show_next_steps
 
 
 def show_success(
     project_name: str,
     template_name: str,
     use_git: bool,
-    template: str,
-    framework: str | None = None,
+    next_steps: list[str],
 ) -> None:
 
     git_status = "[green]✓ Enabled[/green]" if use_git else "[yellow]○ Disabled[/yellow]"
@@ -24,7 +22,11 @@ def show_success(
     table.add_row("[bold cyan]UV[/bold cyan]", "[green]✓ Initialized[/green]")
     table.add_row("[bold cyan]Virtual Env[/bold cyan]", "[green]✓ Created[/green]")
 
-    next_steps_content = show_next_steps(project_name, template, framework)
+    formatted = [
+        step.format(project_name=project_name)
+        for step in next_steps
+    ]
+    next_steps_content = "\n".join(formatted)
 
     next_steps_text = Text()
     next_steps_text.append("\n Next Steps\n", style="bold cyan")

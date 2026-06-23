@@ -144,6 +144,22 @@ class BackendAPITemplate(BaseTemplate):
             starter_files=files,
         )
 
+        if framework == "flask":
+            self.next_steps = [
+                "cd {project_name}",
+                "uv run python run.py",
+            ]
+        elif framework == "django":
+            self.next_steps = [
+                "cd {project_name}",
+                "uv run python manage.py runserver",
+            ]
+        else:
+            self.next_steps = [
+                "cd {project_name}",
+                "uv run uvicorn app.main:app --reload",
+            ]
+
     def get_readme_content(self, context: dict) -> str | None:
         if self.framework == "flask":
             return FLASK_README_CONTENT.format_map(context)

@@ -15,4 +15,8 @@ class FastAPITemplate(BaseTemplate):
             starter_files=[
                 ("app/main.py", FASTAPI_MAIN_CONTENT),
             ],
+            next_steps=[
+                "cd {project_name}",
+                "uv run uvicorn app.main:app --reload",
+            ],
         )

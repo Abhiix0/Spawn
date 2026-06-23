@@ -16,4 +16,9 @@ class DataScienceTemplate(BaseTemplate):
             starter_files=[
                 ("main.py", DATA_SCIENCE_MAIN_CONTENT),
             ],
+            next_steps=[
+                "cd {project_name}",
+                "uv add pandas numpy matplotlib",
+                "uv run python main.py",
+            ],
         )

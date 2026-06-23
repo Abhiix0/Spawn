@@ -10,7 +10,7 @@ from spawn.utils.banner import show_banner
 from spawn.utils.success import show_success
 from spawn.utils.console import console
 from spawn.core.exceptions import SpawnError
-from spawn.core.registry import get_template
+from spawn.core.registry import get_template, instantiate_template
 
 app = typer.Typer()
 
@@ -34,17 +34,14 @@ def create() -> None:
         )
         return
 
-    template = get_template(
-        config.template
-    )
+    template_obj = instantiate_template(config)
 
-    if template is not None:
+    if template_obj is not None:
         show_success(
             project_name=config.name,
-            template_name=template.name,
+            template_name=template_obj.name,
             use_git=config.use_git,
-            template=config.template,
-            framework=config.framework,
+            next_steps=template_obj.next_steps,
         )
 
     if not config.use_git:

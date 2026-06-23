@@ -13,4 +13,8 @@ class PythonScriptTemplate(BaseTemplate):
             starter_files=[
                 ("main.py", PYTHON_MAIN_CONTENT),
             ],
+            next_steps=[
+                "cd {project_name}",
+                "uv run python main.py",
+            ],
         )
