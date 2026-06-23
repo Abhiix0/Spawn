@@ -1,5 +1,5 @@
 from spawn.templates.base import BaseTemplate
-from spawn.templates.files import PYTHON_MAIN_CONTENT
+from spawn.templates.python_script.content import PYTHON_MAIN_CONTENT
 
 
 class PythonScriptTemplate(BaseTemplate):
@@ -12,5 +12,9 @@ class PythonScriptTemplate(BaseTemplate):
             ],
             starter_files=[
                 ("main.py", PYTHON_MAIN_CONTENT),
+            ],
+            next_steps=[
+                "cd {project_name}",
+                "uv run python main.py",
             ],
         )

@@ -1,5 +1,5 @@
 from spawn.templates.base import BaseTemplate
-from spawn.templates.files import FASTAPI_MAIN_CONTENT
+from spawn.templates.fastapi_template.content import FASTAPI_MAIN_CONTENT
 
 
 class FastAPITemplate(BaseTemplate):
@@ -14,5 +14,9 @@ class FastAPITemplate(BaseTemplate):
             ],
             starter_files=[
                 ("app/main.py", FASTAPI_MAIN_CONTENT),
+            ],
+            next_steps=[
+                "cd {project_name}",
+                "uv run uvicorn app.main:app --reload",
             ],
         )

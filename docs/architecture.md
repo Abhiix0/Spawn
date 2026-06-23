@@ -23,135 +23,168 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ lookup via importlib.metadata
+├── __init__.py         # __version__ via importlib.metadata, fallback "0.3.0"
 ├── cli/
-│   ├── app.py          # Typer app, command definitions (create, version, doctor)
-│   └── prompts.py      # Interactive prompt logic, TEMPLATE_CHOICES mapping
+│   ├── app.py          # Typer app: create, version, doctor commands
+│   └── prompts.py      # Interactive prompts; derives menu from registry
 ├── core/
-│   ├── exceptions.py   # SpawnError — base exception for all Spawn errors
-│   ├── models.py       # ProjectConfig dataclass
-│   └── registry.py     # Template registry, get_template() lookup
+│   ├── exceptions.py   # SpawnError — base exception
+│   ├── models.py       # ProjectConfig dataclass (name, template, use_git, framework, extras)
+│   └── registry.py     # TemplateMetadata, TEMPLATES dict, get_template(),
+│                       # instantiate_template(), get_metadata(), list_templates()
 ├── generators/
-│   └── project_generator.py  # Orchestrates folder creation, file writing, git+uv init
+│   └── project_generator.py  # Orchestrates generation, dependency install, meta.json write
 ├── github/
 │   ├── exceptions.py   # GitHubPublishError
 │   ├── publisher.py    # GitHubPublisher — stages, commits, pushes
-│   └── validators.py   # GitHub URL validation (regex)
+│   └── validators.py   # GitHub URL validation
 ├── templates/
-│   ├── base.py         # BaseTemplate dataclass (name, folders, starter_files)
-│   ├── files.py        # README_CONTENT and GITIGNORE_CONTENT strings
-│   ├── python_script.py
-│   ├── fastapi.py
-│   ├── data_science.py
-│   └── ml_project.py
+│   ├── base.py         # BaseTemplate dataclass
+│   ├── shared_content.py     # README_CONTENT, GITIGNORE_CONTENT
+│   ├── python_script/
+│   │   ├── __init__.py       # PythonScriptTemplate
+│   │   └── content.py        # PYTHON_MAIN_CONTENT
+│   ├── fastapi_template/
+│   │   ├── __init__.py       # FastAPITemplate
+│   │   └── content.py        # FASTAPI_MAIN_CONTENT
+│   ├── data_science/
+│   │   ├── __init__.py       # DataScienceTemplate
+│   │   └── content.py        # DATA_SCIENCE_MAIN_CONTENT
+│   ├── ml_project/
+│   │   ├── __init__.py       # MLProjectTemplate
+│   │   └── content.py        # ML_MAIN_CONTENT
+│   └── backend_api/
+│       ├── __init__.py       # BackendAPITemplate (dispatches by framework)
+│       └── content.py        # All FastAPI/Flask/Django/Docker/CI content strings
 └── utils/
+    ├── banner.py       # show_banner() — ASCII wordmark with ice-fade colours
     ├── console.py      # Shared Rich Console instance
-    ├── doctor.py       # ProjectHealthChecker, HealthCheck dataclass, run_health_check()
-    ├── git.py          # initialize_git(), run_git_command(), add_all(), commit(), push etc.
-    ├── next_steps.py   # Template-specific next steps commands
+    ├── doctor.py       # ProjectHealthChecker, run_health_check()
+    ├── git.py          # initialize_git(), run_git_command(), add_all(), commit() etc.
     ├── success.py      # show_success() — renders the success panel
-    ├── uv.py           # initialize_uv() — runs uv init --bare and uv venv
-    └── validators.py   # validate_project_name() — regex validation
+    ├── uv.py           # initialize_uv(), install_packages()
+    └── validators.py   # validate_project_name()
 ```
-
-`templates/files.py` also holds starter-file content constants (`PYTHON_MAIN_CONTENT`, `FASTAPI_MAIN_CONTENT`, etc.) used by individual template modules.
 
 ## 4. Key Flows
 
 ### 4a. Project Creation Flow
 
 1. User runs `spawn create`
-2. `app.create()` prints the opening Rich panel
-3. `get_project_config()` collects name, template, and Git preference via Typer/Rich prompts
-4. `ProjectGenerator.generate()` resolves the template, creates the directory, writes files, and runs `initialize_git()` (if enabled) and `initialize_uv()`
-5. `show_success()` renders the success panel with template-specific next steps from `show_next_steps()`
-6. If Git was enabled, `Confirm.ask("Publish to GitHub?")` runs; on yes, `GitHubPublisher.publish()` stages, commits, and pushes
+2. `app.create()` calls `show_banner()`
+3. `get_project_config()` collects name, template, framework, extras, and Git preference
+4. `ProjectGenerator.generate()` resolves the template via `instantiate_template(config)`,
+   creates directories, writes starter files, writes README and `.gitignore`, runs
+   `initialize_git()` (if enabled), `initialize_uv()`, `install_packages()`, `post_install()`,
+   and writes `.spawn/meta.json`
+5. `show_success()` renders the success panel using `template_obj.next_steps`
+6. If Git was enabled, optionally `GitHubPublisher.publish()` stages, commits, and pushes
 
 ```
 spawn create
     │
     ▼
+show_banner()                 banner.py
+    │
+    ▼
 get_project_config()          prompts.py
-    │  → ProjectConfig
+    │  → ProjectConfig (name, template, framework, extras, use_git)
     ▼
 ProjectGenerator.generate()   project_generator.py
-    ├── get_template()        registry.py
-    ├── mkdir + write files   templates/
-    ├── initialize_git()      git.py          (if use_git)
-    └── initialize_uv()       uv.py
+    ├── instantiate_template()  registry.py  (forwards framework + extras)
+    ├── mkdir + write files     templates/
+    ├── write README.md         shared_content.py
+    ├── write .gitignore        shared_content.py
+    ├── initialize_git()        git.py         (if use_git)
+    ├── initialize_uv()         uv.py
+    ├── install_packages()      uv.py          (if deps non-empty)
+    ├── post_install()          template       (ruff/pytest config, Docker, CI)
+    └── write .spawn/meta.json
     │
     ▼
 show_success()                success.py
-    └── show_next_steps()     next_steps.py
+    └── template_obj.next_steps (formatted with project_name)
     │
     ▼
 GitHubPublisher.publish()     publisher.py    (optional)
-    └── git add / commit / push
 ```
 
 ### 4b. Template System
 
-`BaseTemplate` is a dataclass with three fields:
+`BaseTemplate` is a dataclass with these fields:
 
 | Field | Type | Purpose |
 |---|---|---|
 | `name` | `str` | Display name shown in the success panel |
 | `folders` | `list[str]` | Directories created under the project root |
-| `starter_files` | `list[tuple[str, str]]` | `(relative_path, content_template)` pairs; `{project_name}` is substituted at write time |
+| `starter_files` | `list[tuple[str, str]]` | `(relative_path, content_template)` pairs; `{project_name}` substituted at write time |
+| `next_steps` | `list[str]` | Run commands shown after creation; `{project_name}` substituted at display time |
 
-Each template subclasses `BaseTemplate` in its own file under `templates/`:
+`BaseTemplate` also provides overridable methods:
 
-| Class | Registry key |
-|---|---|
-| `PythonScriptTemplate` | `"python"` |
-| `FastAPITemplate` | `"fastapi"` |
-| `DataScienceTemplate` | `"data-science"` |
-| `MLProjectTemplate` | `"ml"` |
+| Method | Default | Purpose |
+|---|---|---|
+| `generate(project_path, context)` | Creates folders and writes starter files | Template-specific generation |
+| `get_readme_content(context)` | Returns `None` (use shared README) | Custom README per template |
+| `get_dependencies()` | Returns `[]` | Packages to install via `uv add` |
+| `post_install(project_path)` | No-op | Config writes, Docker files, CI files |
 
-`registry.py` holds the `TEMPLATES` dict mapping string keys to template classes. `get_template(template_name)` instantiates the class and returns it, or returns `None` if the key is missing.
+Each template lives in its own subdirectory with an `__init__.py` (class) and `content.py` (string constants).
 
-`ProjectGenerator` always writes `README.md` and `.gitignore` from `files.py` regardless of template; template-specific files come from `starter_files`.
+#### Registry
 
-### 4c. Error Handling
+`registry.py` holds `TEMPLATES: dict[str, TemplateMetadata]`. Current entries in order:
 
-Two-level exception hierarchy:
+| Key | Template class | Frameworks | Extras |
+|---|---|---|---|
+| `backend-api` | `BackendAPITemplate` | fastapi, flask, django | ruff, pytest, docker, github-actions |
+| `python` | `PythonScriptTemplate` | — | — |
+| `data-science` | `DataScienceTemplate` | — | — |
+| `ml` | `MLProjectTemplate` | — | — |
+
+`get_template(slug)` returns a default-constructed instance. `instantiate_template(config)` forwards `framework` and `extras` from `ProjectConfig` to templates whose constructors accept them, using signature introspection.
+
+`_REMOVED_SLUGS = {"fastapi"}` documents slugs that existed in v0.2.0 but are no longer registered.
+
+### 4c. Backend API Dispatch
+
+`BackendAPITemplate.__init__` branches on `framework` to select the correct folder list,
+starter files, and next steps:
+
+```
+framework == "flask"   → FLASK_FOLDERS, FLASK_FILES, flask next steps
+framework == "django"  → DJANGO_FOLDERS, DJANGO_FILES, django next steps
+else (None/"fastapi")  → FASTAPI_FOLDERS, FASTAPI_FILES, fastapi next steps
+```
+
+`get_dependencies()` returns base deps for the framework plus any selected extras.
+`post_install()` writes ruff config, pytest filterwarnings, Dockerfile, `.dockerignore`,
+and/or `.github/workflows/ci.yml` depending on `self.extras`.
+
+### 4d. Error Handling
 
 ```
 SpawnError                    # core/exceptions.py
 └── GitHubPublishError        # github/exceptions.py
 ```
 
-| Exception | Raised by | Caught in |
-|---|---|---|
-| `SpawnError` | `validators.py`, `project_generator.py`, `git.py`, `uv.py` | `app.create()` — generation step |
-| `GitHubPublishError` | `publisher.py` (wraps `SpawnError` from git subprocess calls) | `app.create()` — publish step |
-
-Subprocess failures in `git.py` and `uv.py` raise `SpawnError` with the stderr message or a fallback string. `ProjectGenerator.generate()` wraps its body in a try/except that calls `shutil.rmtree()` on any failure, so a partial directory is never left behind.
-
-The CLI catches both exception types and prints `❌ {message}` in red via Rich — no traceback is shown to the user.
+`ProjectGenerator.generate()` wraps its body in try/except. Any `OSError` is converted to
+`SpawnError`; any `BaseException` (including `SpawnError`) triggers `shutil.rmtree()` rollback
+before re-raising. The CLI catches both exception types and prints `❌ {message}` in red.
 
 ## 5. Adding a New Template
 
-1. Create `src/spawn/templates/your_template.py` — subclass `BaseTemplate`, define `name`, `folders`, and `starter_files`
-2. Register in `src/spawn/core/registry.py` — add your class to the `TEMPLATES` dict with a string key
-3. Add next steps in `src/spawn/utils/next_steps.py` — add an entry to the `commands` dict keyed by your registry key
-4. Add prompt row in `src/spawn/cli/prompts.py` — add to `TEMPLATE_CHOICES` and `table.add_row()` in the Rich table
-5. Write tests — add to `tests/test_templates.py` and `tests/test_registry.py`
+1. Create `src/spawn/templates/your_intent/` with `__init__.py` and `content.py`
+2. Subclass `BaseTemplate`; set `name`, `folders`, `starter_files`, `next_steps`
+3. Override `get_dependencies()`, `post_install()`, `get_readme_content()` as needed
+4. Register in `registry.py` — add a `TemplateMetadata` entry to `TEMPLATES`
+5. Write tests in `test_templates.py` and `test_registry.py`
 
 ## 6. Running Tests
 
 ```bash
 uv run pytest
-```
-
-```bash
 uv run pytest -v
-```
-
-```bash
-uv run pytest tests/test_doctor.py
-```
-
-```bash
+uv run pytest tests/test_generator.py
 uv run ruff check .
 ```

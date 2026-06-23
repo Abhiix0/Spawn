@@ -190,9 +190,11 @@ def test_python_template_creates_main(
     assert (tmp_path / "demo" / "main.py").exists()
 
 
+@patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_fastapi_template_creates_main(
+def test_backend_api_fastapi_creates_main(
     mock_uv,
+    mock_install,
     tmp_path,
     monkeypatch,
 ):
@@ -200,11 +202,14 @@ def test_fastapi_template_creates_main(
 
     config = ProjectConfig(
         name="demo",
-        template="fastapi",
+        template="backend-api",
         use_git=False,
+        framework="fastapi",
     )
 
-    ProjectGenerator().generate(config)
+    from spawn.templates.backend_api import BackendAPITemplate
+    with patch.object(BackendAPITemplate, "post_install"):
+        ProjectGenerator().generate(config)
 
     assert (tmp_path / "demo" / "app" / "main.py").exists()
 
@@ -364,7 +369,7 @@ def test_nested_folder_path_is_created(
         starter_files=[],
     )
 
-    with patch("spawn.generators.project_generator.get_template", return_value=nested_template):
+    with patch("spawn.generators.project_generator.instantiate_template", return_value=nested_template):
         config = ProjectConfig(
             name="demo",
             template="nested",
@@ -373,3 +378,205 @@ def test_nested_folder_path_is_created(
         ProjectGenerator().generate(config)
 
     assert (tmp_path / "demo" / "src" / "api").is_dir()
+
+
+# ---------------------------------------------------------------------------
+# Phase 5D extras flow tests
+# ---------------------------------------------------------------------------
+
+
+def test_backend_api_extras_reach_template():
+    """extras from ProjectConfig must be forwarded to BackendAPITemplate."""
+    from spawn.core.registry import instantiate_template
+    from spawn.templates.backend_api import BackendAPITemplate
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
+    )
+
+    template = instantiate_template(config)
+
+    assert isinstance(template, BackendAPITemplate)
+    assert template.extras == ["ruff", "pytest"]
+    assert template.framework == "fastapi"
+
+
+def test_backend_api_extras_in_dependencies():
+    """ruff, pytest, and httpx must appear in get_dependencies() when selected."""
+    from spawn.core.registry import instantiate_template
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
+    )
+
+    template = instantiate_template(config)
+    deps = template.get_dependencies()
+
+    assert "ruff" in deps
+    assert "pytest" in deps
+    assert "httpx" in deps
+
+
+def test_backend_api_no_extras_excludes_optional_deps():
+    """Without extras, ruff/pytest/httpx must NOT appear in dependencies."""
+    from spawn.core.registry import instantiate_template
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=[],
+    )
+
+    template = instantiate_template(config)
+    deps = template.get_dependencies()
+
+    assert "ruff" not in deps
+    assert "pytest" not in deps
+    assert "httpx" not in deps
+    assert "fastapi" in deps
+    assert "uvicorn[standard]" in deps
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_generator_passes_extras_to_install_packages(
+    mock_uv,
+    mock_install,
+    tmp_path,
+    monkeypatch,
+):
+    """ProjectGenerator must call install_packages with the full dependency list."""
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
+    )
+
+    from spawn.templates.backend_api import BackendAPITemplate
+    with patch.object(BackendAPITemplate, "post_install"):
+        ProjectGenerator().generate(config)
+
+    assert mock_install.called
+    installed = mock_install.call_args[0][1]  # second positional arg: packages list
+    assert "ruff" in installed
+    assert "pytest" in installed
+    assert "httpx" in installed
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_python_template_never_calls_install_packages(
+    mock_uv,
+    mock_install,
+    tmp_path,
+    monkeypatch,
+):
+    """Python template has no dependencies — install_packages must not be called."""
+    monkeypatch.chdir(tmp_path)
+
+    config = ProjectConfig(
+        name="demo",
+        template="python",
+        use_git=False,
+    )
+
+    ProjectGenerator().generate(config)
+
+    mock_install.assert_not_called()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_generator_creates_spawn_meta_json(mock_uv, tmp_path, monkeypatch):
+    """Every generated project must have .spawn/meta.json."""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(name="demo", template="python", use_git=False)
+    ProjectGenerator().generate(config)
+
+    meta_path = tmp_path / "demo" / ".spawn" / "meta.json"
+    assert meta_path.exists(), ".spawn/meta.json was not created"
+
+    data = json.loads(meta_path.read_text(encoding="utf-8"))
+    assert data["intent"] == "python"
+    assert data["framework"] is None
+    assert "spawn_version" in data
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_backend_api_meta_json_has_framework(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
+    """Backend API meta.json must record the selected framework."""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=[],
+    )
+
+    from spawn.templates.backend_api import BackendAPITemplate
+    with patch.object(BackendAPITemplate, "post_install"):
+        ProjectGenerator().generate(config)
+
+    data = json.loads(
+        (tmp_path / "demo" / ".spawn" / "meta.json").read_text(encoding="utf-8")
+    )
+    assert data["intent"] == "backend-api"
+    assert data["framework"] == "fastapi"
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_gitignore_contains_spawn_dir(mock_uv, tmp_path, monkeypatch):
+    """.gitignore in generated projects must exclude .spawn/."""
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(name="demo", template="python", use_git=False)
+    ProjectGenerator().generate(config)
+
+    gitignore = (tmp_path / "demo" / ".gitignore").read_text(encoding="utf-8")
+    assert ".spawn/" in gitignore
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_meta_json_rollback_on_failure(mock_uv, tmp_path, monkeypatch):
+    """If meta.json write fails, rollback must remove the project dir."""
+    from pathlib import Path
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(name="demo", template="python", use_git=False)
+
+    original_mkdir = Path.mkdir
+    call_count = 0
+
+    def failing_mkdir(self, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if self.name == ".spawn":
+            raise OSError("Simulated .spawn mkdir failure")
+        return original_mkdir(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", failing_mkdir)
+
+    with pytest.raises(SpawnError):
+        ProjectGenerator().generate(config)
+
+    assert not (tmp_path / "demo").exists()

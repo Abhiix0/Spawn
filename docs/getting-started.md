@@ -21,24 +21,17 @@ You can now run `spawn` from anywhere on your machine.
 
 ## 3. Your First Project
 
+### Option A — Python Script (simplest)
+
 ```bash
 $ spawn create
-╭─────────────────────────────────────────────╮
-│ 🚀 Spawn                                    │
-│ Create development environments in seconds  │
-╰─────────────────────────────────────────────╯
+```
 
-Project Name: my-api
-
-      Available Templates
-┏━━━┳━━━━━━━━━━━━━━━┓
-┃ # ┃ Template      ┃
-┡━━━╇━━━━━━━━━━━━━━━┩
-│ 1 │ Python Script │
-│ 2 │ FastAPI       │
-│ 3 │ Data Science  │
-│ 4 │ ML Project    │
-└───┴───────────────┘
+```
+  1  Backend API
+  2  Python Script
+  3  Data Science
+  4  ML Project
 
 Choose Template [1-4]: 2
 Initialize Git? [Y/n]: y
@@ -46,49 +39,106 @@ Initializing Git...
 
 ╭────── ✨ Project Created Successfully ──────╮
 │                                              │
+│  Project      my-script                      │
+│  Template     Python Script                  │
+│  Git          ✓ Enabled                      │
+│  UV           ✓ Initialized                  │
+│  Virtual Env  ✓ Created                      │
+│                                              │
+│  Next Steps                                  │
+│    cd my-script                              │
+│    uv run python main.py                     │
+│                                              │
+╰──────────────────────────────────────────────╯
+```
+
+### Option B — Backend API
+
+```bash
+$ spawn create
+```
+
+```
+  1  Backend API
+  2  Python Script
+  3  Data Science
+  4  ML Project
+
+Choose Template [1-4]: 1
+
+  1  fastapi
+  2  flask
+  3  django
+
+Choose Framework [1-3]: 1
+
+  1  ruff
+  2  pytest
+  3  docker
+  4  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+
+Initialize Git? [Y/n]: y
+Initializing Git...
+Installing dependencies...
+
+╭────── ✨ Project Created Successfully ──────╮
+│                                              │
 │  Project      my-api                         │
-│  Template     FastAPI                        │
+│  Template     Backend API                    │
 │  Git          ✓ Enabled                      │
 │  UV           ✓ Initialized                  │
 │  Virtual Env  ✓ Created                      │
 │                                              │
 │  Next Steps                                  │
 │    cd my-api                                 │
-│    uv add fastapi uvicorn                    │
 │    uv run uvicorn app.main:app --reload      │
 │                                              │
 ╰──────────────────────────────────────────────╯
-
-Publish to GitHub? [y/N]: n
 ```
 
-## 4. What Got Created
+## 4. What Gets Created (Backend API / FastAPI)
 
 ```
 my-api/
 ├── .git/
 ├── .gitignore
+├── .spawn/
+│   └── meta.json
 ├── .venv/
+├── .env.example
 ├── README.md
-├── app/
-│   └── main.py
-├── docs/
 ├── pyproject.toml
-├── src/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── api/
+│   │   └── routes/
+│   │       ├── __init__.py
+│   │       └── health.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── config.py
+│   ├── models/
+│   ├── schemas/
+│   └── services/
 └── tests/
+    ├── __init__.py
+    └── test_health.py
 ```
 
 | File / Folder | Purpose |
 |---|---|
-| `app/main.py` | Starter FastAPI app with a `/` route |
-| `src/` | Application source code |
-| `tests/` | Test files |
-| `docs/` | Project documentation |
-| `README.md` | Project overview |
-| `.gitignore` | Ignores venv, caches, and build artifacts |
-| `pyproject.toml` | Project metadata (created by `uv init --bare`) |
-| `.venv/` | Local virtual environment (created by `uv venv`) |
-| `.git/` | Git repository (created because Git was enabled) |
+| `app/main.py` | FastAPI app entry point |
+| `app/api/routes/health.py` | `GET /` health check route returning `{"status": "running"}` |
+| `app/core/config.py` | Pydantic settings with `.env` support |
+| `tests/test_health.py` | Health check test using `TestClient` |
+| `.env.example` | Documents required environment variables |
+| `.spawn/meta.json` | Spawn metadata: intent, framework, version |
+| `pyproject.toml` | Project metadata + installed dependencies |
+| `.venv/` | Local virtual environment |
 
 ## 5. Verify It Works
 
@@ -97,39 +147,22 @@ spawn version
 ```
 
 ```
-Spawn v0.2.0
+Spawn v0.3.0
 ```
 
 ```bash
 cd my-api
-spawn doctor
+uv run uvicorn app.main:app --reload
 ```
 
+Visit `http://localhost:8000/` — should return `{"status": "running"}`.
+
+```bash
+uv run pytest
 ```
-╭────────────── 🏥 Project Health Report ──────────────╮
-│                                                       │
-│  Documentation                                        │
-│  ✓ README.md — Documentation file present           │
-│  ⚠ LICENSE — Missing LICENSE file                     │
-│                                                       │
-│  Version Control                                      │
-│  ✓ Git Repository — Git initialized                   │
-│  ✓ .gitignore — Git ignore configured                 │
-│                                                       │
-│  Quality                                              │
-│  ✓ Tests — Test directory configured                  │
-│  ⚠ Ruff — Ruff not configured                         │
-│  ⚠ Pytest — Pytest not configured                     │
-│                                                       │
-│  Deployment                                           │
-│  ⚠ Dockerfile — Missing Dockerfile                  │
-│  ⚠ GitHub Actions — GitHub Actions not configured     │
-│                                                       │
-│  Configuration                                        │
-│  ⚠ .env.example — Missing .env.example                │
-│                                                       │
-│  Project Score: 50/100 (50%)                          │
-╰───────────────────────────────────────────────────────╯
+
+```bash
+spawn doctor
 ```
 
 ## 6. Next Steps

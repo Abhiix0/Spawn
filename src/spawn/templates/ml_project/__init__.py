@@ -1,5 +1,5 @@
 from spawn.templates.base import BaseTemplate
-from spawn.templates.files import ML_MAIN_CONTENT
+from spawn.templates.ml_project.content import ML_MAIN_CONTENT
 
 
 class MLProjectTemplate(BaseTemplate):
@@ -15,5 +15,10 @@ class MLProjectTemplate(BaseTemplate):
             ],
             starter_files=[
                 ("main.py", ML_MAIN_CONTENT),
+            ],
+            next_steps=[
+                "cd {project_name}",
+                "uv add pandas numpy scikit-learn",
+                "uv run python main.py",
             ],
         )
