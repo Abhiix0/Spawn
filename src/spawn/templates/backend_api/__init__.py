@@ -18,6 +18,16 @@ from spawn.templates.backend_api.content import (
     FLASK_TEST_HEALTH_CONTENT,
     FLASK_ENV_EXAMPLE_CONTENT,
     FLASK_README_CONTENT,
+    # Django
+    DJANGO_MANAGE_CONTENT,
+    DJANGO_SETTINGS_CONTENT,
+    DJANGO_URLS_CONTENT,
+    DJANGO_ASGI_CONTENT,
+    DJANGO_WSGI_CONTENT,
+    DJANGO_HEALTH_VIEWS_CONTENT,
+    DJANGO_HEALTH_URLS_CONTENT,
+    DJANGO_HEALTH_TESTS_CONTENT,
+    DJANGO_README_CONTENT,
 )
 
 # ---------------------------------------------------------------------------
@@ -77,6 +87,29 @@ FLASK_DEPS = [
     "python-dotenv",
 ]
 
+DJANGO_FOLDERS = [
+    "config",
+    "apps/health",
+]
+
+DJANGO_FILES = [
+    ("manage.py", DJANGO_MANAGE_CONTENT),
+    ("config/__init__.py", INIT_CONTENT),
+    ("config/settings.py", DJANGO_SETTINGS_CONTENT),
+    ("config/urls.py", DJANGO_URLS_CONTENT),
+    ("config/asgi.py", DJANGO_ASGI_CONTENT),
+    ("config/wsgi.py", DJANGO_WSGI_CONTENT),
+    ("apps/__init__.py", INIT_CONTENT),
+    ("apps/health/__init__.py", INIT_CONTENT),
+    ("apps/health/views.py", DJANGO_HEALTH_VIEWS_CONTENT),
+    ("apps/health/urls.py", DJANGO_HEALTH_URLS_CONTENT),
+    ("apps/health/tests.py", DJANGO_HEALTH_TESTS_CONTENT),
+]
+
+DJANGO_DEPS = [
+    "django",
+]
+
 
 class BackendAPITemplate(BaseTemplate):
     def __init__(
@@ -90,6 +123,9 @@ class BackendAPITemplate(BaseTemplate):
         if framework == "flask":
             folders = FLASK_FOLDERS
             files = FLASK_FILES
+        elif framework == "django":
+            folders = DJANGO_FOLDERS
+            files = DJANGO_FILES
         else:
             # Default to fastapi for None or "fastapi"
             folders = FASTAPI_FOLDERS
@@ -104,11 +140,15 @@ class BackendAPITemplate(BaseTemplate):
     def get_readme_content(self, context: dict) -> str | None:
         if self.framework == "flask":
             return FLASK_README_CONTENT.format_map(context)
+        if self.framework == "django":
+            return DJANGO_README_CONTENT.format_map(context)
         return BACKEND_API_README_CONTENT.format_map(context)
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "flask":
             base_deps = list(FLASK_DEPS)
+        elif self.framework == "django":
+            base_deps = list(DJANGO_DEPS)
         else:
             base_deps = list(FASTAPI_DEPS)
 

@@ -217,3 +217,159 @@ uv run pytest
 └── README.md
 ```
 """
+
+# ---------------------------------------------------------------------------
+# Django
+# ---------------------------------------------------------------------------
+
+DJANGO_MANAGE_CONTENT = """\
+#!/usr/bin/env python
+import os
+import sys
+
+
+def main():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == "__main__":
+    main()
+"""
+
+DJANGO_SETTINGS_CONTENT = """\
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = "django-insecure-change-me-in-production"
+
+DEBUG = True
+
+ALLOWED_HOSTS = ["*"]
+
+INSTALLED_APPS = [
+    "django.contrib.contenttypes",
+    "django.contrib.staticfiles",
+    "apps.health",
+]
+
+MIDDLEWARE = [
+    "django.middleware.common.CommonMiddleware",
+]
+
+ROOT_URLCONF = "config.urls"
+
+WSGI_APPLICATION = "config.wsgi.application"
+
+DATABASES = {}
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+"""
+
+DJANGO_URLS_CONTENT = """\
+from django.urls import path, include
+
+urlpatterns = [
+    path("", include("apps.health.urls")),
+]
+"""
+
+DJANGO_ASGI_CONTENT = """\
+import os
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
+application = get_asgi_application()
+"""
+
+DJANGO_WSGI_CONTENT = """\
+import os
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
+application = get_wsgi_application()
+"""
+
+DJANGO_HEALTH_VIEWS_CONTENT = """\
+from django.http import JsonResponse
+
+
+def health_check(request):
+    return JsonResponse({"status": "running"})
+"""
+
+DJANGO_HEALTH_URLS_CONTENT = """\
+from django.urls import path
+from apps.health.views import health_check
+
+urlpatterns = [
+    path("", health_check, name="health_check"),
+]
+"""
+
+DJANGO_HEALTH_TESTS_CONTENT = """\
+from django.test import TestCase, Client
+
+
+class HealthCheckTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_health_check(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"status": "running"})
+"""
+
+DJANGO_README_CONTENT = """\
+# {project_name}
+
+Generated with [Spawn](https://github.com/Abhiix0/spawn).
+
+## Getting Started
+
+Install dependencies and start the development server:
+
+```bash
+uv run python manage.py runserver
+```
+
+## Running Tests
+
+```bash
+uv run python manage.py test
+```
+
+## Endpoints
+
+| Method | Path | Description  |
+|--------|------|--------------|
+| GET    | /    | Health check |
+
+## Project Structure
+
+```
+{project_name}/
+├── manage.py
+├── config/
+│   ├── settings.py
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+├── apps/
+│   └── health/
+│       ├── views.py
+│       ├── urls.py
+│       └── tests.py
+└── README.md
+```
+"""
