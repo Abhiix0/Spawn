@@ -12,28 +12,21 @@
 
 ## 2. `spawn create`
 
-Creates a new project directory from a template, writes starter files, optionally runs `git init`, and runs `uv init --bare` + `uv venv`.
-
-### Opening banner
-
-```
-╭─────────────────────────────────────────────╮
-│ 🚀 Spawn                                    │
-│ Create development environments in seconds  │
-╰─────────────────────────────────────────────╯
-```
+Creates a new project directory from a template, writes starter files, installs dependencies, optionally runs `git init`, and runs `uv init --bare` + `uv venv`.
 
 ### Prompt sequence
 
-| Step | Prompt text | Valid input | On invalid input |
-|---|---|---|---|
-| 1 | `Project Name:` | Letters, numbers, `-`, `_` only; must contain at least one letter or digit | Re-prompts. Prints error in red (no `❌` prefix): `Project name can only contain letters, numbers, hyphens (-), and underscores (_).` |
-| 2 | Template table (see below), then `Choose Template [1-4]:` | `1`, `2`, `3`, or `4` | Re-prompts. Prints error in red: `Invalid choice. Please select a valid number.` |
-| 3 | `Initialize Git? [Y/n]:` | `Y` / `y` / Enter (default **Y**), or `N` / `n` | — |
-| 4 | `Publish to GitHub? [y/N]:` | Only if Git was enabled. `Y` / `y`, or `N` / `n` / Enter (default **N**) | — |
-| 5 | `Repository URL` | See valid URL formats below | Prints `❌ Invalid GitHub repository URL.` |
+| Step | Prompt | When shown |
+|---|---|---|
+| 1 | `Project Name` | Always |
+| 2 | Template list → `Choose Template [1-4]` | Always |
+| 3 | Framework list → `Choose Framework [1-N]` | Only for templates with frameworks (Backend API) |
+| 4 | Extras list → `Extras` | Only for templates with extras (Backend API) |
+| 5 | `Initialize Git? [Y/n]` | Always |
+| 6 | `Publish to GitHub? [y/N]` | Only if Git was enabled |
+| 7 | `Repository URL` | Only if publish was confirmed |
 
-#### `Project Name:` validation
+#### `Project Name` validation
 
 | Rule | Detail |
 |---|---|
@@ -42,52 +35,185 @@ Creates a new project directory from a template, writes starter files, optionall
 | Rejected examples | `my project` (space), `my/project` (slash), `---` (no alphanumeric) |
 
 **Error message (exact):**
-
 ```
 Project name can only contain letters, numbers, hyphens (-), and underscores (_).
 ```
 
-#### Template selection table
+#### Template list
 
-```
-      Available Templates
-┏━━━┳━━━━━━━━━━━━━━━┓
-┃ # ┃ Template      ┃
-┡━━━╇━━━━━━━━━━━━━━━┩
-│ 1 │ Python Script │
-│ 2 │ FastAPI       │
-│ 3 │ Data Science  │
-│ 4 │ ML Project    │
-└───┴───────────────┘
-```
+Templates are displayed as a numbered list. The current registry order:
 
-| Input | Template key | Display name |
+| Input | Template | Description |
 |---|---|---|
-| `1` | `python` | Python Script |
-| `2` | `fastapi` | FastAPI |
-| `3` | `data-science` | Data Science |
-| `4` | `ml` | ML Project |
+| `1` | `backend-api` | Backend API — production-ready FastAPI, Flask, or Django |
+| `2` | `python` | Python Script — simple script with `src/` and `tests/` |
+| `3` | `data-science` | Data Science — notebooks and data directories |
+| `4` | `ml` | ML Project — models and data directories |
 
 **Invalid input error (exact):**
-
 ```
 Invalid choice. Please select a valid number.
 ```
 
-#### `Initialize Git?`
+---
+
+### Backend API intent
+
+Selecting Backend API triggers two additional prompts before the Git question.
+
+#### Framework selection
+
+```
+  1  fastapi
+  2  flask
+  3  django
+
+Choose Framework [1-3]:
+```
+
+| Input | Framework | Run command |
+|---|---|---|
+| `1` (default) | FastAPI | `uv run uvicorn app.main:app --reload` |
+| `2` | Flask | `uv run python run.py` |
+| `3` | Django | `uv run python manage.py runserver` |
+
+Pressing Enter (empty) selects `1` (FastAPI).
+
+#### Extras selection
+
+```
+  1  ruff
+  2  pytest
+  3  docker
+  4  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []:
+```
+
+| Extra | What it adds |
+|---|---|
+| `ruff` | Installs `ruff`; appends `[tool.ruff]` to `pyproject.toml` |
+| `pytest` | Installs `pytest` + `httpx`; adds `filterwarnings` config to `pyproject.toml` |
+| `docker` | Writes `Dockerfile` and `.dockerignore` for the selected framework |
+| `github-actions` | Writes `.github/workflows/ci.yml` with ruff + pytest steps |
+
+Enter comma-separated numbers (e.g. `1,2`) or press Enter to skip all. Invalid numbers are silently ignored.
+
+#### Dependency installation
+
+After `uv init`, Spawn calls `uv add` with the base and selected-extras dependencies automatically. No manual `pip install` or `uv add` is needed.
+
+| Framework | Base dependencies |
+|---|---|
+| FastAPI | `fastapi`, `uvicorn[standard]`, `pydantic-settings` |
+| Flask | `flask`, `python-dotenv` |
+| Django | `django` |
+
+#### Generated project structure (FastAPI example)
+
+```
+my-api/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── api/
+│   │   └── routes/
+│   │       ├── __init__.py
+│   │       └── health.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── config.py
+│   ├── models/
+│   ├── schemas/
+│   └── services/
+├── tests/
+│   ├── __init__.py
+│   └── test_health.py
+├── .env.example
+├── .spawn/
+│   └── meta.json
+├── .gitignore
+├── README.md
+└── pyproject.toml
+```
+
+#### Generated project structure (Flask example)
+
+```
+my-api/
+├── app/
+│   ├── __init__.py         # App factory (create_app)
+│   ├── config.py
+│   └── routes/
+│       ├── __init__.py
+│       └── health.py
+├── run.py
+├── tests/
+│   ├── __init__.py
+│   └── test_health.py
+├── .env.example
+├── .spawn/
+│   └── meta.json
+└── pyproject.toml
+```
+
+#### Generated project structure (Django example)
+
+```
+my-api/
+├── manage.py
+├── config/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+├── apps/
+│   └── health/
+│       ├── __init__.py
+│       ├── views.py
+│       ├── urls.py
+│       └── tests.py
+├── .spawn/
+│   └── meta.json
+└── pyproject.toml
+```
+
+#### Next steps by framework
+
+| Framework | Command |
+|---|---|
+| FastAPI | `uv run uvicorn app.main:app --reload` |
+| Flask | `uv run python run.py` |
+| Django | `uv run python manage.py runserver` |
+
+---
+
+### `.spawn/meta.json`
+
+Every generated project receives a `.spawn/meta.json` file:
+
+```json
+{
+  "intent": "backend-api",
+  "framework": "fastapi",
+  "spawn_version": "0.3.0"
+}
+```
+
+This file is excluded from git via `.gitignore`. It records the intent slug, framework used (or `null`), and the Spawn version that created the project.
+
+---
+
+### `Initialize Git?`
 
 | Answer | Behavior |
 |---|---|
 | `Y` / Enter | Prints `Initializing Git...` (yellow), runs `git init` |
 | `N` | Skips `git init`. After success panel, prints: `ℹ GitHub publishing requires Git. Skipping.` (yellow). Command ends — no GitHub prompt. |
 
-**Git disabled message (exact):**
-
-```
-ℹ GitHub publishing requires Git. Skipping.
-```
-
-#### `Publish to GitHub?`
+### `Publish to GitHub?`
 
 Only shown when Git was enabled. Default is **N**.
 
@@ -96,7 +222,7 @@ Only shown when Git was enabled. Default is **N**.
 | `N` / Enter | Command ends after success panel |
 | `Y` | Prompts `Repository URL`, then runs publish flow |
 
-#### `Repository URL`
+#### `Repository URL` formats
 
 | Format | Example |
 |---|---|
@@ -104,65 +230,38 @@ Only shown when Git was enabled. Default is **N**.
 | HTTPS with `.git` | `https://github.com/user/repo.git` |
 | SSH | `git@github.com:user/repo.git` |
 
-**Invalid URL error (exact):**
-
-```
-❌ Invalid GitHub repository URL.
-```
-
-**Publish success (exact):**
-
-```
-🚀 Published successfully!
-```
-
-### Success output
-
-Shown after project generation succeeds. Git status reflects your `Initialize Git?` answer.
+### Success panel
 
 ```
 ╭────── ✨ Project Created Successfully ──────╮
 │                                              │
 │  Project      my-api                         │
-│  Template     FastAPI                        │
+│  Template     Backend API                    │
 │  Git          ✓ Enabled                      │
 │  UV           ✓ Initialized                  │
 │  Virtual Env  ✓ Created                      │
 │                                              │
 │  Next Steps                                  │
 │    cd my-api                                 │
-│    uv add fastapi uvicorn                    │
 │    uv run uvicorn app.main:app --reload      │
 │                                              │
 ╰──────────────────────────────────────────────╯
 ```
 
-#### Next steps by template
-
-| Template | Next steps lines |
-|---|---|
-| Python Script | `cd {name}` → `uv run python main.py` |
-| FastAPI | `cd {name}` → `uv add fastapi uvicorn` → `uv run uvicorn app.main:app --reload` |
-| Data Science | `cd {name}` → `uv add pandas numpy matplotlib` |
-| ML Project | `cd {name}` → `uv add pandas numpy scikit-learn` |
-
 ### Error cases
 
-All generation errors are prefixed with `❌` in red. The partially created directory is deleted on failure during generation.
+All generation errors are prefixed with `❌` in red. The partially created directory is deleted on failure.
 
 | Situation | Message (exact) |
 |---|---|
 | Directory already exists | `❌ Directory '{name}' already exists.` |
 | Git not installed | `❌ Git is not installed or not available in PATH.` |
-| Git init failed | `❌ Failed to initialize Git repository.` |
 | uv not installed | `❌ UV is not installed or not available in PATH.` |
 | uv command failed | `❌ {uv stderr}` or `❌ Failed to initialize UV environment.` |
+| Package install failed | `❌ {uv stderr}` or `❌ Failed to install packages.` |
 | Unknown template | `❌ Unknown template: {template}` |
 | Invalid GitHub URL | `❌ Invalid GitHub repository URL.` |
 | Origin remote already exists | `❌ Origin remote already exists.` |
-| Project path missing (publish) | `❌ Project path does not exist: {path}` |
-| Not a git repo (publish) | `❌ Project is not a Git repository.` |
-| Git command failed (publish) | `❌ {git stderr}` or `❌ Git command failed.` |
 
 ---
 
@@ -173,7 +272,7 @@ Prints the installed package version.
 **Output (exact):**
 
 ```
-Spawn v0.2.0
+Spawn v0.3.0
 ```
 
 ---
@@ -197,14 +296,9 @@ Scans the **current working directory** for project health indicators and prints
 | GitHub Actions | Deployment | 10 | `.github/workflows/*.yml` or `*.yaml` |
 | .env.example | Configuration | 5 | `.env.example` file exists |
 
-**Max score:** 100 (sum of all weights)
+**Max score:** 100
 
 ### Scoring
-
-| Calculation | Detail |
-|---|---|
-| Formula | `(sum of passed check weights) / (sum of all weights) × 100` |
-| Display | `Project Score: {earned}/{max} ({percent}%)` |
 
 | Score range | Color | Meaning |
 |---|---|---|
@@ -212,64 +306,13 @@ Scans the **current working directory** for project health indicators and prints
 | 50–79% | Yellow | Core setup present, gaps remain |
 | 0–49% | Red | Missing multiple essentials |
 
-### Example output
-
-```
-╭─────────────── 🏥 Project Health Report ───────────────╮
-│                                                          │
-│  Documentation                                           │
-│  ✓ README.md — Documentation file present               │
-│  ⚠ LICENSE — Missing LICENSE file                       │
-│                                                          │
-│  Version Control                                         │
-│  ✓ Git Repository — Git initialized                     │
-│  ✓ .gitignore — Git ignore configured                   │
-│                                                          │
-│  Quality                                                 │
-│  ✓ Tests — Test directory configured                    │
-│  ✓ Ruff — Ruff configured in pyproject.toml             │
-│  ✓ Pytest — Pytest configured in pyproject.toml         │
-│                                                          │
-│  Deployment                                              │
-│  ⚠ Dockerfile — Missing Dockerfile                      │
-│  ✓ GitHub Actions — GitHub Actions configured (1 workflow) │
-│                                                          │
-│  Configuration                                           │
-│  ⚠ .env.example — Missing .env.example                  │
-│                                                          │
-│  Project Score: 70/100 (70%)                            │
-╰──────────────────────────────────────────────────────────╯
-```
-
-### Recommendations
-
-When any check fails, a second panel lists prioritized fixes (highest priority first):
-
-| Failed check | Recommendation (exact) |
-|---|---|
-| Git Repository | `Initialize a git repository with 'git init'` |
-| README.md | `Add a README.md file to document your project` |
-| Tests | `Create a tests/ directory and add test files` |
-| .gitignore | `Add a .gitignore file to exclude unnecessary files from version control` |
-| Pytest | `Configure Pytest in pyproject.toml or create pytest.ini` |
-| Ruff | `Configure Ruff linter in pyproject.toml for code quality` |
-| GitHub Actions | `Set up GitHub Actions in .github/workflows/ for CI/CD` |
-| Dockerfile | `Add a Dockerfile for containerized deployment` |
-| LICENSE | `Add a LICENSE file to specify usage terms` |
-| .env.example | `Create a .env.example file to document required environment variables` |
-| Other | `Address: {check name}` |
-
-**Recommendations panel title:** `💡 Recommendations`
-
 ---
 
 ## 5. Exit codes
 
-Spawn does not call `sys.exit()` on handled errors. Caught exceptions print a message and return normally.
-
 | Situation | Exit code |
 |---|---|
 | Command completes successfully | 0 |
-| `spawn create` — `SpawnError` caught (directory exists, Git/uv missing, unknown template) | 0 |
-| `spawn create` — `GitHubPublishError` caught (invalid URL, origin exists, publish failure) | 0 |
+| `spawn create` — `SpawnError` caught | 0 |
+| `spawn create` — `GitHubPublishError` caught | 0 |
 | Uncaught exception (e.g. keyboard interrupt) | 1 |

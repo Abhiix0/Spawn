@@ -3,12 +3,7 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-# Changelog
-
-All notable changes to Spawn are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-
-## v0.3.0 (unreleased)
+## v0.3.0 — June 2026
 
 ### Breaking Changes
 
@@ -20,25 +15,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### New Features
 
-- Backend API intent: generates production-structured FastAPI, Flask,
-  or Django projects
-- Framework selection: choose FastAPI, Flask, or Django at creation time
-- Extras system: opt-in ruff, pytest, docker, github-actions support
-- Dependency installation: `uv add` runs automatically after generation
-- Registry-driven menus: template list derived from registry, no
-  hardcoded prompt mappings
-- `instantiate_template()`: forwards framework and extras from
-  ProjectConfig to templates that accept them
+- **Backend API intent** — generates production-structured FastAPI, Flask,
+  or Django projects with full folder layouts, health routes, config, and tests
+- **Framework selection** — choose FastAPI, Flask, or Django at creation time;
+  each produces a different, correct project structure
+- **Extras system** — opt-in extras at creation: `ruff`, `pytest`, `docker`,
+  `github-actions`; selected extras are installed and configured automatically
+- **Automatic dependency installation** — `uv add` runs after `uv init`;
+  base and extra dependencies are installed into the project venv
+- **Registry-driven menus** — template list, framework list, and extras list
+  are all derived from registry metadata; no hardcoded prompt mappings
+- **`instantiate_template()`** — new registry function that forwards
+  `framework` and `extras` from `ProjectConfig` to templates that accept them
+- **`.spawn/meta.json`** — every generated project receives a metadata file
+  recording `intent`, `framework`, and `spawn_version`; excluded from git
+  via `.gitignore`
+- **`next_steps` on templates** — each template owns its run commands as a
+  `next_steps` field; `next_steps.py` has been deleted
 
 ### Internal
 
 - Templates restructured into per-intent subdirectories
-- BaseTemplate gains generate(), get_readme_content(),
-  get_dependencies(), post_install() methods
-- TemplateMetadata added to registry with available_frameworks and
-  available_extras fields
+  (`python_script/`, `fastapi_template/`, `data_science/`, `ml_project/`,
+  `backend_api/`) — each with `__init__.py` and `content.py`
+- `BaseTemplate` gains `generate()`, `get_readme_content()`,
+  `get_dependencies()`, `post_install()`, and `next_steps` field
+- `TemplateMetadata` added to registry with `available_frameworks` and
+  `available_extras` fields
+- `show_success()` signature updated to accept `next_steps: list[str]`
+  directly from the template object
+- `next_steps.py` removed; `utils/` is now free of slug-keyed dicts
+- Version bumped to `0.3.0`
 
-## v0.2.0 — GitHub Ninja (current)
+## v0.2.0 — GitHub Ninja
 
 Release theme: "From local project creation to a live GitHub repository without leaving the terminal."
 
@@ -67,7 +76,6 @@ Release theme: "From local project creation to a live GitHub repository without 
 - All subprocess calls use `capture_output=True` — git and uv output no longer bleeds into the Rich UI
 - `project_path.mkdir(exist_ok=True)` replaced with existence check + `SpawnError` — prevents silent merge into existing folder
 - Validator regex updated to require at least one letter or digit — previously accepted `-` and `--` as valid project names
-- `test_templates.py` missing `FastAPITemplate` import fixed — was causing CI failure
 
 ## v0.1.0 — Project Generator (initial release)
 
