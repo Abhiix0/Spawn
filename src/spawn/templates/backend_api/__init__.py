@@ -32,6 +32,8 @@ from spawn.templates.backend_api.content import (
     DOCKERFILE_FLASK_CONTENT,
     DOCKERFILE_DJANGO_CONTENT,
     DOCKERIGNORE_CONTENT,
+    # GitHub Actions
+    GITHUB_ACTIONS_CI_CONTENT,
 )
 
 # ---------------------------------------------------------------------------
@@ -197,4 +199,11 @@ class BackendAPITemplate(BaseTemplate):
             )
             (project_path / ".dockerignore").write_text(
                 DOCKERIGNORE_CONTENT, encoding="utf-8"
+            )
+
+        if "github-actions" in self.extras:
+            workflows_path = project_path / ".github" / "workflows"
+            workflows_path.mkdir(parents=True, exist_ok=True)
+            (workflows_path / "ci.yml").write_text(
+                GITHUB_ACTIONS_CI_CONTENT, encoding="utf-8"
             )

@@ -432,3 +432,38 @@ __pycache__
 .git
 .gitignore
 """
+
+# ---------------------------------------------------------------------------
+# GitHub Actions
+# ---------------------------------------------------------------------------
+
+GITHUB_ACTIONS_CI_CONTENT = """\
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Ruff
+        run: uv run ruff check .
+        if: ${{ true }}
+
+      - name: Run Pytest
+        run: uv run pytest
+        if: ${{ true }}
+"""
