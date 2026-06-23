@@ -192,7 +192,7 @@ def test_python_template_creates_main(
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_fastapi_template_creates_main(
+def test_backend_api_fastapi_creates_main(
     mock_uv,
     mock_install,
     tmp_path,
