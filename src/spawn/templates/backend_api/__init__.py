@@ -27,7 +27,11 @@ from spawn.templates.backend_api.content import (
     DJANGO_HEALTH_VIEWS_CONTENT,
     DJANGO_HEALTH_URLS_CONTENT,
     DJANGO_HEALTH_TESTS_CONTENT,
-    DJANGO_README_CONTENT,
+    # Docker
+    DOCKERFILE_FASTAPI_CONTENT,
+    DOCKERFILE_FLASK_CONTENT,
+    DOCKERFILE_DJANGO_CONTENT,
+    DOCKERIGNORE_CONTENT,
 )
 
 # ---------------------------------------------------------------------------
@@ -179,3 +183,18 @@ class BackendAPITemplate(BaseTemplate):
 
         if additions:
             pyproject.write_text(current + additions, encoding="utf-8")
+
+        if "docker" in self.extras:
+            if self.framework == "flask":
+                dockerfile_content = DOCKERFILE_FLASK_CONTENT
+            elif self.framework == "django":
+                dockerfile_content = DOCKERFILE_DJANGO_CONTENT
+            else:
+                dockerfile_content = DOCKERFILE_FASTAPI_CONTENT
+
+            (project_path / "Dockerfile").write_text(
+                dockerfile_content, encoding="utf-8"
+            )
+            (project_path / ".dockerignore").write_text(
+                DOCKERIGNORE_CONTENT, encoding="utf-8"
+            )

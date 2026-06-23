@@ -373,3 +373,62 @@ uv run python manage.py test
 └── README.md
 ```
 """
+
+# ---------------------------------------------------------------------------
+# Docker
+# ---------------------------------------------------------------------------
+
+DOCKERFILE_FASTAPI_CONTENT = """\
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+RUN pip install uv && uv sync
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+"""
+
+DOCKERFILE_FLASK_CONTENT = """\
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+RUN pip install uv && uv sync
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["python", "run.py"]
+"""
+
+DOCKERFILE_DJANGO_CONTENT = """\
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+RUN pip install uv && uv sync
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+"""
+
+DOCKERIGNORE_CONTENT = """\
+.venv
+__pycache__
+*.pyc
+*.pyo
+.env
+.git
+.gitignore
+"""
