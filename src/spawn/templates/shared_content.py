@@ -45,4 +45,7 @@ htmlcov/
 
 # Mypy
 .mypy_cache/
+
+# Spawn metadata
+.spawn/
 """

@@ -1,6 +1,8 @@
+import json
 import shutil
 from pathlib import Path
 
+from spawn import __version__
 from spawn.templates.shared_content import (
     README_CONTENT,
     GITIGNORE_CONTENT,
@@ -65,6 +67,21 @@ class ProjectGenerator:
                 install_packages(project_path, deps)
 
             template.post_install(project_path)
+
+            meta_dir = project_path / ".spawn"
+            meta_dir.mkdir()
+            meta_file = meta_dir / "meta.json"
+            meta_file.write_text(
+                json.dumps(
+                    {
+                        "intent": config.template,
+                        "framework": config.framework,
+                        "spawn_version": __version__,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
 
         except OSError as e:
             shutil.rmtree(project_path, ignore_errors=True)

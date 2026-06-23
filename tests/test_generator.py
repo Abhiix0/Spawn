@@ -497,3 +497,86 @@ def test_python_template_never_calls_install_packages(
     ProjectGenerator().generate(config)
 
     mock_install.assert_not_called()
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_generator_creates_spawn_meta_json(mock_uv, tmp_path, monkeypatch):
+    """Every generated project must have .spawn/meta.json."""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(name="demo", template="python", use_git=False)
+    ProjectGenerator().generate(config)
+
+    meta_path = tmp_path / "demo" / ".spawn" / "meta.json"
+    assert meta_path.exists(), ".spawn/meta.json was not created"
+
+    data = json.loads(meta_path.read_text(encoding="utf-8"))
+    assert data["intent"] == "python"
+    assert data["framework"] is None
+    assert "spawn_version" in data
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_backend_api_meta_json_has_framework(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
+    """Backend API meta.json must record the selected framework."""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=[],
+    )
+
+    from spawn.templates.backend_api import BackendAPITemplate
+    with patch.object(BackendAPITemplate, "post_install"):
+        ProjectGenerator().generate(config)
+
+    data = json.loads(
+        (tmp_path / "demo" / ".spawn" / "meta.json").read_text(encoding="utf-8")
+    )
+    assert data["intent"] == "backend-api"
+    assert data["framework"] == "fastapi"
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_gitignore_contains_spawn_dir(mock_uv, tmp_path, monkeypatch):
+    """.gitignore in generated projects must exclude .spawn/."""
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(name="demo", template="python", use_git=False)
+    ProjectGenerator().generate(config)
+
+    gitignore = (tmp_path / "demo" / ".gitignore").read_text(encoding="utf-8")
+    assert ".spawn/" in gitignore
+
+
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_meta_json_rollback_on_failure(mock_uv, tmp_path, monkeypatch):
+    """If meta.json write fails, rollback must remove the project dir."""
+    from pathlib import Path
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(name="demo", template="python", use_git=False)
+
+    original_mkdir = Path.mkdir
+    call_count = 0
+
+    def failing_mkdir(self, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if self.name == ".spawn":
+            raise OSError("Simulated .spawn mkdir failure")
+        return original_mkdir(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", failing_mkdir)
+
+    with pytest.raises(SpawnError):
+        ProjectGenerator().generate(config)
+
+    assert not (tmp_path / "demo").exists()
