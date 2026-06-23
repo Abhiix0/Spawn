@@ -1,4 +1,4 @@
-from spawn.core.registry import get_template
+from spawn.core.registry import get_template, get_metadata, list_templates
 
 
 def test_python_template_exists():
@@ -28,9 +28,6 @@ def test_ml_template_exists():
     template = get_template("ml")
     assert template is not None
     assert template.name == "ML Project"
-
-
-from spawn.core.registry import get_metadata, list_templates
 
 
 def test_list_templates_returns_all():

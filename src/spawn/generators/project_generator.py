@@ -8,7 +8,7 @@ from spawn.templates.shared_content import (
     GITIGNORE_CONTENT,
 )
 from spawn.core.models import ProjectConfig
-from spawn.core.registry import get_template, instantiate_template
+from spawn.core.registry import instantiate_template
 from spawn.utils.git import initialize_git
 from spawn.utils.uv import initialize_uv, install_packages
 from spawn.core.exceptions import SpawnError

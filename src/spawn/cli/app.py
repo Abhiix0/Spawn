@@ -10,7 +10,7 @@ from spawn.utils.banner import show_banner
 from spawn.utils.success import show_success
 from spawn.utils.console import console
 from spawn.core.exceptions import SpawnError
-from spawn.core.registry import get_template, instantiate_template
+from spawn.core.registry import instantiate_template
 
 app = typer.Typer()
 
