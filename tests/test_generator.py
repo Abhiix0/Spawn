@@ -190,9 +190,11 @@ def test_python_template_creates_main(
     assert (tmp_path / "demo" / "main.py").exists()
 
 
+@patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
 def test_fastapi_template_creates_main(
     mock_uv,
+    mock_install,
     tmp_path,
     monkeypatch,
 ):
@@ -200,11 +202,14 @@ def test_fastapi_template_creates_main(
 
     config = ProjectConfig(
         name="demo",
-        template="fastapi",
+        template="backend-api",
         use_git=False,
+        framework="fastapi",
     )
 
-    ProjectGenerator().generate(config)
+    from spawn.templates.backend_api import BackendAPITemplate
+    with patch.object(BackendAPITemplate, "post_install"):
+        ProjectGenerator().generate(config)
 
     assert (tmp_path / "demo" / "app" / "main.py").exists()
 

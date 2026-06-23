@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 
 from spawn.core.models import ProjectConfig
 from spawn.templates.python_script import PythonScriptTemplate
-from spawn.templates.fastapi_template import FastAPITemplate
 from spawn.templates.data_science import DataScienceTemplate
 from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.backend_api import BackendAPITemplate
@@ -21,17 +20,19 @@ class TemplateMetadata:
 
 
 TEMPLATES: dict[str, TemplateMetadata] = {
+    "backend-api": TemplateMetadata(
+        slug="backend-api",
+        display_name="Backend API",
+        description="Production-ready backend with FastAPI, Flask, or Django",
+        template_class=BackendAPITemplate,
+        available_frameworks=["fastapi", "flask", "django"],
+        available_extras=["ruff", "pytest", "docker", "github-actions"],
+    ),
     "python": TemplateMetadata(
         slug="python",
         display_name="Python Script",
         description="Simple Python script with src/ and tests/",
         template_class=PythonScriptTemplate,
-    ),
-    "fastapi": TemplateMetadata(
-        slug="fastapi",
-        display_name="FastAPI",
-        description="FastAPI web application",
-        template_class=FastAPITemplate,
     ),
     "data-science": TemplateMetadata(
         slug="data-science",
@@ -44,14 +45,6 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="ML Project",
         description="Machine learning project with models and data directories",
         template_class=MLProjectTemplate,
-    ),
-    "backend-api": TemplateMetadata(
-        slug="backend-api",
-        display_name="Backend API",
-        description="Production-ready backend with FastAPI, Flask, or Django",
-        template_class=BackendAPITemplate,
-        available_frameworks=["fastapi", "flask", "django"],
-        available_extras=["ruff", "pytest", "docker", "github-actions"],
     ),
 }
 

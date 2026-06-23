@@ -12,9 +12,10 @@ def test_invalid_template_returns_none():
 
 
 def test_fastapi_template_exists():
-    template = get_template("fastapi")
+    from spawn.templates.backend_api import BackendAPITemplate
+    template = get_template("backend-api")
     assert template is not None
-    assert template.name == "FastAPI"
+    assert isinstance(template, BackendAPITemplate)
 
 
 def test_data_science_template_exists():
@@ -38,7 +39,7 @@ def test_list_templates_returns_all():
     slugs = [t.slug for t in templates]
 
     assert "python" in slugs
-    assert "fastapi" in slugs
+    assert "backend-api" in slugs
     assert "data-science" in slugs
     assert "ml" in slugs
 

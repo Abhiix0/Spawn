@@ -1,5 +1,5 @@
 import typer
-from rich.table import Table
+from rich.text import Text
 
 from spawn.utils.console import console
 from spawn.core.models import ProjectConfig
@@ -8,20 +8,32 @@ from spawn.utils.validators import validate_project_name
 from spawn.core.exceptions import SpawnError
 
 
+def _print_list(items: list[str]) -> None:
+    """Print a numbered list with dim numbers and bright item names."""
+    console.print()
+    for i, item in enumerate(items, start=1):
+        line = Text()
+        line.append(f"  {i}  ", style="dim")
+        line.append(item, style="bold white")
+        console.print(line)
+    console.print()
+
+
 def get_project_config() -> ProjectConfig:
+    # --- Project name ---
     while True:
-        project_name = typer.prompt("Project Name")
+        project_name = typer.prompt(
+            typer.style("Project Name", fg=typer.colors.CYAN)
+        )
 
         try:
             validate_project_name(project_name)
             break
 
         except SpawnError as e:
-            typer.secho(
-                str(e),
-                fg=typer.colors.RED,
-            )
+            typer.secho(str(e), fg=typer.colors.RED)
 
+    # --- Template selection ---
     templates = list_templates()
 
     choice_map = {
@@ -29,30 +41,22 @@ def get_project_config() -> ProjectConfig:
         for i, meta in enumerate(templates, start=1)
     }
 
-    table = Table(title="Available Templates")
-
-    table.add_column("#", justify="center")
-    table.add_column("Template")
-    table.add_column("Description")
-
-    for i, meta in enumerate(templates, start=1):
-        table.add_row(str(i), meta.display_name, meta.description)
-
-    console.print(table)
+    _print_list([meta.display_name for meta in templates])
 
     valid_range = len(templates)
-    choice = typer.prompt(f"Choose Template [1-{valid_range}]")
+    choice = typer.prompt(
+        typer.style(f"Choose Template [1-{valid_range}]", fg=typer.colors.CYAN)
+    )
 
     while choice not in choice_map:
-        typer.secho(
-            "Invalid choice. Please select a valid number.",
-            fg=typer.colors.RED,
+        typer.secho("Invalid choice. Please select a valid number.", fg=typer.colors.RED)
+        choice = typer.prompt(
+            typer.style(f"Choose Template [1-{valid_range}]", fg=typer.colors.CYAN)
         )
-        choice = typer.prompt(f"Choose Template [1-{valid_range}]")
 
     template = choice_map[choice]
 
-    # --- Framework selection (only for templates that declare frameworks) ---
+    # --- Framework selection ---
     selected_framework: str | None = None
     meta = get_metadata(template)
 
@@ -63,36 +67,26 @@ def get_project_config() -> ProjectConfig:
             for i, fw in enumerate(frameworks, start=1)
         }
 
-        fw_table = Table(title="Available Frameworks")
-        fw_table.add_column("#", justify="center")
-        fw_table.add_column("Framework")
-
-        for i, fw in enumerate(frameworks, start=1):
-            fw_table.add_row(str(i), fw)
-
-        console.print(fw_table)
+        _print_list(frameworks)
 
         valid_fw_range = len(frameworks)
         fw_choice = typer.prompt(
-            f"Choose Framework [1-{valid_fw_range}]",
+            typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
             default="1",
         )
 
         while fw_choice not in framework_map:
-            typer.secho(
-                "Invalid choice. Please select a valid number.",
-                fg=typer.colors.RED,
-            )
+            typer.secho("Invalid choice. Please select a valid number.", fg=typer.colors.RED)
             fw_choice = typer.prompt(
-                f"Choose Framework [1-{valid_fw_range}]",
+                typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
                 default="1",
             )
 
         selected_framework = framework_map[fw_choice]
 
-    # --- Extras selection (only for templates that declare extras) ----------
+    # --- Extras selection ---
     selected_extras: list[str] = []
-    # re-use meta already fetched above
+
     if meta and meta.available_extras:
         extras = meta.available_extras
         extras_map = {
@@ -100,19 +94,17 @@ def get_project_config() -> ProjectConfig:
             for i, slug in enumerate(extras, start=1)
         }
 
-        extras_table = Table(title="Available Extras")
-        extras_table.add_column("#", justify="center")
-        extras_table.add_column("Extra")
+        _print_list(extras)
 
-        for i, slug in enumerate(extras, start=1):
-            extras_table.add_row(str(i), slug)
-
-        console.print(extras_table)
-        console.print(
-            "Enter numbers separated by commas, or press Enter to skip"
+        typer.secho(
+            "  Enter numbers separated by commas, or press Enter to skip",
+            fg=typer.colors.CYAN,
         )
 
-        raw = typer.prompt("Extras", default="")
+        raw = typer.prompt(
+            typer.style("Extras", fg=typer.colors.CYAN),
+            default="",
+        )
 
         parsed: list[str] = []
         seen: set[str] = set()
@@ -124,10 +116,9 @@ def get_project_config() -> ProjectConfig:
 
         selected_extras = parsed
 
-    # -----------------------------------------------------------------------
-
+    # --- Git ---
     use_git = typer.confirm(
-        "Initialize Git?",
+        typer.style("Initialize Git?", fg=typer.colors.CYAN),
         default=True,
     )
 
