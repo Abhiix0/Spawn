@@ -78,3 +78,17 @@ def test_backend_api_template_exists():
     assert template is not None
     assert isinstance(template, BackendAPITemplate)
     assert template.name == "Backend API"
+
+
+def test_backend_api_frameworks_include_flask_and_django():
+    from spawn.core.registry import get_metadata
+    meta = get_metadata("backend-api")
+    assert "flask" in meta.available_frameworks
+    assert "django" in meta.available_frameworks
+
+
+def test_backend_api_extras_include_docker_and_github_actions():
+    from spawn.core.registry import get_metadata
+    meta = get_metadata("backend-api")
+    assert "docker" in meta.available_extras
+    assert "github-actions" in meta.available_extras

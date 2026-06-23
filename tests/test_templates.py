@@ -121,3 +121,124 @@ def test_backend_api_readme_content_contains_project_name():
     assert readme is not None
     assert "my-api" in readme
     assert "uv run uvicorn" in readme
+
+
+# ---------------------------------------------------------------------------
+# Flask framework
+# ---------------------------------------------------------------------------
+
+
+def test_backend_api_flask_folders():
+    template = BackendAPITemplate(framework="flask")
+    assert "app/routes" in template.folders
+    assert "tests" in template.folders
+
+
+def test_backend_api_flask_starter_files():
+    template = BackendAPITemplate(framework="flask")
+    paths = [path for path, _ in template.starter_files]
+    assert "run.py" in paths
+    assert "app/__init__.py" in paths
+    assert "app/routes/health.py" in paths
+    assert "app/config.py" in paths
+    assert "tests/test_health.py" in paths
+
+
+def test_backend_api_flask_dependencies():
+    template = BackendAPITemplate(framework="flask")
+    deps = template.get_dependencies()
+    assert "flask" in deps
+    assert "python-dotenv" in deps
+    assert "fastapi" not in deps
+
+
+def test_backend_api_flask_readme():
+    template = BackendAPITemplate(framework="flask")
+    readme = template.get_readme_content({"project_name": "my-api"})
+    assert readme is not None
+    assert "my-api" in readme
+    assert "uv run python run.py" in readme
+
+
+# ---------------------------------------------------------------------------
+# Django framework
+# ---------------------------------------------------------------------------
+
+
+def test_backend_api_django_folders():
+    template = BackendAPITemplate(framework="django")
+    assert "config" in template.folders
+    assert "apps/health" in template.folders
+
+
+def test_backend_api_django_starter_files():
+    template = BackendAPITemplate(framework="django")
+    paths = [path for path, _ in template.starter_files]
+    assert "manage.py" in paths
+    assert "config/settings.py" in paths
+    assert "config/urls.py" in paths
+    assert "apps/health/views.py" in paths
+    assert "apps/health/tests.py" in paths
+
+
+def test_backend_api_django_dependencies():
+    template = BackendAPITemplate(framework="django")
+    deps = template.get_dependencies()
+    assert "django" in deps
+    assert "fastapi" not in deps
+    assert "flask" not in deps
+
+
+def test_backend_api_django_readme():
+    template = BackendAPITemplate(framework="django")
+    readme = template.get_readme_content({"project_name": "my-api"})
+    assert readme is not None
+    assert "my-api" in readme
+    assert "manage.py runserver" in readme
+
+
+# ---------------------------------------------------------------------------
+# Docker extra
+# ---------------------------------------------------------------------------
+
+
+def test_backend_api_docker_extra_fastapi(tmp_path):
+    template = BackendAPITemplate(framework="fastapi", extras=["docker"])
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    template.post_install(tmp_path)
+    assert (tmp_path / "Dockerfile").exists()
+    assert (tmp_path / ".dockerignore").exists()
+    content = (tmp_path / "Dockerfile").read_text(encoding="utf-8")
+    assert "uvicorn" in content
+
+
+def test_backend_api_docker_extra_flask(tmp_path):
+    template = BackendAPITemplate(framework="flask", extras=["docker"])
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    template.post_install(tmp_path)
+    dockerfile = (tmp_path / "Dockerfile").read_text(encoding="utf-8")
+    assert "run.py" in dockerfile
+
+
+def test_backend_api_docker_extra_django(tmp_path):
+    template = BackendAPITemplate(framework="django", extras=["docker"])
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    template.post_install(tmp_path)
+    dockerfile = (tmp_path / "Dockerfile").read_text(encoding="utf-8")
+    assert "manage.py" in dockerfile
+
+
+# ---------------------------------------------------------------------------
+# GitHub Actions extra
+# ---------------------------------------------------------------------------
+
+
+def test_backend_api_github_actions_extra(tmp_path):
+    template = BackendAPITemplate(framework="fastapi", extras=["github-actions"])
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    template.post_install(tmp_path)
+    ci_path = tmp_path / ".github" / "workflows" / "ci.yml"
+    assert ci_path.exists()
+    content = ci_path.read_text(encoding="utf-8")
+    assert "pytest" in content
+    assert "ruff" in content

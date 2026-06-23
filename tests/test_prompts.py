@@ -188,3 +188,52 @@ def test_backend_api_extras_invalid_entry_ignored(mock_prompt, mock_confirm):
     assert "ruff" in config.extras
     assert "pytest" in config.extras
     assert len(config.extras) == 2
+
+
+@patch("spawn.cli.prompts.typer.confirm", return_value=False)
+@patch(
+    "spawn.cli.prompts.typer.prompt",
+    side_effect=[
+        "my-api",
+        "5",    # backend-api
+        "2",    # flask
+        "",     # no extras
+    ],
+)
+def test_backend_api_flask_framework_selected(mock_prompt, mock_confirm):
+    config = get_project_config()
+    assert config.template == "backend-api"
+    assert config.framework == "flask"
+    assert config.extras == []
+
+
+@patch("spawn.cli.prompts.typer.confirm", return_value=False)
+@patch(
+    "spawn.cli.prompts.typer.prompt",
+    side_effect=[
+        "my-api",
+        "5",    # backend-api
+        "3",    # django
+        "",     # no extras
+    ],
+)
+def test_backend_api_django_framework_selected(mock_prompt, mock_confirm):
+    config = get_project_config()
+    assert config.template == "backend-api"
+    assert config.framework == "django"
+
+
+@patch("spawn.cli.prompts.typer.confirm", return_value=False)
+@patch(
+    "spawn.cli.prompts.typer.prompt",
+    side_effect=[
+        "my-api",
+        "5",        # backend-api
+        "1",        # fastapi
+        "3,4",      # docker + github-actions
+    ],
+)
+def test_backend_api_docker_and_github_actions_extras(mock_prompt, mock_confirm):
+    config = get_project_config()
+    assert "docker" in config.extras
+    assert "github-actions" in config.extras
