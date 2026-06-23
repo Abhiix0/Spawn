@@ -3,6 +3,41 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+# Changelog
+
+All notable changes to Spawn are documented here.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## v0.3.0 (unreleased)
+
+### Breaking Changes
+
+- The `fastapi` template slug has been removed. FastAPI projects are
+  now generated via the `backend-api` intent: `spawn create` →
+  Backend API → FastAPI. There is no automatic migration for
+  `.spawn/meta.json` files or any stored config referencing
+  `template: "fastapi"`.
+
+### New Features
+
+- Backend API intent: generates production-structured FastAPI, Flask,
+  or Django projects
+- Framework selection: choose FastAPI, Flask, or Django at creation time
+- Extras system: opt-in ruff, pytest, docker, github-actions support
+- Dependency installation: `uv add` runs automatically after generation
+- Registry-driven menus: template list derived from registry, no
+  hardcoded prompt mappings
+- `instantiate_template()`: forwards framework and extras from
+  ProjectConfig to templates that accept them
+
+### Internal
+
+- Templates restructured into per-intent subdirectories
+- BaseTemplate gains generate(), get_readme_content(),
+  get_dependencies(), post_install() methods
+- TemplateMetadata added to registry with available_frameworks and
+  available_extras fields
+
 ## v0.2.0 — GitHub Ninja (current)
 
 Release theme: "From local project creation to a live GitHub repository without leaving the terminal."

@@ -19,6 +19,11 @@ class TemplateMetadata:
     available_extras: list[str] = field(default_factory=list)
 
 
+# Slugs that existed in v0.2.0 but have been superseded.
+# get_template() returns None for these, which surfaces as a clear
+# SpawnError("Unknown template: fastapi") in the generator.
+_REMOVED_SLUGS = {"fastapi"}
+
 TEMPLATES: dict[str, TemplateMetadata] = {
     "backend-api": TemplateMetadata(
         slug="backend-api",

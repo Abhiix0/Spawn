@@ -11,7 +11,7 @@ def test_invalid_template_returns_none():
     assert get_template("banana") is None
 
 
-def test_fastapi_template_exists():
+def test_backend_api_template_is_registered():
     from spawn.templates.backend_api import BackendAPITemplate
     template = get_template("backend-api")
     assert template is not None
