@@ -375,6 +375,6 @@ This project is open source under the [MIT License](LICENSE).
 
 <div align="center">
 
-**[⭐ Star on GitHub](https://github.com/Abhiix0/spawn)** · **[🐛 Report a Bug](https://github.com/Abhiix0/spawn/issues)** · **[💡 Request a Feature](https://github.com/Abhiix0/spawn/issues)**
+**[Star on GitHub](https://github.com/Abhiix0/spawn)** · **[Report a Bug](https://github.com/Abhiix0/spawn/issues)** · **[Request a Feature](https://github.com/Abhiix0/spawn/issues)**
 
 </div>
