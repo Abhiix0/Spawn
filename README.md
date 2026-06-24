@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🦋 Spawn
+# Spawn
 
 > Eliminate repetitive project setup. Go from zero to a fully structured dev environment in seconds.
 
@@ -20,45 +20,37 @@ Spawn is a local CLI tool that transforms one command into a complete Python pro
 Every new Python project starts with the same manual ritual:
 
 ```bash
-mkdir my-project
-cd my-project
+mkdir my-project && cd my-project
 mkdir src tests docs
 touch README.md .gitignore
 git init
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 ...
 ```
 
-It's repetitive. It's error-prone. It's inconsistent. And you haven't written a single line of *real* code yet.
+It's repetitive. It's inconsistent. And you haven't written a single line of *real* code yet.
 
 **Spawn collapses all of that into one command: `spawn create`**
 
 ---
 
-## Features at a Glance
+## Features
 
 | Feature | What it does |
 |---|---|
-| **Interactive CLI** | Prompt-driven setup powered by [Rich](https://github.com/Textualize/rich) |
 | **Intent-based templates** | Backend API (FastAPI / Flask / Django), Python Script, Data Science, ML Project |
-| **Framework selection** | Choose your framework at creation time — no post-setup reconfiguring |
-| **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and configured automatically |
+| **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
-| **Git integration** | Optionally runs `git init` and publishes to GitHub |
-| **uv integration** | Runs `uv init` and `uv venv` for you |
-| **Smart next steps** | Shows the exact commands to run after setup |
+| **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
-| **spawn doctor** | Scans your project directory for health indicators and scores it out of 100 |
+| **spawn doctor** | Scans your project for health indicators and scores it out of 100 |
 
 ---
 
 ## Prerequisites
 
-Before using Spawn, make sure you have these installed:
-
 - **Python 3.12+** — [Download here](https://python.org/downloads)
-- **uv** — A fast Python package manager. [Install guide](https://github.com/astral-sh/uv)
+- **uv** — [Install guide](https://github.com/astral-sh/uv)
 - **Git** — [Download here](https://git-scm.com/downloads)
 
 > **First time with uv?** Run `pip install uv` or check their [quickstart](https://github.com/astral-sh/uv#getting-started).
@@ -68,61 +60,46 @@ Before using Spawn, make sure you have these installed:
 ## Installation
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/Abhiix0/spawn.git
-
-# 2. Navigate into the project folder
 cd spawn
-
-# 3. Install dependencies
 uv sync
-
-# 4. Install Spawn as a global tool
 uv tool install .
 ```
 
-That's it. You can now run `spawn` from anywhere on your machine.
+You can now run `spawn` from anywhere on your machine.
 
 ---
 
 ## Usage
 
-### Create a new project
-
 ```bash
 spawn create
 ```
 
-Spawn guides you through an interactive prompt. The flow depends on which template you choose.
+Spawn walks you through a short prompt sequence. The number of steps depends on the template you pick.
 
-#### Python Script, Data Science, ML Project
-
-```
-Project Name: my-script
-
-  1  Backend API
-  2  Python Script
-  3  Data Science
-  4  ML Project
-
-Choose Template [1-4]: 2
-Initialize Git? [Y/n]: Y
-```
-
-#### Backend API
-
-Selecting Backend API adds two extra steps — framework and extras:
+**Step 1 — Name your project**
 
 ```
 Project Name: my-api
+```
 
+Spawn rejects names with spaces or special characters, and tells you immediately if that directory already exists.
+
+**Step 2 — Pick a template**
+
+```
   1  Backend API
   2  Python Script
   3  Data Science
   4  ML Project
 
 Choose Template [1-4]: 1
+```
 
+**Step 3 — Framework and extras** *(Backend API only)*
+
+```
   1  fastapi
   2  flask
   3  django
@@ -136,11 +113,15 @@ Choose Framework [1-3]: 1
 
   Enter numbers separated by commas, or press Enter to skip
 Extras []: 1,2
+```
 
+**Step 4 — Git**
+
+```
 Initialize Git? [Y/n]: Y
 ```
 
-When it's done, you'll see a clean summary and exactly what to do next:
+That's it. Spawn generates the project, installs dependencies, and shows you exactly what to run next.
 
 ```
 ╭────── ✨ Project Created Successfully ──────╮
@@ -158,69 +139,31 @@ When it's done, you'll see a clean summary and exactly what to do next:
 ╰──────────────────────────────────────────────╯
 ```
 
-### Check your version
-
-```bash
-spawn version
-# → Spawn v0.3.0
-```
-
----
-
-### Publish to GitHub
-
-After project creation, if Git was enabled, Spawn will ask:
-
-```
-Publish to GitHub? [y/N]:
-```
-
-Paste your existing empty GitHub repository URL:
-
-```
-Repository URL: https://github.com/your-username/my-project
-```
-
-Spawn will automatically:
-- Stage all files (`git add .`)
-- Create the initial commit
-- Set the branch to `main`
-- Add the remote origin
-- Push to GitHub
-
-```
-🚀 Published successfully!
-```
-
-> The repository must already exist on GitHub. Spawn connects to it — it does not create it.
-
 ---
 
 ## Project Templates
 
-### `[1]` Backend API — Production-ready backend
+### `[1]` Backend API
 
 Best for: REST APIs, microservices, backend web apps.
 
-Choose a framework at creation time:
+Generates a production-structured project with a health endpoint, config module, and test file ready to run. Choose your framework and opt into extras — everything is installed automatically via `uv add`.
 
-| Framework | Run command |
+| Framework | Start command |
 |---|---|
 | FastAPI | `uv run uvicorn app.main:app --reload` |
 | Flask | `uv run python run.py` |
 | Django | `uv run python manage.py runserver` |
 
-Optional extras: `ruff`, `pytest`, `docker`, `github-actions`
-
-All selected extras are installed automatically via `uv add`. No manual setup required.
+**Available extras:** `ruff` `pytest` `docker` `github-actions`
 
 **FastAPI structure:**
 
 ```
 my-api/
 ├── app/
-│   ├── api/routes/health.py
-│   ├── core/config.py
+│   ├── api/routes/health.py   # GET / → {"status": "running"}
+│   ├── core/config.py         # pydantic-settings config
 │   ├── models/
 │   ├── schemas/
 │   ├── services/
@@ -232,89 +175,93 @@ my-api/
 └── .gitignore
 ```
 
-The health endpoint is ready immediately:
-
 ```bash
+# After generation
+cd my-api
 uv run uvicorn app.main:app --reload
-# → GET http://localhost:8000/ returns {"status": "running"}
+# GET http://localhost:8000/ → {"status": "running"}
 ```
 
 ---
 
-### `[2]` Python Script — General purpose scripting
+### `[2]` Python Script
 
 Best for: automation scripts, utilities, one-off tools.
 
 ```
 my-project/
 ├── main.py
-├── README.md
-├── .gitignore
 ├── src/
-└── tests/
+├── tests/
+├── README.md
+└── .gitignore
 ```
 
-**Next step:** `uv run python main.py`
+```bash
+cd my-project
+uv run python main.py
+```
 
 ---
 
-### `[3]` Data Science — Data analysis and visualization
+### `[3]` Data Science
 
-Best for: exploratory data analysis, reporting, Jupyter notebooks.
+Best for: exploratory analysis, reporting, Jupyter notebooks.
 
 ```
 my-project/
 ├── main.py
-├── README.md
-├── .gitignore
 ├── data/
 ├── notebooks/
 ├── src/
 ├── docs/
-└── tests/
+├── tests/
+├── README.md
+└── .gitignore
 ```
 
-**Next steps:**
-
 ```bash
+cd my-project
 uv add pandas numpy matplotlib
 uv run python main.py
 ```
 
 ---
 
-### `[4]` ML Project — Machine learning pipelines
+### `[4]` ML Project
 
 Best for: model training, feature engineering, experiments.
 
 ```
 my-project/
 ├── main.py
-├── README.md
-├── .gitignore
 ├── data/
 ├── models/
 ├── src/
 ├── docs/
-└── tests/
+├── tests/
+├── README.md
+└── .gitignore
 ```
 
-**Next steps:**
-
 ```bash
+cd my-project
 uv add pandas numpy scikit-learn
 uv run python main.py
 ```
 
 ---
 
-## spawn doctor
+## Other Commands
+
+### `spawn doctor`
+
+Scans your project directory for health indicators and scores it out of 100.
 
 ```bash
 spawn doctor
+spawn doctor ./path/to/project
 ```
-
-`spawn doctor` scans your current project directory and checks for essential project health indicators — documentation, version control, test setup, linting, deployment config, and more. Each check is weighted and tallied into a score out of 100.
 
 ```
 ╭─────────────── 🏥 Project Health Report ───────────────╮
@@ -343,24 +290,25 @@ spawn doctor
 ╰──────────────────────────────────────────────────────────╯
 ```
 
----
-
-## Examples
+### `spawn version`
 
 ```bash
-# FastAPI backend with ruff and pytest
-spawn create
-# → name: api-server, template: 1 (Backend API), framework: 1 (FastAPI)
-# → extras: 1,2 (ruff, pytest), git: Y
-
-# Simple Python script, no Git
-spawn create
-# → name: my-tool, template: 2 (Python Script), git: N
-
-# Data science workspace
-spawn create
-# → name: analysis, template: 3 (Data Science), git: N
+spawn version
+# → Spawn v0.3.0
 ```
+
+### Publish to GitHub
+
+After creation, if Git was enabled, Spawn asks:
+
+```
+Publish to GitHub? [y/N]: y
+Repository URL: https://github.com/your-username/my-project
+```
+
+Spawn stages all files, creates the initial commit, renames the branch to `main`, adds the remote, and pushes.
+
+> The repository must already exist on GitHub. Spawn connects to it — it does not create it.
 
 ---
 
@@ -391,39 +339,32 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 ## Contributing
 
-Contributions are welcome! Whether it's a bug fix, a new template, or a feature from the roadmap — here's how to get started.
+Contributions are welcome. Whether it's a bug fix, a new intent, or something from the roadmap — here's how to get started.
 
-### Adding a new intent (3 steps)
+### Adding a new intent
 
 **1. Create the intent directory**
 
 ```
 src/spawn/templates/your_intent/
-├── __init__.py    ← template class, subclass BaseTemplate
+├── __init__.py    ← subclass BaseTemplate
 └── content.py     ← all file content as string constants
 ```
 
 **2. Register it**
 
-`src/spawn/core/registry.py` — add a `TemplateMetadata` entry to the `TEMPLATES` dict with your slug, display name, description, template class, and any `available_frameworks` or `available_extras`.
+In `src/spawn/core/registry.py`, add a `TemplateMetadata` entry to `TEMPLATES` with your slug, display name, description, template class, and any `available_frameworks` or `available_extras`.
 
 **3. Write tests**
 
-```
-tests/test_templates.py
-tests/test_generator.py
-```
-
-Cover template instantiation, generated structure, and dependency list. Mock `initialize_uv` and `install_packages` in generator tests.
+Add coverage in `tests/test_templates.py` and `tests/test_generator.py`. Mock `initialize_uv` and `install_packages` in generator tests.
 
 ### Before submitting a PR
 
 ```bash
-uv run pytest        # all tests must pass
+uv run pytest        # must pass
 uv run ruff check .  # must be clean
 ```
-
-Not sure where to start? Check the [open issues](https://github.com/Abhiix0/spawn/issues) or pick something from the roadmap above.
 
 ---
 
