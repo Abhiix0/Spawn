@@ -217,11 +217,65 @@ def test_backend_api_docker_extra_django(tmp_path):
 
 
 def test_backend_api_github_actions_extra(tmp_path):
-    template = BackendAPITemplate(framework="fastapi", extras=["github-actions"])
+    template = BackendAPITemplate(framework="fastapi", extras=["github-actions", "ruff", "pytest"])
     (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
     template.post_install(tmp_path)
     ci_path = tmp_path / ".github" / "workflows" / "ci.yml"
     assert ci_path.exists()
     content = ci_path.read_text(encoding="utf-8")
-    assert "pytest" in content
-    assert "ruff" in content
+    assert "uv sync" in content
+    assert "uv run pytest" in content
+    assert "uv run ruff check ." in content
+
+
+def test_ci_without_ruff_does_not_include_ruff_step():
+    from spawn.templates.backend_api.content import (
+        GITHUB_ACTIONS_CI_BASE,
+        GITHUB_ACTIONS_CI_RUFF_STEP,
+        GITHUB_ACTIONS_CI_PYTEST_STEP,
+    )
+
+    t = BackendAPITemplate(framework="fastapi", extras=["github-actions"])
+    ci = GITHUB_ACTIONS_CI_BASE
+    if "ruff" in t.extras:
+        ci += GITHUB_ACTIONS_CI_RUFF_STEP
+    if "pytest" in t.extras:
+        ci += GITHUB_ACTIONS_CI_PYTEST_STEP
+
+    assert "ruff" not in ci
+    assert "pytest" not in ci
+    assert "uv sync" in ci
+
+
+def test_ci_with_ruff_and_pytest_includes_both_steps():
+    from spawn.templates.backend_api.content import (
+        GITHUB_ACTIONS_CI_BASE,
+        GITHUB_ACTIONS_CI_RUFF_STEP,
+        GITHUB_ACTIONS_CI_PYTEST_STEP,
+    )
+
+    t = BackendAPITemplate(
+        framework="fastapi", extras=["github-actions", "ruff", "pytest"]
+    )
+    ci = GITHUB_ACTIONS_CI_BASE
+    if "ruff" in t.extras:
+        ci += GITHUB_ACTIONS_CI_RUFF_STEP
+    if "pytest" in t.extras:
+        ci += GITHUB_ACTIONS_CI_PYTEST_STEP
+
+    assert "uv run ruff check ." in ci
+    assert "uv run pytest" in ci
+
+
+def test_gitignore_does_not_ignore_uv_lock():
+    from spawn.templates.shared_content import GITIGNORE_CONTENT
+
+    lines = GITIGNORE_CONTENT.splitlines()
+    assert "uv.lock" not in lines
+
+
+def test_flask_dockerfile_exposes_port_5000():
+    from spawn.templates.backend_api.content import DOCKERFILE_FLASK_CONTENT
+
+    assert "EXPOSE 5000" in DOCKERFILE_FLASK_CONTENT
+    assert "EXPOSE 8000" not in DOCKERFILE_FLASK_CONTENT
