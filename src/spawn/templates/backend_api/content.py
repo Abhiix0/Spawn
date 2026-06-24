@@ -405,7 +405,7 @@ RUN pip install uv && uv sync
 
 COPY . .
 
-EXPOSE 8000
+EXPOSE 5000
 
 CMD ["python", "run.py"]
 """
@@ -439,7 +439,7 @@ __pycache__
 # GitHub Actions
 # ---------------------------------------------------------------------------
 
-GITHUB_ACTIONS_CI_CONTENT = """\
+GITHUB_ACTIONS_CI_BASE = """\
 name: CI
 
 on:
@@ -460,12 +460,14 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+"""
 
+GITHUB_ACTIONS_CI_RUFF_STEP = """\
       - name: Run Ruff
         run: uv run ruff check .
-        if: ${{ true }}
+"""
 
+GITHUB_ACTIONS_CI_PYTEST_STEP = """\
       - name: Run Pytest
         run: uv run pytest
-        if: ${{ true }}
 """

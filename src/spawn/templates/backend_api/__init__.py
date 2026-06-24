@@ -34,7 +34,9 @@ from spawn.templates.backend_api.content import (
     DOCKERFILE_DJANGO_CONTENT,
     DOCKERIGNORE_CONTENT,
     # GitHub Actions
-    GITHUB_ACTIONS_CI_CONTENT,
+    GITHUB_ACTIONS_CI_BASE,
+    GITHUB_ACTIONS_CI_RUFF_STEP,
+    GITHUB_ACTIONS_CI_PYTEST_STEP,
 )
 
 # ---------------------------------------------------------------------------
@@ -221,6 +223,11 @@ class BackendAPITemplate(BaseTemplate):
         if "github-actions" in self.extras:
             workflows_path = project_path / ".github" / "workflows"
             workflows_path.mkdir(parents=True, exist_ok=True)
+            ci_content = GITHUB_ACTIONS_CI_BASE
+            if "ruff" in self.extras:
+                ci_content += GITHUB_ACTIONS_CI_RUFF_STEP
+            if "pytest" in self.extras:
+                ci_content += GITHUB_ACTIONS_CI_PYTEST_STEP
             (workflows_path / "ci.yml").write_text(
-                GITHUB_ACTIONS_CI_CONTENT, encoding="utf-8"
+                ci_content, encoding="utf-8"
             )
