@@ -1,4 +1,5 @@
 import typer
+from pathlib import Path
 from rich.text import Text
 
 from spawn.utils.console import console
@@ -28,10 +29,19 @@ def get_project_config() -> ProjectConfig:
 
         try:
             validate_project_name(project_name)
-            break
-
         except SpawnError as e:
             typer.secho(str(e), fg=typer.colors.RED)
+            continue
+
+        if Path(project_name).exists():
+            typer.secho(
+                f"A directory named '{project_name}' already exists. "
+                "Choose a different name.",
+                fg=typer.colors.RED,
+            )
+            continue
+
+        break
 
     # --- Template selection ---
     templates = list_templates()

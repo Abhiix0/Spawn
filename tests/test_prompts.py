@@ -240,3 +240,32 @@ def test_backend_api_docker_and_github_actions_extras(mock_prompt, mock_confirm)
     config = get_project_config()
     assert "docker" in config.extras
     assert "github-actions" in config.extras
+
+
+def test_existing_directory_name_retried(tmp_path, monkeypatch):
+    """If the project directory already exists, prompt loops and retries."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "taken").mkdir()
+
+    with patch("spawn.cli.prompts.typer.prompt") as mock_prompt, \
+         patch("spawn.cli.prompts.typer.confirm", return_value=False):
+        # First entry: "taken" (exists), second entry: "free" (does not exist)
+        mock_prompt.side_effect = ["taken", "free", "2"]
+        config = get_project_config()
+
+    assert config.name == "free"
+
+
+def test_existing_directory_shows_error_message(tmp_path, monkeypatch):
+    """Error message is shown when entered name already exists as a directory."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "taken").mkdir()
+
+    with patch("spawn.cli.prompts.typer.prompt") as mock_prompt, \
+         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
+         patch("spawn.cli.prompts.typer.secho") as mock_secho:
+        mock_prompt.side_effect = ["taken", "free", "2"]
+        get_project_config()
+
+    error_calls = [str(call) for call in mock_secho.call_args_list]
+    assert any("already exists" in c for c in error_calls)
