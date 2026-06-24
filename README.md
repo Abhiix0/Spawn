@@ -1,6 +1,5 @@
 <div align="center">
-
-# Spawn
+<img src="assets/preview.png" alt="Spawn — scaffold your next project" width="520" />
 
 > Eliminate repetitive project setup. Go from zero to a fully structured dev environment in seconds.
 
