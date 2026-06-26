@@ -3,6 +3,35 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v0.4.0 — June 2026
+
+### New Features
+
+- **CLI Application intent** — generates Typer, Click, or Argparse projects
+  with Utility or Interactive sub-types; each produces the correct folder
+  structure, main entry point, working example command, and tests
+- **CLI type selection** — choose Utility (command-oriented) or Interactive
+  (prompt-driven) at creation time; Utility generates `src/commands/` and
+  `src/utils/`; Interactive adds `src/prompts/` and `src/ui/`
+- **CLI extras** — opt-in `ruff`, `pytest`, `github-actions`; installed and
+  wired automatically the same way as Backend API extras
+- **Interactive README** — each CLI type × framework combination now produces
+  a tailored README with the correct run command and commands table
+
+### Breaking Changes
+
+- The `python`, `data-science`, and `ml` template slugs have been removed
+  from the active menu. These intents are planned for future re-registration
+  as fully-featured, intent-based templates. Projects generated with those
+  slugs are unaffected — `.spawn/meta.json` still records the original slug.
+
+### Internal
+
+- Registry reduced to two active templates: `backend-api` and `cli`
+- `_REMOVED_SLUGS` updated to include `python`, `data-science`, `ml`
+- CLI type prompt now precedes framework prompt (matches PRD spec)
+- Version bumped to `0.4.0`
+
 ## v0.3.0 — June 2026
 
 ### Breaking Changes
