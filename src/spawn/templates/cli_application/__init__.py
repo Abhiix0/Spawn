@@ -23,6 +23,9 @@ from spawn.templates.cli_application.content import (
     CLI_GITHUB_ACTIONS_CI_BASE,
     CLI_GITHUB_ACTIONS_CI_RUFF_STEP,
     CLI_GITHUB_ACTIONS_CI_PYTEST_STEP,
+    TYPER_INTERACTIVE_README_CONTENT,
+    CLICK_INTERACTIVE_README_CONTENT,
+    ARGPARSE_INTERACTIVE_README_CONTENT,
 )
 
 # ---------------------------------------------------------------------------
@@ -154,11 +157,14 @@ class CLITemplate(BaseTemplate):
         )
 
     def get_readme_content(self, context: dict) -> str | None:
+        is_interactive = self.cli_type == "interactive"
         if self.framework == "click":
-            return CLICK_README_CONTENT.format_map(context)
-        if self.framework == "argparse":
-            return ARGPARSE_README_CONTENT.format_map(context)
-        return TYPER_README_CONTENT.format_map(context)
+            template = CLICK_INTERACTIVE_README_CONTENT if is_interactive else CLICK_README_CONTENT
+        elif self.framework == "argparse":
+            template = ARGPARSE_INTERACTIVE_README_CONTENT if is_interactive else ARGPARSE_README_CONTENT
+        else:
+            template = TYPER_INTERACTIVE_README_CONTENT if is_interactive else TYPER_README_CONTENT
+        return template.format_map(context)
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "click":

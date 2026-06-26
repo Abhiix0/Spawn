@@ -411,3 +411,102 @@ CLI_GITHUB_ACTIONS_CI_PYTEST_STEP = """\
       - name: Run Pytest
         run: uv run pytest
 """
+
+# ---------------------------------------------------------------------------
+# Interactive READMEs
+# ---------------------------------------------------------------------------
+
+TYPER_INTERACTIVE_README_CONTENT = """\
+# {project_name}
+
+A CLI application generated with Spawn.
+
+## Getting Started
+
+```bash
+uv run python -m src.main greet
+```
+
+## Running Tests
+
+```bash
+uv run pytest
+```
+
+## Commands
+
+| Command | Description                    |
+|---------|--------------------------------|
+| greet   | Greets the user interactively  |
+| version | Shows the version              |
+
+## Development
+
+```bash
+uv run python -m src.main --help
+```
+"""
+
+CLICK_INTERACTIVE_README_CONTENT = """\
+# {project_name}
+
+A CLI application generated with Spawn.
+
+## Getting Started
+
+```bash
+uv run python -m src.main greet
+```
+
+## Running Tests
+
+```bash
+uv run pytest
+```
+
+## Commands
+
+| Command | Description                    |
+|---------|--------------------------------|
+| greet   | Greets the user interactively  |
+
+## Development
+
+```bash
+uv run python -m src.main --help
+```
+
+Built with Click
+"""
+
+ARGPARSE_INTERACTIVE_README_CONTENT = """\
+# {project_name}
+
+A CLI application generated with Spawn.
+
+## Getting Started
+
+```bash
+uv run python -m src.main greet
+```
+
+## Running Tests
+
+```bash
+uv run pytest
+```
+
+## Commands
+
+| Command | Description                    |
+|---------|--------------------------------|
+| greet   | Greets the user interactively  |
+
+## Development
+
+```bash
+uv run python -m src.main --help
+```
+
+Built with Python's standard argparse library. No external dependencies required.
+"""
