@@ -18,8 +18,8 @@ runner = CliRunner()
 # Helpers
 # ---------------------------------------------------------------------------
 
-_VALID_CONFIG = ProjectConfig(name="demo", template="python", use_git=True)
-_VALID_CONFIG_NO_GIT = ProjectConfig(name="demo", template="python", use_git=False)
+_VALID_CONFIG = ProjectConfig(name="demo", template="cli", use_git=True)
+_VALID_CONFIG_NO_GIT = ProjectConfig(name="demo", template="cli", use_git=False)
 
 
 def _fake_generate(_config: ProjectConfig) -> Path:

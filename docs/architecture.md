@@ -23,7 +23,7 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "0.3.0"
+├── __init__.py         # __version__ via importlib.metadata, fallback "0.4.0"
 ├── cli/
 │   ├── app.py          # Typer app: create, version, doctor commands
 │   └── prompts.py      # Interactive prompts; derives menu from registry
@@ -41,21 +41,15 @@ src/spawn/
 ├── templates/
 │   ├── base.py         # BaseTemplate dataclass
 │   ├── shared_content.py     # README_CONTENT, GITIGNORE_CONTENT
-│   ├── python_script/
-│   │   ├── __init__.py       # PythonScriptTemplate
-│   │   └── content.py        # PYTHON_MAIN_CONTENT
-│   ├── fastapi_template/
-│   │   ├── __init__.py       # FastAPITemplate
-│   │   └── content.py        # FASTAPI_MAIN_CONTENT
-│   ├── data_science/
-│   │   ├── __init__.py       # DataScienceTemplate
-│   │   └── content.py        # DATA_SCIENCE_MAIN_CONTENT
-│   ├── ml_project/
-│   │   ├── __init__.py       # MLProjectTemplate
-│   │   └── content.py        # ML_MAIN_CONTENT
-│   └── backend_api/
-│       ├── __init__.py       # BackendAPITemplate (dispatches by framework)
-│       └── content.py        # All FastAPI/Flask/Django/Docker/CI content strings
+│   ├── backend_api/
+│   │   ├── __init__.py       # BackendAPITemplate (dispatches by framework)
+│   │   └── content.py        # All FastAPI/Flask/Django/Docker/CI content strings
+│   ├── cli_application/
+│   │   ├── __init__.py       # CLITemplate (dispatches by framework + cli_type)
+│   │   └── content.py        # All framework × cli_type content strings
+│   ├── python_script/        # Reserved — not in active menu
+│   ├── data_science/         # Reserved — not in active menu
+│   └── ml_project/           # Reserved — not in active menu
 └── utils/
     ├── banner.py       # show_banner() — ASCII wordmark with ice-fade colours
     ├── console.py      # Shared Rich Console instance
@@ -138,13 +132,11 @@ Each template lives in its own subdirectory with an `__init__.py` (class) and `c
 | Key | Template class | Frameworks | Extras |
 |---|---|---|---|
 | `backend-api` | `BackendAPITemplate` | fastapi, flask, django | ruff, pytest, docker, github-actions |
-| `python` | `PythonScriptTemplate` | — | — |
-| `data-science` | `DataScienceTemplate` | — | — |
-| `ml` | `MLProjectTemplate` | — | — |
+| `cli` | `CLITemplate` | typer, click, argparse | ruff, pytest, github-actions |
 
-`get_template(slug)` returns a default-constructed instance. `instantiate_template(config)` forwards `framework` and `extras` from `ProjectConfig` to templates whose constructors accept them, using signature introspection.
+`get_template(slug)` returns a default-constructed instance. `instantiate_template(config)` forwards `framework`, `extras`, and `cli_type` from `ProjectConfig` to templates whose constructors accept them, using signature introspection.
 
-`_REMOVED_SLUGS = {"fastapi"}` documents slugs that existed in v0.2.0 but are no longer registered.
+`_REMOVED_SLUGS = {"fastapi", "python", "data-science", "ml"}` documents slugs that existed in previous versions but are no longer registered.
 
 ### 4c. Backend API Dispatch
 

@@ -2,10 +2,12 @@ import inspect
 from dataclasses import dataclass, field
 
 from spawn.core.models import ProjectConfig
-from spawn.templates.python_script import PythonScriptTemplate
-from spawn.templates.data_science import DataScienceTemplate
-from spawn.templates.ml_project import MLProjectTemplate
+# Reserved — re-register when intents are ready
+# from spawn.templates.python_script import PythonScriptTemplate
+# from spawn.templates.data_science import DataScienceTemplate
+# from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.backend_api import BackendAPITemplate
+from spawn.templates.cli_application import CLITemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -17,12 +19,13 @@ class TemplateMetadata:
     template_class: type
     available_frameworks: list[str] = field(default_factory=list)
     available_extras: list[str] = field(default_factory=list)
+    available_cli_types: list[str] = field(default_factory=list)
 
 
-# Slugs that existed in v0.2.0 but have been superseded.
+# Slugs that existed in previous versions but have been superseded.
 # get_template() returns None for these, which surfaces as a clear
 # SpawnError("Unknown template: fastapi") in the generator.
-_REMOVED_SLUGS = {"fastapi"}
+_REMOVED_SLUGS = {"fastapi", "python", "data-science", "ml"}
 
 TEMPLATES: dict[str, TemplateMetadata] = {
     "backend-api": TemplateMetadata(
@@ -33,23 +36,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         available_frameworks=["fastapi", "flask", "django"],
         available_extras=["ruff", "pytest", "docker", "github-actions"],
     ),
-    "python": TemplateMetadata(
-        slug="python",
-        display_name="Python Script",
-        description="Simple Python script with src/ and tests/",
-        template_class=PythonScriptTemplate,
-    ),
-    "data-science": TemplateMetadata(
-        slug="data-science",
-        display_name="Data Science",
-        description="Data science project with notebooks and data directories",
-        template_class=DataScienceTemplate,
-    ),
-    "ml": TemplateMetadata(
-        slug="ml",
-        display_name="ML Project",
-        description="Machine learning project with models and data directories",
-        template_class=MLProjectTemplate,
+    "cli": TemplateMetadata(
+        slug="cli",
+        display_name="CLI Application",
+        description="Command-line application with Typer, Click, or Argparse",
+        template_class=CLITemplate,
+        available_frameworks=["typer", "click", "argparse"],
+        available_extras=["ruff", "pytest", "github-actions"],
+        available_cli_types=["utility", "interactive"],
     ),
 }
 
@@ -89,6 +83,8 @@ def instantiate_template(config: ProjectConfig) -> BaseTemplate | None:
         kwargs["framework"] = config.framework
     if "extras" in params:
         kwargs["extras"] = config.extras
+    if "cli_type" in params:
+        kwargs["cli_type"] = config.cli_type
 
     return cls(**kwargs)
 

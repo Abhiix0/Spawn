@@ -8,3 +8,4 @@ class ProjectConfig:
     use_git: bool
     framework: str | None = None
     extras: list[str] = field(default_factory=list)
+    cli_type: str | None = None

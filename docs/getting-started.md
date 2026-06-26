@@ -21,7 +21,7 @@ You can now run `spawn` from anywhere on your machine.
 
 ## 3. Your First Project
 
-### Option A — Python Script (simplest)
+### Option A — CLI Application (Typer, Utility)
 
 ```bash
 $ spawn create
@@ -29,25 +29,43 @@ $ spawn create
 
 ```
   1  Backend API
-  2  Python Script
-  3  Data Science
-  4  ML Project
+  2  CLI Application
 
-Choose Template [1-4]: 2
+Choose Template [1-2]: 2
+
+  1  utility
+  2  interactive
+
+Choose CLI Type [1-2]: 1
+
+  1  typer
+  2  click
+  3  argparse
+
+Choose Framework [1-3]: 1
+
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+
 Initialize Git? [Y/n]: y
 Initializing Git...
+Installing dependencies...
 
 ╭────── ✨ Project Created Successfully ──────╮
 │                                              │
-│  Project      my-script                      │
-│  Template     Python Script                  │
+│  Project      my-cli                         │
+│  Template     CLI Application                │
 │  Git          ✓ Enabled                      │
 │  UV           ✓ Initialized                  │
 │  Virtual Env  ✓ Created                      │
 │                                              │
 │  Next Steps                                  │
-│    cd my-script                              │
-│    uv run python main.py                     │
+│    cd my-cli                                 │
+│    uv run python -m src.main hello           │
 │                                              │
 ╰──────────────────────────────────────────────╯
 ```
@@ -60,11 +78,9 @@ $ spawn create
 
 ```
   1  Backend API
-  2  Python Script
-  3  Data Science
-  4  ML Project
+  2  CLI Application
 
-Choose Template [1-4]: 1
+Choose Template [1-2]: 1
 
   1  fastapi
   2  flask
@@ -147,7 +163,7 @@ spawn version
 ```
 
 ```
-Spawn v0.3.0
+Spawn v0.4.0
 ```
 
 ```bash

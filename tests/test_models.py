@@ -32,3 +32,19 @@ def test_project_config_with_framework():
     )
 
     assert config.framework == "fastapi"
+
+
+def test_project_config_cli_type_defaults_none():
+    from spawn.core.models import ProjectConfig
+
+    c = ProjectConfig(name="x", template="cli", use_git=False)
+    assert c.cli_type is None
+
+
+def test_project_config_cli_type_set():
+    from spawn.core.models import ProjectConfig
+
+    c = ProjectConfig(
+        name="x", template="cli", use_git=False, cli_type="interactive"
+    )
+    assert c.cli_type == "interactive"

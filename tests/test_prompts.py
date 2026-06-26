@@ -23,13 +23,13 @@ def _make_prompt_side_effects(*values):
 
 
 @patch("spawn.cli.prompts.typer.confirm", return_value=True)
-@patch("spawn.cli.prompts.typer.prompt", side_effect=["my-project", "2"])
+@patch("spawn.cli.prompts.typer.prompt", side_effect=["my-project", "2", "1", "1", ""])
 def test_valid_name_and_template_returns_config(mock_prompt, mock_confirm):
     config = get_project_config()
 
     assert isinstance(config, ProjectConfig)
     assert config.name == "my-project"
-    assert config.template == "python"
+    assert config.template == "cli"
     assert config.use_git is True
 
 
@@ -52,7 +52,10 @@ def test_git_false_reflected_in_config(mock_prompt, mock_confirm):
     side_effect=[
         "--",          # invalid: no alphanumeric
         "good-name",   # valid
-        "2",           # template choice: python
+        "2",           # template choice: cli
+        "1",           # framework: typer
+        "1",           # cli_type: utility
+        "",            # extras: skip
     ],
 )
 def test_invalid_name_retried_until_valid(mock_prompt, mock_confirm):
@@ -66,13 +69,16 @@ def test_invalid_name_retried_until_valid(mock_prompt, mock_confirm):
     side_effect=[
         "my project",  # invalid: space
         "my-project",  # valid
-        "3",           # template choice: data-science
+        "2",           # template choice: cli
+        "1",           # framework: typer
+        "1",           # cli_type: utility
+        "",            # extras: skip
     ],
 )
 def test_name_with_space_retried(mock_prompt, mock_confirm):
     config = get_project_config()
     assert config.name == "my-project"
-    assert config.template == "data-science"
+    assert config.template == "cli"
 
 
 # ---------------------------------------------------------------------------
@@ -87,12 +93,15 @@ def test_name_with_space_retried(mock_prompt, mock_confirm):
         "demo",   # valid name
         "9",      # invalid template choice
         "0",      # invalid template choice
-        "4",      # valid: ml
+        "2",      # valid: cli
+        "1",      # framework: typer
+        "1",      # cli_type: utility
+        "",       # extras: skip
     ],
 )
 def test_invalid_template_choice_retried(mock_prompt, mock_confirm):
     config = get_project_config()
-    assert config.template == "ml"
+    assert config.template == "cli"
 
 
 @patch("spawn.cli.prompts.typer.confirm", return_value=True)
@@ -101,16 +110,19 @@ def test_invalid_template_choice_retried(mock_prompt, mock_confirm):
     side_effect=[
         "demo",
         "abc",   # invalid (non-numeric)
-        "2",     # valid: python
+        "2",     # valid: cli
+        "1",     # framework: typer
+        "1",     # cli_type: utility
+        "",      # extras: skip
     ],
 )
 def test_non_numeric_template_choice_retried(mock_prompt, mock_confirm):
     config = get_project_config()
-    assert config.template == "python"
+    assert config.template == "cli"
 
 
 # ---------------------------------------------------------------------------
-# All four template choices map correctly
+# All template choices map correctly
 # ---------------------------------------------------------------------------
 
 
@@ -118,16 +130,15 @@ def test_non_numeric_template_choice_retried(mock_prompt, mock_confirm):
     "choice,expected_template",
     [
         ("1", "backend-api"),
-        ("2", "python"),
-        ("3", "data-science"),
-        ("4", "ml"),
+        ("2", "cli"),
     ],
 )
 @patch("spawn.cli.prompts.typer.confirm", return_value=False)
 def test_all_template_choices(mock_confirm, choice, expected_template):
-    # backend-api needs framework + extras prompts consumed
-    extras: list[str] = ["1", ""] if expected_template == "backend-api" else []
-    side_effects = ["project", choice] + extras
+    if expected_template == "backend-api":
+        side_effects = ["project", choice, "1", ""]       # name, choice, framework, extras
+    else:
+        side_effects = ["project", choice, "1", "1", ""]  # name, choice, framework, cli_type, extras
     with patch(
         "spawn.cli.prompts.typer.prompt", side_effect=side_effects
     ):
@@ -249,8 +260,7 @@ def test_existing_directory_name_retried(tmp_path, monkeypatch):
 
     with patch("spawn.cli.prompts.typer.prompt") as mock_prompt, \
          patch("spawn.cli.prompts.typer.confirm", return_value=False):
-        # First entry: "taken" (exists), second entry: "free" (does not exist)
-        mock_prompt.side_effect = ["taken", "free", "2"]
+        mock_prompt.side_effect = ["taken", "free", "2", "1", "1", ""]
         config = get_project_config()
 
     assert config.name == "free"
@@ -264,7 +274,7 @@ def test_existing_directory_shows_error_message(tmp_path, monkeypatch):
     with patch("spawn.cli.prompts.typer.prompt") as mock_prompt, \
          patch("spawn.cli.prompts.typer.confirm", return_value=False), \
          patch("spawn.cli.prompts.typer.secho") as mock_secho:
-        mock_prompt.side_effect = ["taken", "free", "2"]
+        mock_prompt.side_effect = ["taken", "free", "2", "1", "1", ""]
         get_project_config()
 
     error_calls = [str(call) for call in mock_secho.call_args_list]
