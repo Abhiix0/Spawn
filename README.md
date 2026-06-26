@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), Python Script, Data Science, ML Project |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse) |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -89,14 +89,12 @@ Spawn rejects names with spaces or special characters, and tells you immediately
 
 ```
   1  Backend API
-  2  Python Script
-  3  Data Science
-  4  ML Project
+  2  CLI Application
 
-Choose Template [1-4]: 1
+Choose Template [1-2]: 1
 ```
 
-**Step 3 — Framework and extras** *(Backend API only)*
+**Step 3 — Additional prompts** *(template-dependent)*
 
 ```
   1  fastapi
@@ -109,6 +107,28 @@ Choose Framework [1-3]: 1
   2  pytest
   3  docker
   4  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+**CLI Application — CLI type and framework**
+
+```
+  1  utility
+  2  interactive
+
+Choose CLI Type [1-2]: 1
+
+  1  typer
+  2  click
+  3  argparse
+
+Choose Framework [1-3]: 1
+
+  1  ruff
+  2  pytest
+  3  github-actions
 
   Enter numbers separated by commas, or press Enter to skip
 Extras []: 1,2
@@ -183,70 +203,46 @@ uv run uvicorn app.main:app --reload
 
 ---
 
-### `[2]` Python Script
+### `[2]` CLI Application
 
-Best for: automation scripts, utilities, one-off tools.
+Best for: developer tools, automation commands, project generators, setup wizards.
+
+**Utility CLI:**
 
 ```
-my-project/
-├── main.py
+my-cli/
 ├── src/
+│   ├── commands/
+│   ├── utils/
+│   └── main.py
 ├── tests/
 ├── README.md
 └── .gitignore
 ```
 
 ```bash
-cd my-project
-uv run python main.py
+cd my-cli
+uv run python -m src.main hello
 ```
 
----
-
-### `[3]` Data Science
-
-Best for: exploratory analysis, reporting, Jupyter notebooks.
+**Interactive CLI:**
 
 ```
-my-project/
-├── main.py
-├── data/
-├── notebooks/
+my-cli/
 ├── src/
-├── docs/
+│   ├── commands/
+│   ├── prompts/
+│   ├── ui/
+│   ├── utils/
+│   └── main.py
 ├── tests/
 ├── README.md
 └── .gitignore
 ```
 
 ```bash
-cd my-project
-uv add pandas numpy matplotlib
-uv run python main.py
-```
-
----
-
-### `[4]` ML Project
-
-Best for: model training, feature engineering, experiments.
-
-```
-my-project/
-├── main.py
-├── data/
-├── models/
-├── src/
-├── docs/
-├── tests/
-├── README.md
-└── .gitignore
-```
-
-```bash
-cd my-project
-uv add pandas numpy scikit-learn
-uv run python main.py
+cd my-cli
+uv run python -m src.main greet
 ```
 
 ---
@@ -293,7 +289,7 @@ spawn doctor ./path/to/project
 
 ```bash
 spawn version
-# → Spawn v0.3.0
+# → Spawn v0.4.0
 ```
 
 ### Publish to GitHub
@@ -327,7 +323,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **Backend API intent** — FastAPI, Flask, Django with production structure (v0.3.0)
 - [x] **Extras system** — ruff, pytest, Docker, GitHub Actions installed automatically (v0.3.0)
 - [x] **Dependency installation** — `uv add` runs automatically after generation (v0.3.0)
-- [ ] **CLI Application intent** — Typer-based CLI scaffold (v0.4.0)
+- [x] **CLI Application intent** — Typer, Click, Argparse with Utility/Interactive sub-types (v0.4.0)
 - [ ] **Automation Tool intent** — scripting and scheduling scaffold (v0.5.0)
 - [ ] **AI Chatbot intent** — LLM-integrated chat app scaffold (v0.6.0)
 - [ ] **AI Agent intent** — tool-calling agent scaffold (v0.7.0)
