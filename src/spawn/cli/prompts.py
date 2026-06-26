@@ -68,6 +68,7 @@ def get_project_config() -> ProjectConfig:
 
     # --- Framework selection ---
     selected_framework: str | None = None
+    selected_cli_type: str | None = None
     meta = get_metadata(template)
 
     if meta and meta.available_frameworks:
@@ -93,6 +94,40 @@ def get_project_config() -> ProjectConfig:
             )
 
         selected_framework = framework_map[fw_choice]
+
+    # --- CLI type selection ---
+    if meta and meta.available_cli_types:
+        cli_types = meta.available_cli_types
+        cli_type_map = {
+            str(i): ct
+            for i, ct in enumerate(cli_types, start=1)
+        }
+
+        _print_list(cli_types)
+
+        valid_ct_range = len(cli_types)
+        ct_choice = typer.prompt(
+            typer.style(
+                f"Choose CLI Type [1-{valid_ct_range}]",
+                fg=typer.colors.CYAN,
+            ),
+            default="1",
+        )
+
+        while ct_choice not in cli_type_map:
+            typer.secho(
+                "Invalid choice. Please select a valid number.",
+                fg=typer.colors.RED,
+            )
+            ct_choice = typer.prompt(
+                typer.style(
+                    f"Choose CLI Type [1-{valid_ct_range}]",
+                    fg=typer.colors.CYAN,
+                ),
+                default="1",
+            )
+
+        selected_cli_type = cli_type_map[ct_choice]
 
     # --- Extras selection ---
     selected_extras: list[str] = []
@@ -138,4 +173,5 @@ def get_project_config() -> ProjectConfig:
         use_git=use_git,
         framework=selected_framework,
         extras=selected_extras,
+        cli_type=selected_cli_type,
     )
