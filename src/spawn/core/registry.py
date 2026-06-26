@@ -2,7 +2,7 @@ import inspect
 from dataclasses import dataclass, field
 
 from spawn.core.models import ProjectConfig
-# Kept for future re-registration
+# Reserved — re-register when intents are ready
 # from spawn.templates.python_script import PythonScriptTemplate
 # from spawn.templates.data_science import DataScienceTemplate
 # from spawn.templates.ml_project import MLProjectTemplate

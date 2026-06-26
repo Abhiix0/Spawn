@@ -1,6 +1,5 @@
 """Generator integration tests for the CLI Application template."""
 import json
-import pytest
 
 from unittest.mock import patch
 
