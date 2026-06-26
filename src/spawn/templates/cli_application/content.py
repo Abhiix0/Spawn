@@ -12,6 +12,12 @@ def hello() -> None:
     typer.echo("Hello from {project_name}!")
 
 
+@app.command()
+def version() -> None:
+    \"\"\"Show the version.\"\"\"
+    typer.echo("{project_name} v0.1.0")
+
+
 def main() -> None:
     app()
 
@@ -36,6 +42,11 @@ def test_hello_command() -> None:
     result = runner.invoke(app, ["hello"])
     assert result.exit_code == 0
     assert "Hello" in result.output
+
+
+def test_version_command() -> None:
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
 """
 
 TYPER_README_CONTENT = """\
@@ -60,6 +71,7 @@ uv run pytest
 | Command | Description             |
 |---------|-------------------------|
 | hello   | Prints a hello message  |
+| version | Shows the version       |
 
 ## Development
 
@@ -238,6 +250,12 @@ def greet() -> None:
     typer.echo(f"Hello, {{name}}! Welcome to {project_name}.")
 
 
+@app.command()
+def version() -> None:
+    \"\"\"Show the version.\"\"\"
+    typer.echo("{project_name} v0.1.0")
+
+
 def main() -> None:
     app()
 
@@ -258,6 +276,11 @@ def test_greet_command() -> None:
     result = runner.invoke(app, ["greet"], input="Alice\\n")
     assert result.exit_code == 0
     assert "Hello, Alice" in result.output
+
+
+def test_version_command() -> None:
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
 """
 
 # ---------------------------------------------------------------------------
