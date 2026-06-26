@@ -12,7 +12,7 @@ def test_backend_api_template_is_registered():
     assert isinstance(template, BackendAPITemplate)
 
 
-def test_removed_slug_returns_none():
+def test_removed_slugs_return_none():
     assert get_template("python") is None
     assert get_template("data-science") is None
     assert get_template("ml") is None
