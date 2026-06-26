@@ -19,12 +19,13 @@ Creates a new project directory from a template, writes starter files, installs 
 | Step | Prompt | When shown |
 |---|---|---|
 | 1 | `Project Name` | Always |
-| 2 | Template list → `Choose Template [1-4]` | Always |
-| 3 | Framework list → `Choose Framework [1-N]` | Only for templates with frameworks (Backend API) |
-| 4 | Extras list → `Extras` | Only for templates with extras (Backend API) |
-| 5 | `Initialize Git? [Y/n]` | Always |
-| 6 | `Publish to GitHub? [y/N]` | Only if Git was enabled |
-| 7 | `Repository URL` | Only if publish was confirmed |
+| 2 | Template list → `Choose Template [1-2]` | Always |
+| 3 | CLI Type list → `Choose CLI Type [1-2]` | Only for CLI Application |
+| 4 | Framework list → `Choose Framework [1-N]` | Only for templates with frameworks |
+| 5 | Extras list → `Extras` | Only for templates with extras |
+| 6 | `Initialize Git? [Y/n]` | Always |
+| 7 | `Publish to GitHub? [y/N]` | Only if Git was enabled |
+| 8 | `Repository URL` | Only if publish was confirmed |
 
 #### `Project Name` validation
 
@@ -46,9 +47,7 @@ Templates are displayed as a numbered list. The current registry order:
 | Input | Template | Description |
 |---|---|---|
 | `1` | `backend-api` | Backend API — production-ready FastAPI, Flask, or Django |
-| `2` | `python` | Python Script — simple script with `src/` and `tests/` |
-| `3` | `data-science` | Data Science — notebooks and data directories |
-| `4` | `ml` | ML Project — models and data directories |
+| `2` | `cli` | CLI Application — Typer, Click, or Argparse with Utility or Interactive type |
 
 **Invalid input error (exact):**
 ```
@@ -187,6 +186,114 @@ my-api/
 | FastAPI | `uv run uvicorn app.main:app --reload` |
 | Flask | `uv run python run.py` |
 | Django | `uv run python manage.py runserver` |
+
+---
+
+### CLI Application intent
+
+Selecting CLI Application triggers two additional prompts before the extras and Git questions.
+
+#### CLI Type selection
+
+```
+  1  utility
+  2  interactive
+
+Choose CLI Type [1-2]:
+```
+
+| Input | CLI Type | Description |
+|---|---|---|
+| `1` (default) | `utility` | Command-oriented CLI; generates `src/commands/` and `src/utils/` |
+| `2` | `interactive` | Prompt-driven CLI; adds `src/prompts/` and `src/ui/` |
+
+Pressing Enter (empty) selects `1` (utility).
+
+#### Framework selection
+
+```
+  1  typer
+  2  click
+  3  argparse
+
+Choose Framework [1-3]:
+```
+
+| Input | Framework | Dependencies |
+|---|---|---|
+| `1` (default) | Typer | `typer` |
+| `2` | Click | `click` |
+| `3` | Argparse | None (stdlib only) |
+
+#### Extras selection
+
+```
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []:
+```
+
+| Extra | What it adds |
+|---|---|
+| `ruff` | Installs `ruff`; appends `[tool.ruff]` to `pyproject.toml` |
+| `pytest` | Installs `pytest`; appends `[tool.pytest.ini_options]` to `pyproject.toml` |
+| `github-actions` | Writes `.github/workflows/ci.yml` with ruff + pytest steps |
+
+#### Generated project structure (Typer utility example)
+
+```
+my-cli/
+├── src/
+│   ├── __init__.py
+│   ├── commands/
+│   │   └── __init__.py
+│   ├── utils/
+│   │   └── __init__.py
+│   └── main.py
+├── tests/
+│   ├── __init__.py
+│   └── test_cli.py
+├── .spawn/
+│   └── meta.json
+├── .gitignore
+├── README.md
+└── pyproject.toml
+```
+
+#### Generated project structure (Typer interactive example)
+
+```
+my-cli/
+├── src/
+│   ├── __init__.py
+│   ├── commands/
+│   │   └── __init__.py
+│   ├── prompts/
+│   │   └── __init__.py
+│   ├── ui/
+│   │   └── __init__.py
+│   ├── utils/
+│   │   └── __init__.py
+│   └── main.py
+├── tests/
+│   ├── __init__.py
+│   └── test_cli.py
+├── .spawn/
+│   └── meta.json
+├── .gitignore
+├── README.md
+└── pyproject.toml
+```
+
+#### Next steps by CLI type
+
+| CLI Type | Command |
+|---|---|
+| Utility | `uv run python -m src.main hello` |
+| Interactive | `uv run python -m src.main greet` |
 
 ---
 
