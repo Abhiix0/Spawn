@@ -6,6 +6,7 @@ from spawn.templates.python_script import PythonScriptTemplate
 from spawn.templates.data_science import DataScienceTemplate
 from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.backend_api import BackendAPITemplate
+from spawn.templates.cli_application import CLITemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -32,6 +33,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         template_class=BackendAPITemplate,
         available_frameworks=["fastapi", "flask", "django"],
         available_extras=["ruff", "pytest", "docker", "github-actions"],
+    ),
+    "cli": TemplateMetadata(
+        slug="cli",
+        display_name="CLI Application",
+        description="Command-line application with Typer, Click, or Argparse",
+        template_class=CLITemplate,
+        available_frameworks=["typer", "click", "argparse"],
+        available_extras=["ruff", "pytest", "github-actions"],
     ),
     "python": TemplateMetadata(
         slug="python",
