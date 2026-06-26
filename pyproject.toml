@@ -1,6 +1,6 @@
 [project]
 name = "spawn"
-version = "0.3.0"
+version = "0.4.0"
 description = "Spawn a ready-to-use Python project in seconds"
 readme = "README.md"
 requires-python = ">=3.12"
