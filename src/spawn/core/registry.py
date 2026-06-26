@@ -18,6 +18,7 @@ class TemplateMetadata:
     template_class: type
     available_frameworks: list[str] = field(default_factory=list)
     available_extras: list[str] = field(default_factory=list)
+    available_cli_types: list[str] = field(default_factory=list)
 
 
 # Slugs that existed in v0.2.0 but have been superseded.
@@ -33,14 +34,6 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         template_class=BackendAPITemplate,
         available_frameworks=["fastapi", "flask", "django"],
         available_extras=["ruff", "pytest", "docker", "github-actions"],
-    ),
-    "cli": TemplateMetadata(
-        slug="cli",
-        display_name="CLI Application",
-        description="Command-line application with Typer, Click, or Argparse",
-        template_class=CLITemplate,
-        available_frameworks=["typer", "click", "argparse"],
-        available_extras=["ruff", "pytest", "github-actions"],
     ),
     "python": TemplateMetadata(
         slug="python",
@@ -59,6 +52,15 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="ML Project",
         description="Machine learning project with models and data directories",
         template_class=MLProjectTemplate,
+    ),
+    "cli": TemplateMetadata(
+        slug="cli",
+        display_name="CLI Application",
+        description="Command-line application with Typer, Click, or Argparse",
+        template_class=CLITemplate,
+        available_frameworks=["typer", "click", "argparse"],
+        available_extras=["ruff", "pytest", "github-actions"],
+        available_cli_types=["utility", "interactive"],
     ),
 }
 
@@ -98,6 +100,8 @@ def instantiate_template(config: ProjectConfig) -> BaseTemplate | None:
         kwargs["framework"] = config.framework
     if "extras" in params:
         kwargs["extras"] = config.extras
+    if "cli_type" in params:
+        kwargs["cli_type"] = config.cli_type
 
     return cls(**kwargs)
 

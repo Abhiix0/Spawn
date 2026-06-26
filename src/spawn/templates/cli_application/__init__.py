@@ -14,10 +14,16 @@ from spawn.templates.cli_application.content import (
     ARGPARSE_MAIN_CONTENT,
     ARGPARSE_TEST_CONTENT,
     ARGPARSE_README_CONTENT,
+    TYPER_INTERACTIVE_MAIN_CONTENT,
+    TYPER_INTERACTIVE_TEST_CONTENT,
+    CLICK_INTERACTIVE_MAIN_CONTENT,
+    CLICK_INTERACTIVE_TEST_CONTENT,
+    ARGPARSE_INTERACTIVE_MAIN_CONTENT,
+    ARGPARSE_INTERACTIVE_TEST_CONTENT,
 )
 
 # ---------------------------------------------------------------------------
-# Folder structure (identical for all frameworks)
+# Folder structures
 # ---------------------------------------------------------------------------
 
 UTILITY_FOLDERS = [
@@ -26,8 +32,16 @@ UTILITY_FOLDERS = [
     "tests",
 ]
 
+INTERACTIVE_FOLDERS = [
+    "src/commands",
+    "src/prompts",
+    "src/ui",
+    "src/utils",
+    "tests",
+]
+
 # ---------------------------------------------------------------------------
-# Starter file lists
+# Utility starter file lists
 # ---------------------------------------------------------------------------
 
 TYPER_UTILITY_FILES = [
@@ -57,25 +71,72 @@ ARGPARSE_UTILITY_FILES = [
     ("tests/test_cli.py", ARGPARSE_TEST_CONTENT),
 ]
 
+# ---------------------------------------------------------------------------
+# Interactive starter file lists
+# ---------------------------------------------------------------------------
+
+TYPER_INTERACTIVE_FILES = [
+    ("src/__init__.py", INIT_CONTENT),
+    ("src/commands/__init__.py", INIT_CONTENT),
+    ("src/prompts/__init__.py", INIT_CONTENT),
+    ("src/ui/__init__.py", INIT_CONTENT),
+    ("src/utils/__init__.py", INIT_CONTENT),
+    ("src/main.py", TYPER_INTERACTIVE_MAIN_CONTENT),
+    ("tests/__init__.py", INIT_CONTENT),
+    ("tests/test_cli.py", TYPER_INTERACTIVE_TEST_CONTENT),
+]
+
+CLICK_INTERACTIVE_FILES = [
+    ("src/__init__.py", INIT_CONTENT),
+    ("src/commands/__init__.py", INIT_CONTENT),
+    ("src/prompts/__init__.py", INIT_CONTENT),
+    ("src/ui/__init__.py", INIT_CONTENT),
+    ("src/utils/__init__.py", INIT_CONTENT),
+    ("src/main.py", CLICK_INTERACTIVE_MAIN_CONTENT),
+    ("tests/__init__.py", INIT_CONTENT),
+    ("tests/test_cli.py", CLICK_INTERACTIVE_TEST_CONTENT),
+]
+
+ARGPARSE_INTERACTIVE_FILES = [
+    ("src/__init__.py", INIT_CONTENT),
+    ("src/commands/__init__.py", INIT_CONTENT),
+    ("src/prompts/__init__.py", INIT_CONTENT),
+    ("src/ui/__init__.py", INIT_CONTENT),
+    ("src/utils/__init__.py", INIT_CONTENT),
+    ("src/main.py", ARGPARSE_INTERACTIVE_MAIN_CONTENT),
+    ("tests/__init__.py", INIT_CONTENT),
+    ("tests/test_cli.py", ARGPARSE_INTERACTIVE_TEST_CONTENT),
+]
+
 
 class CLITemplate(BaseTemplate):
     def __init__(
         self,
         framework: str | None = None,
         extras: list[str] | None = None,
+        cli_type: str | None = None,
     ) -> None:
         self.framework = framework or "typer"
         self.extras = extras or []
+        self.cli_type = cli_type or "utility"
+
+        is_interactive = self.cli_type == "interactive"
 
         if self.framework == "click":
-            folders = list(UTILITY_FOLDERS)
-            starter_files = list(CLICK_UTILITY_FILES)
+            folders = list(INTERACTIVE_FOLDERS if is_interactive else UTILITY_FOLDERS)
+            starter_files = list(
+                CLICK_INTERACTIVE_FILES if is_interactive else CLICK_UTILITY_FILES
+            )
         elif self.framework == "argparse":
-            folders = list(UTILITY_FOLDERS)
-            starter_files = list(ARGPARSE_UTILITY_FILES)
+            folders = list(INTERACTIVE_FOLDERS if is_interactive else UTILITY_FOLDERS)
+            starter_files = list(
+                ARGPARSE_INTERACTIVE_FILES if is_interactive else ARGPARSE_UTILITY_FILES
+            )
         else:
-            folders = list(UTILITY_FOLDERS)
-            starter_files = list(TYPER_UTILITY_FILES)
+            folders = list(INTERACTIVE_FOLDERS if is_interactive else UTILITY_FOLDERS)
+            starter_files = list(
+                TYPER_INTERACTIVE_FILES if is_interactive else TYPER_UTILITY_FILES
+            )
 
         super().__init__(
             name="CLI Application",
@@ -83,7 +144,9 @@ class CLITemplate(BaseTemplate):
             starter_files=starter_files,
             next_steps=[
                 "cd {project_name}",
-                "uv run python -m src.main hello",
+                "uv run python -m src.main greet"
+                if is_interactive
+                else "uv run python -m src.main hello",
             ],
         )
 
