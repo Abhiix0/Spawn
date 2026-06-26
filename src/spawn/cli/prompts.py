@@ -71,30 +71,6 @@ def get_project_config() -> ProjectConfig:
     selected_cli_type: str | None = None
     meta = get_metadata(template)
 
-    if meta and meta.available_frameworks:
-        frameworks = meta.available_frameworks
-        framework_map = {
-            str(i): fw
-            for i, fw in enumerate(frameworks, start=1)
-        }
-
-        _print_list(frameworks)
-
-        valid_fw_range = len(frameworks)
-        fw_choice = typer.prompt(
-            typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
-            default="1",
-        )
-
-        while fw_choice not in framework_map:
-            typer.secho("Invalid choice. Please select a valid number.", fg=typer.colors.RED)
-            fw_choice = typer.prompt(
-                typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
-                default="1",
-            )
-
-        selected_framework = framework_map[fw_choice]
-
     # --- CLI type selection ---
     if meta and meta.available_cli_types:
         cli_types = meta.available_cli_types
@@ -128,6 +104,31 @@ def get_project_config() -> ProjectConfig:
             )
 
         selected_cli_type = cli_type_map[ct_choice]
+
+    # --- Framework selection ---
+    if meta and meta.available_frameworks:
+        frameworks = meta.available_frameworks
+        framework_map = {
+            str(i): fw
+            for i, fw in enumerate(frameworks, start=1)
+        }
+
+        _print_list(frameworks)
+
+        valid_fw_range = len(frameworks)
+        fw_choice = typer.prompt(
+            typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
+            default="1",
+        )
+
+        while fw_choice not in framework_map:
+            typer.secho("Invalid choice. Please select a valid number.", fg=typer.colors.RED)
+            fw_choice = typer.prompt(
+                typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
+                default="1",
+            )
+
+        selected_framework = framework_map[fw_choice]
 
     # --- Extras selection ---
     selected_extras: list[str] = []
