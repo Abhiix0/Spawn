@@ -20,6 +20,9 @@ from spawn.templates.cli_application.content import (
     CLICK_INTERACTIVE_TEST_CONTENT,
     ARGPARSE_INTERACTIVE_MAIN_CONTENT,
     ARGPARSE_INTERACTIVE_TEST_CONTENT,
+    CLI_GITHUB_ACTIONS_CI_BASE,
+    CLI_GITHUB_ACTIONS_CI_RUFF_STEP,
+    CLI_GITHUB_ACTIONS_CI_PYTEST_STEP,
 )
 
 # ---------------------------------------------------------------------------
@@ -159,10 +162,44 @@ class CLITemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "click":
-            return ["click"]
-        if self.framework == "argparse":
-            return []
-        return ["typer"]
+            base: list[str] = ["click"]
+        elif self.framework == "argparse":
+            base = []
+        else:
+            base = ["typer"]
+
+        if "pytest" in self.extras:
+            base = base + ["pytest"]
+        if "ruff" in self.extras:
+            base = base + ["ruff"]
+
+        return base
 
     def post_install(self, project_path: Path) -> None:
-        pass
+        pyproject = project_path / "pyproject.toml"
+        current = pyproject.read_text(encoding="utf-8")
+        additions = ""
+
+        if "pytest" in self.extras:
+            additions += (
+                "\n[tool.pytest.ini_options]\n"
+                'testpaths = ["tests"]\n'
+            )
+
+        if "ruff" in self.extras:
+            additions += "\n[tool.ruff]\nline-length = 88\n"
+
+        if additions:
+            pyproject.write_text(current + additions, encoding="utf-8")
+
+        if "github-actions" in self.extras:
+            workflows_path = project_path / ".github" / "workflows"
+            workflows_path.mkdir(parents=True, exist_ok=True)
+            ci_content = CLI_GITHUB_ACTIONS_CI_BASE
+            if "ruff" in self.extras:
+                ci_content += CLI_GITHUB_ACTIONS_CI_RUFF_STEP
+            if "pytest" in self.extras:
+                ci_content += CLI_GITHUB_ACTIONS_CI_PYTEST_STEP
+            (workflows_path / "ci.yml").write_text(
+                ci_content, encoding="utf-8"
+            )

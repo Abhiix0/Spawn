@@ -351,3 +351,40 @@ def test_greet_command() -> None:
     assert result.returncode == 0
     assert "Hello, Alice" in result.stdout
 """
+
+# ---------------------------------------------------------------------------
+# GitHub Actions CI
+# ---------------------------------------------------------------------------
+
+CLI_GITHUB_ACTIONS_CI_BASE = """\
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+"""
+
+CLI_GITHUB_ACTIONS_CI_RUFF_STEP = """\
+      - name: Run Ruff
+        run: uv run ruff check .
+"""
+
+CLI_GITHUB_ACTIONS_CI_PYTEST_STEP = """\
+      - name: Run Pytest
+        run: uv run pytest
+"""
