@@ -90,3 +90,30 @@ def test_backend_api_extras_include_docker_and_github_actions():
     meta = get_metadata("backend-api")
     assert "docker" in meta.available_extras
     assert "github-actions" in meta.available_extras
+
+
+def test_cli_template_is_registered():
+    from spawn.templates.cli_application import CLITemplate
+
+    template = get_template("cli")
+    assert template is not None
+    assert isinstance(template, CLITemplate)
+
+
+def test_cli_metadata():
+    meta = get_metadata("cli")
+    assert meta is not None
+    assert meta.slug == "cli"
+    assert meta.display_name == "CLI Application"
+    assert "typer" in meta.available_frameworks
+    assert "click" in meta.available_frameworks
+    assert "argparse" in meta.available_frameworks
+    assert "ruff" in meta.available_extras
+    assert "pytest" in meta.available_extras
+    assert "utility" in meta.available_cli_types
+    assert "interactive" in meta.available_cli_types
+
+
+def test_cli_in_list_templates():
+    slugs = [m.slug for m in list_templates()]
+    assert "cli" in slugs
