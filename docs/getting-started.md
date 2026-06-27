@@ -30,8 +30,9 @@ $ spawn create
 ```
   1  Backend API
   2  CLI Application
+  3  Automation Tool
 
-Choose Template [1-2]: 2
+Choose Template [1-3]: 2
 
   1  utility
   2  interactive
@@ -79,8 +80,9 @@ $ spawn create
 ```
   1  Backend API
   2  CLI Application
+  3  Automation Tool
 
-Choose Template [1-2]: 1
+Choose Template [1-3]: 1
 
   1  fastapi
   2  flask
@@ -163,7 +165,7 @@ spawn version
 ```
 
 ```
-Spawn v0.4.0
+Spawn v0.5.0
 ```
 
 ```bash

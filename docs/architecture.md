@@ -23,7 +23,7 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "0.4.0"
+├── __init__.py         # __version__ via importlib.metadata, fallback "0.5.0"
 ├── cli/
 │   ├── app.py          # Typer app: create, version, doctor commands
 │   └── prompts.py      # Interactive prompts; derives menu from registry
@@ -47,6 +47,9 @@ src/spawn/
 │   ├── cli_application/
 │   │   ├── __init__.py       # CLITemplate (dispatches by framework + cli_type)
 │   │   └── content.py        # All framework × cli_type content strings
+│   ├── automation/
+│   │   ├── __init__.py       # AutomationTemplate
+│   │   └── content.py        # Workflow, task, logger, test, README content strings
 │   ├── python_script/        # Reserved — not in active menu
 │   ├── data_science/         # Reserved — not in active menu
 │   └── ml_project/           # Reserved — not in active menu
@@ -133,6 +136,7 @@ Each template lives in its own subdirectory with an `__init__.py` (class) and `c
 |---|---|---|---|
 | `backend-api` | `BackendAPITemplate` | fastapi, flask, django | ruff, pytest, docker, github-actions |
 | `cli` | `CLITemplate` | typer, click, argparse | ruff, pytest, github-actions |
+| `automation` | `AutomationTemplate` | none | ruff, pytest, github-actions |
 
 `get_template(slug)` returns a default-constructed instance. `instantiate_template(config)` forwards `framework`, `extras`, and `cli_type` from `ProjectConfig` to templates whose constructors accept them, using signature introspection.
 
