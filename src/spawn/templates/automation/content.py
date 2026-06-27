@@ -166,7 +166,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
-      - run: uv sync --all-extras --dev
+      - name: Install dependencies
+        run: uv sync
 """
 
 GITHUB_ACTIONS_CI_RUFF_STEP = """\
