@@ -19,7 +19,7 @@ Creates a new project directory from a template, writes starter files, installs 
 | Step | Prompt | When shown |
 |---|---|---|
 | 1 | `Project Name` | Always |
-| 2 | Template list → `Choose Template [1-2]` | Always |
+| 2 | Template list → `Choose Template [1-3]` | Always |
 | 3 | CLI Type list → `Choose CLI Type [1-2]` | Only for CLI Application |
 | 4 | Framework list → `Choose Framework [1-N]` | Only for templates with frameworks |
 | 5 | Extras list → `Extras` | Only for templates with extras |
@@ -48,6 +48,7 @@ Templates are displayed as a numbered list. The current registry order:
 |---|---|---|
 | `1` | `backend-api` | Backend API — production-ready FastAPI, Flask, or Django |
 | `2` | `cli` | CLI Application — Typer, Click, or Argparse with Utility or Interactive type |
+| `3` | `automation` | Automation Tool — workflow-based automation with logging and tasks |
 
 **Invalid input error (exact):**
 ```
@@ -297,6 +298,69 @@ my-cli/
 
 ---
 
+### Automation Tool intent
+
+Automation Tool has no framework or type selection. After picking template 3,
+only extras and Git are prompted.
+
+#### Extras selection
+
+```
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []:
+```
+
+| Extra | What it adds |
+|---|---|
+| `ruff` | Installs `ruff`; appends `[tool.ruff]` to `pyproject.toml` |
+| `pytest` | Installs `pytest`; appends `[tool.pytest.ini_options]` to `pyproject.toml` |
+| `github-actions` | Writes `.github/workflows/ci.yml` with ruff + pytest steps |
+
+#### Generated project structure
+
+```
+my-automation/
+├── src/
+│   ├── __init__.py
+│   ├── workflows/
+│   │   ├── __init__.py
+│   │   └── report_workflow.py
+│   ├── tasks/
+│   │   ├── __init__.py
+│   │   ├── data_task.py
+│   │   └── report_task.py
+│   ├── integrations/
+│   │   └── __init__.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   └── logger.py
+│   └── main.py
+├── logs/
+│   └── .gitkeep
+├── tests/
+│   ├── __init__.py
+│   └── test_automation.py
+├── .env.example
+├── .spawn/
+│   └── meta.json
+├── .gitignore
+├── README.md
+└── pyproject.toml
+```
+
+#### Next steps
+
+```
+cd my-automation
+uv run python -m src.main
+```
+
+---
+
 ### `.spawn/meta.json`
 
 Every generated project receives a `.spawn/meta.json` file:
@@ -305,7 +369,7 @@ Every generated project receives a `.spawn/meta.json` file:
 {
   "intent": "backend-api",
   "framework": "fastapi",
-  "spawn_version": "0.4.0"
+  "spawn_version": "0.5.0"
 }
 ```
 
@@ -379,7 +443,7 @@ Prints the installed package version.
 **Output (exact):**
 
 ```
-Spawn v0.4.0
+Spawn v0.5.0
 ```
 
 ---

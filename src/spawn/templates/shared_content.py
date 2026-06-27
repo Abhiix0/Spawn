@@ -47,4 +47,7 @@ htmlcov/
 
 # Spawn metadata
 .spawn/
+
+# Logs
+logs/*.log
 """

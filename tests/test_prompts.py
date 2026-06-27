@@ -131,12 +131,15 @@ def test_non_numeric_template_choice_retried(mock_prompt, mock_confirm):
     [
         ("1", "backend-api"),
         ("2", "cli"),
+        ("3", "automation"),
     ],
 )
 @patch("spawn.cli.prompts.typer.confirm", return_value=False)
 def test_all_template_choices(mock_confirm, choice, expected_template):
     if expected_template == "backend-api":
         side_effects = ["project", choice, "1", ""]       # name, choice, framework, extras
+    elif expected_template == "automation":
+        side_effects = ["project", choice, ""]            # name, choice, extras (skip)
     else:
         side_effects = ["project", choice, "1", "1", ""]  # name, choice, framework, cli_type, extras
     with patch(

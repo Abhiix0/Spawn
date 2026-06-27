@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse) |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -90,8 +90,9 @@ Spawn rejects names with spaces or special characters, and tells you immediately
 ```
   1  Backend API
   2  CLI Application
+  3  Automation Tool
 
-Choose Template [1-2]: 1
+Choose Template [1-3]: 1
 ```
 
 **Step 3 — Additional prompts** *(template-dependent)*
@@ -247,6 +248,31 @@ uv run python -m src.main greet
 
 ---
 
+### `[3]` Automation Tool
+
+Best for: scheduled jobs, data pipelines, reporting systems, integration automation.
+
+```
+my-automation/
+├── src/
+│   ├── workflows/
+│   ├── tasks/
+│   ├── integrations/
+│   ├── utils/
+│   └── main.py
+├── logs/
+├── tests/
+├── .env.example
+└── README.md
+```
+
+```bash
+cd my-automation
+uv run python -m src.main
+```
+
+---
+
 ## Other Commands
 
 ### `spawn doctor`
@@ -289,7 +315,7 @@ spawn doctor ./path/to/project
 
 ```bash
 spawn version
-# → Spawn v0.4.0
+# → Spawn v0.5.0
 ```
 
 ### Publish to GitHub
@@ -324,7 +350,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **Extras system** — ruff, pytest, Docker, GitHub Actions installed automatically (v0.3.0)
 - [x] **Dependency installation** — `uv add` runs automatically after generation (v0.3.0)
 - [x] **CLI Application intent** — Typer, Click, Argparse with Utility/Interactive sub-types (v0.4.0)
-- [ ] **Automation Tool intent** — scripting and scheduling scaffold (v0.5.0)
+- [x] **Automation Tool intent** — workflow-based automation with logging, tasks, and integrations (v0.5.0)
 - [ ] **AI Chatbot intent** — LLM-integrated chat app scaffold (v0.6.0)
 - [ ] **AI Agent intent** — tool-calling agent scaffold (v0.7.0)
 - [ ] **RAG System intent** — retrieval-augmented generation scaffold (v0.8.0)

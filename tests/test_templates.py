@@ -274,6 +274,15 @@ def test_gitignore_does_not_ignore_uv_lock():
     assert "uv.lock" not in lines
 
 
+def test_gitignore_excludes_log_files_not_logs_dir():
+    from spawn.templates.shared_content import GITIGNORE_CONTENT
+
+    lines = GITIGNORE_CONTENT.splitlines()
+    assert "logs/*.log" in lines
+    assert "logs/" not in lines
+    assert "logs" not in lines
+
+
 def test_flask_dockerfile_exposes_port_5000():
     from spawn.templates.backend_api.content import DOCKERFILE_FLASK_CONTENT
 
