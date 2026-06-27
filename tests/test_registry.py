@@ -95,3 +95,28 @@ def test_cli_metadata():
 def test_cli_in_list_templates():
     slugs = [m.slug for m in list_templates()]
     assert "cli" in slugs
+
+
+def test_automation_template_is_registered():
+    from spawn.templates.automation import AutomationTemplate
+
+    template = get_template("automation")
+    assert template is not None
+    assert isinstance(template, AutomationTemplate)
+
+
+def test_automation_metadata():
+    meta = get_metadata("automation")
+    assert meta is not None
+    assert meta.slug == "automation"
+    assert meta.display_name == "Automation Tool"
+    assert "ruff" in meta.available_extras
+    assert "pytest" in meta.available_extras
+    assert "github-actions" in meta.available_extras
+    assert meta.available_frameworks == []
+    assert meta.available_cli_types == []
+
+
+def test_automation_in_list_templates():
+    slugs = [m.slug for m in list_templates()]
+    assert "automation" in slugs
