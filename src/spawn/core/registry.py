@@ -9,6 +9,7 @@ from spawn.core.models import ProjectConfig
 from spawn.templates.backend_api import BackendAPITemplate
 from spawn.templates.cli_application import CLITemplate
 from spawn.templates.automation import AutomationTemplate
+from spawn.templates.chatbot import ChatbotTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -51,6 +52,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="Automation Tool",
         description="Workflow-based automation with logging, tasks, and integrations",
         template_class=AutomationTemplate,
+        available_extras=["ruff", "pytest", "github-actions"],
+    ),
+    "chatbot": TemplateMetadata(
+        slug="chatbot",
+        display_name="AI Chatbot",
+        description="Conversational AI with PydanticAI or OpenAI SDK",
+        template_class=ChatbotTemplate,
+        available_frameworks=["pydantic-ai", "openai-sdk"],
         available_extras=["ruff", "pytest", "github-actions"],
     ),
 }

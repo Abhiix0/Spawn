@@ -33,6 +33,17 @@ def _patch_automation_post_install():
     return patch.object(AutomationTemplate, "post_install")
 
 
+def _chatbot_config(name="demo", **kwargs):
+    """Return a minimal ProjectConfig using the chatbot template."""
+    return ProjectConfig(name=name, template="chatbot", use_git=False, **kwargs)
+
+
+def _patch_chatbot_post_install():
+    """Context manager that silences ChatbotTemplate.post_install."""
+    from spawn.templates.chatbot import ChatbotTemplate
+    return patch.object(ChatbotTemplate, "post_install")
+
+
 # ---------------------------------------------------------------------------
 # Basic project structure
 # ---------------------------------------------------------------------------
@@ -494,3 +505,114 @@ def test_automation_extras_in_dependencies():
     assert "pytest" in deps
     assert "requests" in deps
     assert "python-dotenv" in deps
+
+
+# ---------------------------------------------------------------------------
+# AI Chatbot generator tests
+# ---------------------------------------------------------------------------
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_generator_creates_project(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(_chatbot_config())
+    assert (tmp_path / "demo").exists()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_generator_creates_folders(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(_chatbot_config())
+    assert (tmp_path / "demo" / "src" / "chatbot").exists()
+    assert (tmp_path / "demo" / "src" / "providers").exists()
+    assert (tmp_path / "demo" / "src" / "prompts").exists()
+    assert (tmp_path / "demo" / "src" / "utils").exists()
+    assert (tmp_path / "demo" / "tests").exists()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_generator_creates_main(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(_chatbot_config())
+    assert (tmp_path / "demo" / "src" / "main.py").exists()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_generator_creates_env_example(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(_chatbot_config())
+    assert (tmp_path / "demo" / ".env.example").exists()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_generator_creates_meta_json(mock_uv, mock_install, tmp_path, monkeypatch):
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(_chatbot_config())
+    meta = json.loads((tmp_path / "demo" / ".spawn" / "meta.json").read_text())
+    assert meta["intent"] == "chatbot"
+    assert meta["framework"] is None
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_generator_with_openai_sdk_framework(mock_uv, mock_install, tmp_path, monkeypatch):
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(
+        name="demo", template="chatbot", use_git=False, framework="openai-sdk"
+    )
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(config)
+    meta = json.loads((tmp_path / "demo" / ".spawn" / "meta.json").read_text())
+    assert meta["framework"] == "openai-sdk"
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_chatbot_env_example_contains_project_name(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_chatbot_post_install():
+        ProjectGenerator().generate(_chatbot_config(name="my-bot"))
+    content = (tmp_path / "my-bot" / ".env.example").read_text(encoding="utf-8")
+    assert "my-bot" in content
+
+
+def test_chatbot_pydantic_ai_extras_in_dependencies():
+    from spawn.core.registry import instantiate_template
+
+    config = ProjectConfig(
+        name="demo", template="chatbot", use_git=False,
+        framework="pydantic-ai", extras=["ruff", "pytest"],
+    )
+    deps = instantiate_template(config).get_dependencies()
+    assert "pydantic-ai" in deps
+    assert "python-dotenv" in deps
+    assert "ruff" in deps
+    assert "pytest" in deps
+
+
+def test_chatbot_openai_sdk_extras_in_dependencies():
+    from spawn.core.registry import instantiate_template
+
+    config = ProjectConfig(
+        name="demo", template="chatbot", use_git=False,
+        framework="openai-sdk", extras=["pytest"],
+    )
+    deps = instantiate_template(config).get_dependencies()
+    assert "openai" in deps
+    assert "python-dotenv" in deps
+    assert "pytest" in deps
+    assert "pydantic-ai" not in deps

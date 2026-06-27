@@ -24,7 +24,8 @@ def test_list_templates_returns_all():
     assert "backend-api" in slugs
     assert "cli" in slugs
     assert "automation" in slugs
-    assert len(slugs) == 3
+    assert "chatbot" in slugs
+    assert len(slugs) == 4
 
 
 def test_get_metadata_returns_none_for_unknown():
@@ -120,3 +121,29 @@ def test_automation_metadata():
 def test_automation_in_list_templates():
     slugs = [m.slug for m in list_templates()]
     assert "automation" in slugs
+
+
+def test_chatbot_template_is_registered():
+    from spawn.templates.chatbot import ChatbotTemplate
+
+    template = get_template("chatbot")
+    assert template is not None
+    assert isinstance(template, ChatbotTemplate)
+
+
+def test_chatbot_metadata():
+    meta = get_metadata("chatbot")
+    assert meta is not None
+    assert meta.slug == "chatbot"
+    assert meta.display_name == "AI Chatbot"
+    assert "pydantic-ai" in meta.available_frameworks
+    assert "openai-sdk" in meta.available_frameworks
+    assert "ruff" in meta.available_extras
+    assert "pytest" in meta.available_extras
+    assert "github-actions" in meta.available_extras
+    assert meta.available_cli_types == []
+
+
+def test_chatbot_in_list_templates():
+    slugs = [m.slug for m in list_templates()]
+    assert "chatbot" in slugs
