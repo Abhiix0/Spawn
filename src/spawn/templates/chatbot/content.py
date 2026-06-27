@@ -33,13 +33,11 @@ from pydantic_ai import Agent
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     api_key = os.getenv("API_KEY", "")
     model = os.getenv("MODEL", "openai:gpt-4o-mini")
-    if api_key:
-        os.environ.setdefault("OPENAI_API_KEY", api_key)
-    agent = Agent(model, system_prompt=system_prompt)
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
-    result = agent.run_sync(prompt)
-    return result.data
+    agent = Agent(model, system_prompt=system_prompt)
+    result = agent.run_sync(prompt, api_key=api_key)
+    return result.output
 """
 
 OPENAI_LLM_CONTENT = """\
@@ -93,21 +91,40 @@ def load_env() -> None:
 
 PYDANTIC_AI_ENV_EXAMPLE_CONTENT = """\
 APP_NAME={project_name}
+
+# Your API key — passed directly to the provider via pydantic-ai
 API_KEY=
+
+# Model string with provider prefix (pydantic-ai format)
+# Examples:
+#   openai:gpt-4o-mini
+#   groq:llama-3.3-70b-versatile
+#   anthropic:claude-3-5-haiku-latest
 MODEL=openai:gpt-4o-mini
 """
 
 OPENAI_ENV_EXAMPLE_CONTENT = """\
 APP_NAME={project_name}
+
+# Your API key for the provider
 API_KEY=
+
+# Plain model name (no provider prefix for OpenAI SDK)
 MODEL=gpt-4o-mini
+
+# Base URL — change to use Groq, OpenRouter, Ollama, etc.
+# Examples:
+#   https://api.groq.com/openai/v1
+#   https://openrouter.ai/api/v1
+#   http://localhost:11434/v1
 BASE_URL=https://api.openai.com/v1
 """
 
 PYDANTIC_AI_TEST_CONTENT = """\
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from src.chatbot.chat import get_response
+from src.providers.llm import get_llm_response
 
 
 def test_get_response_returns_string():
@@ -121,6 +138,34 @@ def test_get_response_non_empty():
     with patch("src.chatbot.chat.get_llm_response", return_value="Sure!"):
         result = get_response("Tell me something")
     assert result != ""
+
+
+def test_get_llm_response_uses_output_attribute():
+    mock_result = MagicMock()
+    mock_result.output = "test response"
+    with patch("src.providers.llm.Agent") as mock_agent_class:
+        mock_agent = MagicMock()
+        mock_agent.run_sync.return_value = mock_result
+        mock_agent_class.return_value = mock_agent
+        messages = [{{"role": "user", "content": "hello"}}]
+        response = get_llm_response(messages, "You are helpful.")
+    assert response == "test response"
+    mock_agent.run_sync.assert_called_once()
+
+
+def test_get_llm_response_passes_api_key():
+    mock_result = MagicMock()
+    mock_result.output = "ok"
+    with patch("src.providers.llm.Agent") as mock_agent_class:
+        mock_agent = MagicMock()
+        mock_agent.run_sync.return_value = mock_result
+        mock_agent_class.return_value = mock_agent
+        with patch("src.providers.llm.os.getenv", side_effect=lambda k, d="": {{
+            "API_KEY": "test-key", "MODEL": "openai:gpt-4o-mini"
+        }}.get(k, d)):
+            get_llm_response([{{"role": "user", "content": "hi"}}], "prompt")
+        call_kwargs = mock_agent.run_sync.call_args
+        assert call_kwargs.kwargs.get("api_key") == "test-key"
 """
 
 OPENAI_TEST_CONTENT = PYDANTIC_AI_TEST_CONTENT
@@ -136,7 +181,10 @@ An AI chatbot generated with Spawn, using PydanticAI.
 
 ```env
 API_KEY=your-api-key-here
+# Provider-prefixed model string:
 MODEL=openai:gpt-4o-mini
+# or: groq:llama-3.3-70b-versatile
+# or: anthropic:claude-3-5-haiku-latest
 ```
 
 2. Run the chatbot:
@@ -168,9 +216,23 @@ uv run pytest
 
 ## Switching Providers
 
-Edit `src/providers/llm.py` to change model or provider.
+Change the MODEL in `.env` to switch providers:
 
-Update `MODEL` and `API_KEY` in `.env`.
+```env
+# OpenAI
+MODEL=openai:gpt-4o-mini
+API_KEY=your-openai-key
+
+# Groq (fast, free tier available)
+MODEL=groq:llama-3.3-70b-versatile
+API_KEY=your-groq-key
+
+# Anthropic
+MODEL=anthropic:claude-3-5-haiku-latest
+API_KEY=your-anthropic-key
+```
+
+No code changes needed — `src/providers/llm.py` handles all providers.
 
 ## Future Expansions
 
@@ -226,9 +288,26 @@ uv run pytest
 
 ## Switching Providers
 
-Edit `src/providers/llm.py` and update `BASE_URL`, `MODEL`, and `API_KEY` in `.env`.
+Edit `BASE_URL` and `MODEL` in `.env` to switch providers.
 
-Compatible with any OpenAI-compatible API (Groq, OpenRouter, Ollama).
+`API_KEY` is passed directly — no code changes needed.
+
+```env
+# Groq
+BASE_URL=https://api.groq.com/openai/v1
+MODEL=llama-3.3-70b-versatile
+API_KEY=your-groq-key
+
+# OpenRouter
+BASE_URL=https://openrouter.ai/api/v1
+MODEL=openai/gpt-4o-mini
+API_KEY=your-openrouter-key
+
+# Ollama (local)
+BASE_URL=http://localhost:11434/v1
+MODEL=llama3.2
+API_KEY=ollama
+```
 
 ## Future Expansions
 

@@ -134,3 +134,22 @@ def test_openai_sdk_env_example_has_base_url():
     env_file = dict(t.starter_files)[".env.example"]
     result = env_file.format_map({"project_name": "test"})
     assert "BASE_URL" in result
+
+
+def test_pydantic_ai_llm_content_uses_result_output():
+    """Generated llm.py must access result.output, not result.data."""
+    t = ChatbotTemplate(framework="pydantic-ai")
+    files = dict(t.starter_files)
+    llm_content = files["src/providers/llm.py"]
+    assert "result.output" in llm_content
+    assert "result.data" not in llm_content
+
+
+def test_pydantic_ai_llm_content_passes_api_key_to_run_sync():
+    """Generated llm.py must pass api_key to run_sync, not set env vars."""
+    t = ChatbotTemplate(framework="pydantic-ai")
+    files = dict(t.starter_files)
+    llm_content = files["src/providers/llm.py"]
+    assert "run_sync(prompt, api_key=api_key)" in llm_content
+    assert "OPENAI_API_KEY" not in llm_content
+    assert "setdefault" not in llm_content
