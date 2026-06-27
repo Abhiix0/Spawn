@@ -10,7 +10,8 @@ from spawn.templates.chatbot.content import (
     CHAT_CONTENT,
     SYSTEM_PROMPT_CONTENT,
     ENV_UTIL_CONTENT,
-    ENV_EXAMPLE_CONTENT,
+    PYDANTIC_AI_ENV_EXAMPLE_CONTENT,
+    OPENAI_ENV_EXAMPLE_CONTENT,
     PYDANTIC_AI_TEST_CONTENT,
     OPENAI_TEST_CONTENT,
     PYDANTIC_AI_README_CONTENT,
@@ -29,7 +30,12 @@ CHATBOT_FOLDERS = [
 ]
 
 
-def _build_files(main_content: str, llm_content: str, test_content: str) -> list:
+def _build_files(
+    main_content: str,
+    llm_content: str,
+    test_content: str,
+    env_example_content: str,
+) -> list:
     return [
         ("src/__init__.py", INIT_CONTENT),
         ("src/chatbot/__init__.py", INIT_CONTENT),
@@ -43,7 +49,7 @@ def _build_files(main_content: str, llm_content: str, test_content: str) -> list
         ("src/main.py", main_content),
         ("tests/__init__.py", INIT_CONTENT),
         ("tests/test_chatbot.py", test_content),
-        (".env.example", ENV_EXAMPLE_CONTENT),
+        (".env.example", env_example_content),
     ]
 
 
@@ -60,16 +66,20 @@ class ChatbotTemplate(BaseTemplate):
             main_content = OPENAI_MAIN_CONTENT
             llm_content = OPENAI_LLM_CONTENT
             test_content = OPENAI_TEST_CONTENT
+            env_example_content = OPENAI_ENV_EXAMPLE_CONTENT
         else:
             # Default: pydantic-ai
             main_content = PYDANTIC_AI_MAIN_CONTENT
             llm_content = PYDANTIC_AI_LLM_CONTENT
             test_content = PYDANTIC_AI_TEST_CONTENT
+            env_example_content = PYDANTIC_AI_ENV_EXAMPLE_CONTENT
 
         super().__init__(
             name="AI Chatbot",
             folders=list(CHATBOT_FOLDERS),
-            starter_files=_build_files(main_content, llm_content, test_content),
+            starter_files=_build_files(
+                main_content, llm_content, test_content, env_example_content
+            ),
             next_steps=[
                 "cd {project_name}",
                 "Add your API_KEY to .env",

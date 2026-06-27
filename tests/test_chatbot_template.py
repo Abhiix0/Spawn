@@ -100,3 +100,37 @@ def test_chatbot_next_steps_contain_run_command():
 def test_chatbot_next_steps_contain_env_instruction():
     t = ChatbotTemplate()
     assert any("API_KEY" in step for step in t.next_steps)
+
+
+def test_pydantic_ai_env_example_has_provider_prefixed_model():
+    """pydantic-ai requires 'openai:gpt-4o-mini' not 'gpt-4o-mini'."""
+    t = ChatbotTemplate(framework="pydantic-ai")
+    env_file = dict(t.starter_files)[".env.example"]
+    result = env_file.format_map({"project_name": "test"})
+    assert "MODEL=openai:gpt-4o-mini" in result
+    assert "MODEL=gpt-4o-mini\n" not in result
+
+
+def test_pydantic_ai_env_example_has_no_base_url():
+    """pydantic-ai does not use BASE_URL - should not appear in its .env."""
+    t = ChatbotTemplate(framework="pydantic-ai")
+    env_file = dict(t.starter_files)[".env.example"]
+    result = env_file.format_map({"project_name": "test"})
+    assert "BASE_URL" not in result
+
+
+def test_openai_sdk_env_example_has_plain_model():
+    """OpenAI SDK uses plain model name, no provider prefix."""
+    t = ChatbotTemplate(framework="openai-sdk")
+    env_file = dict(t.starter_files)[".env.example"]
+    result = env_file.format_map({"project_name": "test"})
+    assert "MODEL=gpt-4o-mini" in result
+    assert "MODEL=openai:" not in result
+
+
+def test_openai_sdk_env_example_has_base_url():
+    """OpenAI SDK supports BASE_URL for provider switching."""
+    t = ChatbotTemplate(framework="openai-sdk")
+    env_file = dict(t.starter_files)[".env.example"]
+    result = env_file.format_map({"project_name": "test"})
+    assert "BASE_URL" in result

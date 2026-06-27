@@ -91,7 +91,13 @@ def load_env() -> None:
     load_dotenv()
 """
 
-ENV_EXAMPLE_CONTENT = """\
+PYDANTIC_AI_ENV_EXAMPLE_CONTENT = """\
+APP_NAME={project_name}
+API_KEY=
+MODEL=openai:gpt-4o-mini
+"""
+
+OPENAI_ENV_EXAMPLE_CONTENT = """\
 APP_NAME={project_name}
 API_KEY=
 MODEL=gpt-4o-mini
