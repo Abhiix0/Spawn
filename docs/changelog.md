@@ -3,6 +3,29 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v0.5.0 — 2026
+
+### New Features
+
+- **Automation Tool intent** — generates a workflow-based automation project
+  with `src/workflows/`, `src/tasks/`, `src/integrations/`, `src/utils/`,
+  `logs/`, and a working example that runs immediately
+- **Logging out of the box** — every generated project includes a `setup_logger()`
+  utility and writes to `logs/app.log` with no manual configuration required
+- **Working example workflow** — `load_sample_data → generate_report → log output`
+  runs on first `uv run python -m src.main` without modification
+- **`.env.example`** — pre-wired environment config template included in every
+  generated project
+- **Automation extras** — opt-in `ruff`, `pytest`, `github-actions`;
+  installed and wired automatically
+
+### Internal
+
+- Registry expanded to three active templates: `backend-api`, `cli`, `automation`
+- No new fields added to `ProjectConfig` or `TemplateMetadata` — automation
+  uses the existing `extras` field; prompt flow adapts automatically via guards
+- Version bumped to `0.5.0`
+
 ## v0.4.0 — June 2026
 
 ### New Features
