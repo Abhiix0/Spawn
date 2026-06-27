@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -91,8 +91,9 @@ Spawn rejects names with spaces or special characters, and tells you immediately
   1  Backend API
   2  CLI Application
   3  Automation Tool
+  4  AI Chatbot
 
-Choose Template [1-3]: 1
+Choose Template [1-4]: 1
 ```
 
 **Step 3 — Additional prompts** *(template-dependent)*
@@ -273,6 +274,31 @@ uv run python -m src.main
 
 ---
 
+### `[4]` AI Chatbot
+
+Best for: customer support bots, study assistants, conversational AI tools.
+
+```
+my-chatbot/
+├── src/
+│   ├── chatbot/
+│   ├── providers/
+│   ├── prompts/
+│   ├── utils/
+│   └── main.py
+├── tests/
+├── .env.example
+└── README.md
+```
+
+```bash
+cd my-chatbot
+# Add API_KEY to .env
+uv run python src/main.py
+```
+
+---
+
 ## Other Commands
 
 ### `spawn doctor`
@@ -315,7 +341,7 @@ spawn doctor ./path/to/project
 
 ```bash
 spawn version
-# → Spawn v0.5.0
+# → Spawn v0.6.0
 ```
 
 ### Publish to GitHub
@@ -351,7 +377,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **Dependency installation** — `uv add` runs automatically after generation (v0.3.0)
 - [x] **CLI Application intent** — Typer, Click, Argparse with Utility/Interactive sub-types (v0.4.0)
 - [x] **Automation Tool intent** — workflow-based automation with logging, tasks, and integrations (v0.5.0)
-- [ ] **AI Chatbot intent** — LLM-integrated chat app scaffold (v0.6.0)
+- [x] **AI Chatbot intent** — PydanticAI and OpenAI SDK with provider abstraction (v0.6.0)
 - [ ] **AI Agent intent** — tool-calling agent scaffold (v0.7.0)
 - [ ] **RAG System intent** — retrieval-augmented generation scaffold (v0.8.0)
 - [ ] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)

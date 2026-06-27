@@ -19,7 +19,7 @@ Creates a new project directory from a template, writes starter files, installs 
 | Step | Prompt | When shown |
 |---|---|---|
 | 1 | `Project Name` | Always |
-| 2 | Template list → `Choose Template [1-3]` | Always |
+| 2 | Template list → `Choose Template [1-4]` | Always |
 | 3 | CLI Type list → `Choose CLI Type [1-2]` | Only for CLI Application |
 | 4 | Framework list → `Choose Framework [1-N]` | Only for templates with frameworks |
 | 5 | Extras list → `Extras` | Only for templates with extras |
@@ -49,6 +49,7 @@ Templates are displayed as a numbered list. The current registry order:
 | `1` | `backend-api` | Backend API — production-ready FastAPI, Flask, or Django |
 | `2` | `cli` | CLI Application — Typer, Click, or Argparse with Utility or Interactive type |
 | `3` | `automation` | Automation Tool — workflow-based automation with logging and tasks |
+| `4` | `chatbot` | AI Chatbot — PydanticAI or OpenAI SDK with provider abstraction |
 
 **Invalid input error (exact):**
 ```
@@ -361,6 +362,30 @@ uv run python -m src.main
 
 ---
 
+### AI Chatbot intent
+
+Selecting AI Chatbot triggers a framework prompt then extras.
+
+#### Framework selection
+
+```
+  1  pydantic-ai
+  2  openai-sdk
+
+Choose Framework [1-2]:
+```
+
+| Input | Framework | Key dependency |
+|---|---|---|
+| `1` (default) | PydanticAI | `pydantic-ai` |
+| `2` | OpenAI SDK | `openai` |
+
+Both variants install `python-dotenv` and use the same project structure.
+
+Provider switching requires changes only in `src/providers/llm.py` and `.env`.
+
+---
+
 ### `.spawn/meta.json`
 
 Every generated project receives a `.spawn/meta.json` file:
@@ -369,7 +394,7 @@ Every generated project receives a `.spawn/meta.json` file:
 {
   "intent": "backend-api",
   "framework": "fastapi",
-  "spawn_version": "0.5.0"
+  "spawn_version": "0.6.0"
 }
 ```
 
@@ -443,7 +468,7 @@ Prints the installed package version.
 **Output (exact):**
 
 ```
-Spawn v0.5.0
+Spawn v0.6.0
 ```
 
 ---

@@ -3,6 +3,27 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v0.6.0 — 2026
+
+### New Features
+
+- **AI Chatbot intent** — generates a provider-agnostic conversational AI project
+  with PydanticAI or OpenAI SDK; run `uv run python src/main.py` immediately after
+  adding an API key
+- **Provider abstraction layer** — `src/providers/llm.py` isolates the AI provider;
+  switching from OpenAI to Groq/Anthropic/OpenRouter requires only env var changes
+- **Centralized prompt management** — `src/prompts/system_prompt.py` keeps system
+  prompts out of application logic
+- **Session-level conversation history** — message history is maintained across
+  turns within a single run without external storage
+
+### Internal
+
+- Registry expanded to four active templates: backend-api, cli, automation, chatbot
+- ChatbotTemplate branches on framework to select provider implementation;
+  chatbot/, prompts/, utils/, and main.py are shared between both variants
+- Version bumped to 0.6.0
+
 ## v0.5.0 — 2026
 
 ### New Features
