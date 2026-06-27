@@ -23,7 +23,8 @@ def test_list_templates_returns_all():
     slugs = [t.slug for t in templates]
     assert "backend-api" in slugs
     assert "cli" in slugs
-    assert len(slugs) == 2
+    assert "automation" in slugs
+    assert len(slugs) == 3
 
 
 def test_get_metadata_returns_none_for_unknown():
