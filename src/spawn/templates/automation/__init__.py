@@ -55,7 +55,7 @@ class AutomationTemplate(BaseTemplate):
             starter_files=AUTOMATION_FILES,
             next_steps=[
                 "cd {project_name}",
-                "uv run python src/main.py",
+                "uv run python -m src.main",
             ],
         )
 

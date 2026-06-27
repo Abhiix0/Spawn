@@ -65,4 +65,4 @@ def test_automation_starter_file_paths_are_strings():
 
 def test_automation_next_steps():
     t = AutomationTemplate()
-    assert any("src/main.py" in step for step in t.next_steps)
+    assert any("src.main" in step for step in t.next_steps)

@@ -105,7 +105,7 @@ An automation project generated with Spawn.
 ## Getting Started
 
 ```bash
-uv run python src/main.py
+uv run python -m src.main
 ```
 
 ## Project Structure
