@@ -8,6 +8,7 @@ from spawn.core.models import ProjectConfig
 # from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.backend_api import BackendAPITemplate
 from spawn.templates.cli_application import CLITemplate
+from spawn.templates.automation import AutomationTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -44,6 +45,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         available_frameworks=["typer", "click", "argparse"],
         available_extras=["ruff", "pytest", "github-actions"],
         available_cli_types=["utility", "interactive"],
+    ),
+    "automation": TemplateMetadata(
+        slug="automation",
+        display_name="Automation Tool",
+        description="Workflow-based automation with logging, tasks, and integrations",
+        template_class=AutomationTemplate,
+        available_extras=["ruff", "pytest", "github-actions"],
     ),
 }
 
