@@ -294,7 +294,7 @@ my-chatbot/
 ```bash
 cd my-chatbot
 # Add API_KEY to .env
-uv run python src/main.py
+uv run python -m src.main
 ```
 
 ---

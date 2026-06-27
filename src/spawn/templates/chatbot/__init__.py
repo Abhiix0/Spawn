@@ -73,7 +73,7 @@ class ChatbotTemplate(BaseTemplate):
             next_steps=[
                 "cd {project_name}",
                 "Add your API_KEY to .env",
-                "uv run python src/main.py",
+                "uv run python -m src.main",
             ],
         )
 

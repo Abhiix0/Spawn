@@ -94,7 +94,7 @@ def test_chatbot_starter_file_paths_are_strings():
 
 def test_chatbot_next_steps_contain_run_command():
     t = ChatbotTemplate()
-    assert any("src/main.py" in step for step in t.next_steps)
+    assert any("src.main" in step for step in t.next_steps)
 
 
 def test_chatbot_next_steps_contain_env_instruction():

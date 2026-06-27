@@ -7,7 +7,7 @@ from src.utils.env import load_env
 
 def main() -> None:
     load_env()
-    print("Chatbot ready. Type 'quit' to exit.\n")
+    print("Chatbot ready. Type 'quit' to exit.\\n")
     while True:
         user_input = input("You: ").strip()
         if not user_input:
@@ -15,7 +15,7 @@ def main() -> None:
         if user_input.lower() in ("quit", "exit"):
             break
         response = get_response(user_input)
-        print(f"Bot: {{response}}\n")
+        print(f"Bot: {{response}}\\n")
 
 
 if __name__ == "__main__":
@@ -33,7 +33,9 @@ from pydantic_ai import Agent
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     api_key = os.getenv("API_KEY", "")
     model = os.getenv("MODEL", "openai:gpt-4o-mini")
-    agent = Agent(model, system_prompt=system_prompt, api_key=api_key)
+    if api_key:
+        os.environ.setdefault("OPENAI_API_KEY", api_key)
+    agent = Agent(model, system_prompt=system_prompt)
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
     result = agent.run_sync(prompt)
@@ -134,7 +136,7 @@ MODEL=openai:gpt-4o-mini
 2. Run the chatbot:
 
 ```bash
-uv run python src/main.py
+uv run python -m src.main
 ```
 
 ## Project Structure
@@ -192,7 +194,7 @@ BASE_URL=https://api.openai.com/v1
 2. Run the chatbot:
 
 ```bash
-uv run python src/main.py
+uv run python -m src.main
 ```
 
 ## Project Structure
