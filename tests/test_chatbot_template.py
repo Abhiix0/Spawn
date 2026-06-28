@@ -1,6 +1,18 @@
+import os
+import py_compile
+import tempfile
+
 import pytest
 
 from spawn.templates.chatbot import ChatbotTemplate
+from spawn.templates.chatbot.content import (
+    ENV_PYDANTIC_GEMINI,
+    PYDANTIC_AI_ANTHROPIC_LLM_CONTENT,
+    PYDANTIC_AI_GEMINI_LLM_CONTENT,
+    PYDANTIC_AI_OLLAMA_LLM_CONTENT,
+    PYDANTIC_AI_OPENAI_LLM_CONTENT,
+    PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
+)
 
 # ─── Construction ─────────────────────────────────────────────────────────
 
@@ -250,19 +262,6 @@ def test_next_steps_mention_env():
 
 
 # ─── pydantic-ai API correctness ────────────────────────────────────────
-
-import os
-import py_compile
-import tempfile
-
-from spawn.templates.chatbot.content import (
-    ENV_PYDANTIC_GEMINI,
-    PYDANTIC_AI_ANTHROPIC_LLM_CONTENT,
-    PYDANTIC_AI_GEMINI_LLM_CONTENT,
-    PYDANTIC_AI_OLLAMA_LLM_CONTENT,
-    PYDANTIC_AI_OPENAI_LLM_CONTENT,
-    PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
-)
 
 
 def test_pydantic_ai_openai_no_api_key_in_run_sync():
