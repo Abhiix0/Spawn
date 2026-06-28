@@ -598,7 +598,8 @@ def test_chatbot_pydantic_ai_extras_in_dependencies():
         framework="pydantic-ai", extras=["ruff", "pytest"],
     )
     deps = instantiate_template(config).get_dependencies()
-    assert "pydantic-ai[openai]" in deps
+    assert "pydantic-ai" in deps
+    assert "openai" in deps
     assert "python-dotenv" in deps
     assert "ruff" in deps
     assert "pytest" in deps

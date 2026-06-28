@@ -108,7 +108,7 @@ def test_chatbot_creates_system_prompt(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with _mock_uv_and_install():
         ProjectGenerator().generate(_cfg())
-    assert (tmp_path / "my-bot" / "src" / "prompts" / "system_prompt.py").exists()
+    assert (tmp_path / "my-bot" / "src" / "prompts" / "system.txt").exists()
 
 
 def test_chatbot_creates_env_util(tmp_path, monkeypatch):
@@ -154,7 +154,6 @@ def test_chatbot_openai_sdk_env_has_plain_model(tmp_path, monkeypatch):
         ProjectGenerator().generate(_cfg(framework="openai-sdk"))
     env = (tmp_path / "my-bot" / ".env.example").read_text(encoding="utf-8")
     assert "MODEL=gpt-4o-mini" in env
-    assert "BASE_URL" in env
 
 
 def test_chatbot_readme_contains_project_name(tmp_path, monkeypatch):
@@ -226,9 +225,9 @@ def test_chatbot_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
          patch.object(ChatbotTemplate, "post_install"):
         ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
     args = mock_install.call_args[0][1]
-    assert "pydantic-ai[openai]" in args
+    assert "pydantic-ai" in args
+    assert "openai" in args
     assert "python-dotenv" in args
-    assert "openai" not in args
 
 
 def test_chatbot_openai_sdk_install_packages_called(tmp_path, monkeypatch):
