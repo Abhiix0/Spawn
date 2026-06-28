@@ -7,21 +7,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### New Features
 
-- **AI Chatbot intent** — generates a provider-agnostic conversational AI project
-  with PydanticAI or OpenAI SDK; run `uv run python src/main.py` immediately after
-  adding an API key
-- **Provider abstraction layer** — `src/providers/llm.py` isolates the AI provider;
-  switching from OpenAI to Groq/Anthropic/OpenRouter requires only env var changes
-- **Centralized prompt management** — `src/prompts/system_prompt.py` keeps system
-  prompts out of application logic
-- **Session-level conversation history** — message history is maintained across
-  turns within a single run without external storage
+- **AI Chatbot intent** — generates a fully runnable conversational AI project
+  with runtime memory, centralized prompt management, and provider abstraction
+- **3 frameworks**: PydanticAI, OpenAI SDK, LiteLLM
+- **5 providers**: OpenAI, Anthropic, Gemini, OpenRouter, Ollama
+- **13 supported combinations** — each generates correct dependencies,
+  provider-specific env vars, and working llm.py out of the box
+- **Runtime memory** — `src/memory/history.py` maintains conversation
+  context across turns within a session; no database required
+- **Plain-text prompt system** — `src/prompts/system.txt` is editable
+  without touching Python code; loaded dynamically at runtime
+- **Rich extra** — opt-in `rich` terminal UI with colored panels and
+  styled input/output
+- **Provider-specific env vars** — generated `.env.example` uses the
+  correct key name for each provider (OPENAI_API_KEY, ANTHROPIC_API_KEY,
+  GOOGLE_API_KEY, OPENROUTER_API_KEY, OLLAMA_BASE_URL)
+
+### Bug Fixes
+
+- Fixed `result.data` → `result.output` in PydanticAI provider
+  (AgentRunResult attribute name in current pydantic-ai)
+- Fixed `setdefault("OPENAI_API_KEY")` pattern that silently broke
+  non-OpenAI providers; api_key is now passed directly to run_sync()
 
 ### Internal
 
-- Registry expanded to four active templates: backend-api, cli, automation, chatbot
-- ChatbotTemplate branches on framework to select provider implementation;
-  chatbot/, prompts/, utils/, and main.py are shared between both variants
+- `ProjectConfig` gains `provider: str | None = None` field
+- `TemplateMetadata` gains `available_providers: list[str]` field
+- `instantiate_template()` forwards `provider` to template constructors
+- Registry: chatbot updated to 3 frameworks, 5 providers, 4 extras
 - Version bumped to 0.6.0
 
 ## v0.5.0 — 2026
