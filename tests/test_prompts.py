@@ -142,7 +142,7 @@ def test_all_template_choices(mock_confirm, choice, expected_template):
     elif expected_template == "automation":
         side_effects = ["project", choice, ""]            # name, choice, extras (skip)
     elif expected_template == "chatbot":
-        side_effects = ["project", choice, "1", ""]       # name, choice, framework, extras
+        side_effects = ["project", choice, "1", "1", ""]  # name, choice, framework, provider, extras
     else:
         side_effects = ["project", choice, "1", "1", ""]  # name, choice, framework, cli_type, extras
     with patch(
