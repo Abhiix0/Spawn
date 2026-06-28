@@ -22,6 +22,7 @@ class TemplateMetadata:
     available_frameworks: list[str] = field(default_factory=list)
     available_extras: list[str] = field(default_factory=list)
     available_cli_types: list[str] = field(default_factory=list)
+    available_providers: list[str] = field(default_factory=list)
 
 
 # Slugs that existed in previous versions but have been superseded.
@@ -57,10 +58,11 @@ TEMPLATES: dict[str, TemplateMetadata] = {
     "chatbot": TemplateMetadata(
         slug="chatbot",
         display_name="AI Chatbot",
-        description="Conversational AI with PydanticAI or OpenAI SDK",
+        description="Conversational AI with PydanticAI, OpenAI SDK, or LiteLLM",
         template_class=ChatbotTemplate,
-        available_frameworks=["pydantic-ai", "openai-sdk"],
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_frameworks=["pydantic-ai", "openai-sdk", "litellm"],
+        available_providers=["openai", "anthropic", "gemini", "openrouter", "ollama"],
+        available_extras=["ruff", "pytest", "rich", "github-actions"],
     ),
 }
 
@@ -102,6 +104,8 @@ def instantiate_template(config: ProjectConfig) -> BaseTemplate | None:
         kwargs["extras"] = config.extras
     if "cli_type" in params:
         kwargs["cli_type"] = config.cli_type
+    if "provider" in params:
+        kwargs["provider"] = config.provider
 
     return cls(**kwargs)
 
