@@ -1,8 +1,288 @@
 INIT_CONTENT = ""
 
-PYDANTIC_AI_MAIN_CONTENT = """\
+# ─── Shared content ───────────────────────────────────────────────────────
+
+CHAT_CONTENT = """\
+from src.providers.llm import get_llm_response
+from src.memory.history import append_user, append_assistant, get_history
+from src.config.settings import get_system_prompt
+
+
+def get_response(user_input: str) -> str:
+    append_user(user_input)
+    history = get_history()
+    system_prompt = get_system_prompt()
+    response = get_llm_response(history, system_prompt)
+    append_assistant(response)
+    return response
+"""
+
+MEMORY_HISTORY_CONTENT = """\
+_history: list[dict] = []
+
+
+def append_user(content: str) -> None:
+    _history.append({{"role": "user", "content": content}})
+
+
+def append_assistant(content: str) -> None:
+    _history.append({{"role": "assistant", "content": content}})
+
+
+def get_history() -> list[dict]:
+    return list(_history)
+
+
+def clear() -> None:
+    _history.clear()
+"""
+
+SYSTEM_PROMPT_TXT_CONTENT = """\
+You are a helpful AI assistant.
+Answer questions clearly and concisely.
+"""
+
+SETTINGS_CONTENT = """\
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+def load_env() -> None:
+    load_dotenv()
+
+
+def get_model() -> str:
+    return os.getenv("MODEL", "")
+
+
+def get_system_prompt() -> str:
+    prompt_path = Path(__file__).parent.parent / "prompts" / "system.txt"
+    return prompt_path.read_text(encoding="utf-8").strip()
+"""
+
+ENV_UTIL_CONTENT = """\
+from src.config.settings import load_env
+
+__all__ = ["load_env"]
+"""
+
+# ─── PydanticAI ───────────────────────────────────────────────────────────
+
+PYDANTIC_AI_OPENAI_LLM_CONTENT = """\
+import os
+
+from pydantic_ai import Agent
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "openai:gpt-4o-mini")
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    history = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = history[-1] if history else ""
+    agent = Agent(model, system_prompt=system_prompt)
+    result = agent.run_sync(prompt, api_key=api_key)
+    return result.output
+"""
+
+PYDANTIC_AI_ANTHROPIC_LLM_CONTENT = """\
+import os
+
+from pydantic_ai import Agent
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "anthropic:claude-3-5-haiku-latest")
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    history = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = history[-1] if history else ""
+    agent = Agent(model, system_prompt=system_prompt)
+    result = agent.run_sync(prompt, api_key=api_key)
+    return result.output
+"""
+
+PYDANTIC_AI_GEMINI_LLM_CONTENT = """\
+import os
+
+from pydantic_ai import Agent
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "google-gla:gemini-1.5-flash")
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    history = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = history[-1] if history else ""
+    agent = Agent(model, system_prompt=system_prompt)
+    result = agent.run_sync(prompt, api_key=api_key)
+    return result.output
+"""
+
+PYDANTIC_AI_OPENROUTER_LLM_CONTENT = """\
+import os
+
+from openai import AsyncOpenAI
+from pydantic_ai import Agent
+from pydantic_ai.providers.openai import OpenAIProvider
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model_name = os.getenv("MODEL", "openai/gpt-4o-mini")
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    history = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = history[-1] if history else ""
+    openai_client = AsyncOpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1",
+    )
+    provider = OpenAIProvider(openai_client=openai_client)
+    agent = Agent(f"openai:{{model_name}}", system_prompt=system_prompt, model_settings={{"provider": provider}})
+    result = agent.run_sync(prompt)
+    return result.output
+"""
+
+PYDANTIC_AI_OLLAMA_LLM_CONTENT = """\
+import os
+
+from openai import AsyncOpenAI
+from pydantic_ai import Agent
+from pydantic_ai.providers.openai import OpenAIProvider
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model_name = os.getenv("MODEL", "llama3.2")
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+    history = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = history[-1] if history else ""
+    openai_client = AsyncOpenAI(api_key="ollama", base_url=base_url)
+    provider = OpenAIProvider(openai_client=openai_client)
+    agent = Agent(f"openai:{{model_name}}", system_prompt=system_prompt, model_settings={{"provider": provider}})
+    result = agent.run_sync(prompt)
+    return result.output
+"""
+
+# ─── OpenAI SDK ───────────────────────────────────────────────────────────
+
+OPENAI_SDK_OPENAI_LLM_CONTENT = """\
+import os
+
+from openai import OpenAI
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
+    model = os.getenv("MODEL", "gpt-4o-mini")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = client.chat.completions.create(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+OPENAI_SDK_OPENROUTER_LLM_CONTENT = """\
+import os
+
+from openai import OpenAI
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    client = OpenAI(
+        api_key=os.getenv("OPENROUTER_API_KEY", ""),
+        base_url="https://openrouter.ai/api/v1",
+    )
+    model = os.getenv("MODEL", "openai/gpt-4o-mini")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = client.chat.completions.create(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+OPENAI_SDK_GEMINI_LLM_CONTENT = """\
+import os
+
+from openai import OpenAI
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    client = OpenAI(
+        api_key=os.getenv("GOOGLE_API_KEY", ""),
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    )
+    model = os.getenv("MODEL", "gemini-1.5-flash")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = client.chat.completions.create(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+# ─── LiteLLM ──────────────────────────────────────────────────────────────
+
+LITELLM_OPENAI_LLM_CONTENT = """\
+import os
+
+import litellm
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "gpt-4o-mini")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = litellm.completion(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+LITELLM_ANTHROPIC_LLM_CONTENT = """\
+import os
+
+import litellm
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "claude-3-5-haiku-latest")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = litellm.completion(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+LITELLM_GEMINI_LLM_CONTENT = """\
+import os
+
+import litellm
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "gemini/gemini-1.5-flash")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = litellm.completion(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+LITELLM_OPENROUTER_LLM_CONTENT = """\
+import os
+
+import litellm
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "openrouter/openai/gpt-4o-mini")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = litellm.completion(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+LITELLM_OLLAMA_LLM_CONTENT = """\
+import os
+
+import litellm
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "ollama/llama3.2")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = litellm.completion(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+# ─── Main content ─────────────────────────────────────────────────────────
+
+MAIN_CONTENT_NO_RICH = """\
 from src.chatbot.chat import get_response
-from src.utils.env import load_env
+from src.config.settings import load_env
 
 
 def main() -> None:
@@ -22,105 +302,100 @@ if __name__ == "__main__":
     main()
 """
 
-OPENAI_MAIN_CONTENT = PYDANTIC_AI_MAIN_CONTENT
+MAIN_CONTENT_RICH = """\
+from rich.console import Console
+from rich.panel import Panel
 
-PYDANTIC_AI_LLM_CONTENT = """\
-import os
+from src.chatbot.chat import get_response
+from src.config.settings import load_env
 
-from pydantic_ai import Agent
+console = Console()
 
 
-def get_llm_response(messages: list[dict], system_prompt: str) -> str:
-    api_key = os.getenv("API_KEY", "")
-    model = os.getenv("MODEL", "openai:gpt-4o-mini")
-    history = [m["content"] for m in messages if m["role"] == "user"]
-    prompt = history[-1] if history else ""
-    agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt, api_key=api_key)
-    return result.output
+def main() -> None:
+    load_env()
+    console.print(Panel.fit("[bold cyan]Chatbot[/bold cyan] — type [dim]quit[/dim] to exit"))
+    while True:
+        user_input = console.input("[bold yellow]You:[/bold yellow] ").strip()
+        if not user_input:
+            continue
+        if user_input.lower() in ("quit", "exit"):
+            break
+        response = get_response(user_input)
+        console.print(f"[bold green]Bot:[/bold green] {{response}}\\n")
+
+
+if __name__ == "__main__":
+    main()
 """
 
-OPENAI_LLM_CONTENT = """\
-import os
+# ─── Env examples (provider-specific) ─────────────────────────────────────
 
-from openai import OpenAI
-
-
-def get_llm_response(messages: list[dict], system_prompt: str) -> str:
-    client = OpenAI(
-        api_key=os.getenv("API_KEY", ""),
-        base_url=os.getenv("BASE_URL", "https://api.openai.com/v1"),
-    )
-    model = os.getenv("MODEL", "gpt-4o-mini")
-    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
-    response = client.chat.completions.create(
-        model=model,
-        messages=full_messages,
-    )
-    return response.choices[0].message.content or ""
-"""
-
-CHAT_CONTENT = """\
-from src.providers.llm import get_llm_response
-from src.prompts.system_prompt import SYSTEM_PROMPT
-
-_history: list[dict] = []
-
-
-def get_response(user_input: str) -> str:
-    _history.append({{"role": "user", "content": user_input}})
-    response = get_llm_response(_history, SYSTEM_PROMPT)
-    _history.append({{"role": "assistant", "content": response}})
-    return response
-"""
-
-SYSTEM_PROMPT_CONTENT = """\
-SYSTEM_PROMPT = (
-    "You are a helpful assistant. "
-    "Answer questions clearly and concisely."
-)
-"""
-
-ENV_UTIL_CONTENT = """\
-from dotenv import load_dotenv
-
-
-def load_env() -> None:
-    load_dotenv()
-"""
-
-PYDANTIC_AI_ENV_EXAMPLE_CONTENT = """\
+ENV_OPENAI = """\
 APP_NAME={project_name}
+OPENAI_API_KEY=
+MODEL=gpt-4o-mini
+"""
 
-# Your API key — passed directly to the provider via pydantic-ai
-API_KEY=
+ENV_ANTHROPIC = """\
+APP_NAME={project_name}
+ANTHROPIC_API_KEY=
+MODEL=claude-3-5-haiku-latest
+"""
 
-# Model string with provider prefix (pydantic-ai format)
-# Examples:
-#   openai:gpt-4o-mini
-#   groq:llama-3.3-70b-versatile
-#   anthropic:claude-3-5-haiku-latest
+ENV_GEMINI = """\
+APP_NAME={project_name}
+GOOGLE_API_KEY=
+MODEL=gemini-1.5-flash
+"""
+
+ENV_OPENROUTER = """\
+APP_NAME={project_name}
+OPENROUTER_API_KEY=
+MODEL=openai/gpt-4o-mini
+"""
+
+ENV_OLLAMA = """\
+APP_NAME={project_name}
+OLLAMA_BASE_URL=http://localhost:11434
+MODEL=llama3.2
+"""
+
+# Provider-prefixed MODEL for pydantic-ai variants
+
+ENV_PYDANTIC_OPENAI = """\
+APP_NAME={project_name}
+OPENAI_API_KEY=
 MODEL=openai:gpt-4o-mini
 """
 
-OPENAI_ENV_EXAMPLE_CONTENT = """\
+ENV_PYDANTIC_ANTHROPIC = """\
 APP_NAME={project_name}
-
-# Your API key for the provider
-API_KEY=
-
-# Plain model name (no provider prefix for OpenAI SDK)
-MODEL=gpt-4o-mini
-
-# Base URL — change to use Groq, OpenRouter, Ollama, etc.
-# Examples:
-#   https://api.groq.com/openai/v1
-#   https://openrouter.ai/api/v1
-#   http://localhost:11434/v1
-BASE_URL=https://api.openai.com/v1
+ANTHROPIC_API_KEY=
+MODEL=anthropic:claude-3-5-haiku-latest
 """
 
-PYDANTIC_AI_TEST_CONTENT = """\
+ENV_PYDANTIC_GEMINI = """\
+APP_NAME={project_name}
+GOOGLE_API_KEY=
+MODEL=google-gla:gemini-1.5-flash
+"""
+
+ENV_PYDANTIC_OPENROUTER = """\
+APP_NAME={project_name}
+OPENROUTER_API_KEY=
+MODEL=openai/gpt-4o-mini
+"""
+
+ENV_PYDANTIC_OLLAMA = """\
+APP_NAME={project_name}
+OLLAMA_BASE_URL=http://localhost:11434
+MODEL=llama3.2
+"""
+
+# ─── Test content ─────────────────────────────────────────────────────────
+
+TEST_CONTENT = """\
 from unittest.mock import MagicMock, patch
 
 from src.chatbot.chat import get_response
@@ -129,195 +404,81 @@ from src.providers.llm import get_llm_response
 
 def test_get_response_returns_string():
     with patch("src.chatbot.chat.get_llm_response", return_value="Hello!"):
-        result = get_response("Hi")
+        with patch("src.chatbot.chat.get_system_prompt", return_value="You are helpful."):
+            result = get_response("Hi")
     assert isinstance(result, str)
     assert result == "Hello!"
 
 
+def test_generate_response_mock():
+    with patch("src.chatbot.chat.get_llm_response", return_value="Mocked response"):
+        with patch("src.chatbot.chat.get_system_prompt", return_value="prompt"):
+            result = get_response("test input")
+    assert result == "Mocked response"
+
+
 def test_get_response_non_empty():
     with patch("src.chatbot.chat.get_llm_response", return_value="Sure!"):
-        result = get_response("Tell me something")
+        with patch("src.chatbot.chat.get_system_prompt", return_value="prompt"):
+            result = get_response("Tell me something")
     assert result != ""
-
-
-def test_get_llm_response_uses_output_attribute():
-    mock_result = MagicMock()
-    mock_result.output = "test response"
-    with patch("src.providers.llm.Agent") as mock_agent_class:
-        mock_agent = MagicMock()
-        mock_agent.run_sync.return_value = mock_result
-        mock_agent_class.return_value = mock_agent
-        messages = [{{"role": "user", "content": "hello"}}]
-        response = get_llm_response(messages, "You are helpful.")
-    assert response == "test response"
-    mock_agent.run_sync.assert_called_once()
-
-
-def test_get_llm_response_passes_api_key():
-    mock_result = MagicMock()
-    mock_result.output = "ok"
-    with patch("src.providers.llm.Agent") as mock_agent_class:
-        mock_agent = MagicMock()
-        mock_agent.run_sync.return_value = mock_result
-        mock_agent_class.return_value = mock_agent
-        with patch("src.providers.llm.os.getenv", side_effect=lambda k, d="": {{
-            "API_KEY": "test-key", "MODEL": "openai:gpt-4o-mini"
-        }}.get(k, d)):
-            get_llm_response([{{"role": "user", "content": "hi"}}], "prompt")
-        call_kwargs = mock_agent.run_sync.call_args
-        assert call_kwargs.kwargs.get("api_key") == "test-key"
 """
 
-OPENAI_TEST_CONTENT = PYDANTIC_AI_TEST_CONTENT
+# ─── README content ───────────────────────────────────────────────────────
 
-PYDANTIC_AI_README_CONTENT = """\
-# {project_name}
+def make_readme(framework: str, provider: str) -> str:
+    provider_key_map = {
+        "openai":      "OPENAI_API_KEY=your-key",
+        "anthropic":   "ANTHROPIC_API_KEY=your-key",
+        "gemini":      "GOOGLE_API_KEY=your-key",
+        "openrouter":  "OPENROUTER_API_KEY=your-key",
+        "ollama":      "OLLAMA_BASE_URL=http://localhost:11434",
+    }
+    key_line = provider_key_map.get(provider, "API_KEY=your-key")
+    return (
+        "# {project_name}\n\n"
+        f"An AI chatbot generated with Spawn, using {framework.title()} + {provider.title()}.\n\n"
+        "## Getting Started\n\n"
+        "1. Copy `.env.example` to `.env` and fill in your credentials:\n\n"
+        "```env\n"
+        f"{key_line}\n"
+        "```\n\n"
+        "2. Run the chatbot:\n\n"
+        "```bash\n"
+        "uv run python -m src.main\n"
+        "```\n\n"
+        "## Example\n\n"
+        "```\n"
+        "You: Hello\n"
+        "Bot: Hello! How can I help?\n"
+        "```\n\n"
+        "## Project Structure\n\n"
+        "```\n"
+        "{project_name}/\n"
+        "├── src/\n"
+        "│   ├── chatbot/      # Conversation orchestration\n"
+        "│   ├── providers/    # LLM provider (llm.py)\n"
+        "│   ├── prompts/      # system.txt\n"
+        "│   ├── memory/       # Runtime conversation history\n"
+        "│   ├── config/       # Settings and env loading\n"
+        "│   └── main.py\n"
+        "├── tests/\n"
+        "├── .env.example\n"
+        "└── README.md\n"
+        "```\n\n"
+        "## Running Tests\n\n"
+        "```bash\n"
+        "uv run pytest\n"
+        "```\n\n"
+        "## Future Expansions\n\n"
+        "```bash\n"
+        "spawn add memory\n"
+        "spawn add tools\n"
+        "spawn add rag\n"
+        "```\n"
+    )
 
-An AI chatbot generated with Spawn, using PydanticAI.
-
-## Getting Started
-
-1. Add your API key to `.env`:
-
-```env
-API_KEY=your-api-key-here
-# Provider-prefixed model string:
-MODEL=openai:gpt-4o-mini
-# or: groq:llama-3.3-70b-versatile
-# or: anthropic:claude-3-5-haiku-latest
-```
-
-2. Run the chatbot:
-
-```bash
-uv run python -m src.main
-```
-
-## Project Structure
-
-```
-{project_name}/
-├── src/
-│   ├── chatbot/        # Conversation logic
-│   ├── providers/      # LLM provider (llm.py)
-│   ├── prompts/        # System prompt definitions
-│   ├── utils/          # Shared helpers
-│   └── main.py         # Entry point
-├── tests/
-├── .env.example
-└── README.md
-```
-
-## Running Tests
-
-```bash
-uv run pytest
-```
-
-## Switching Providers
-
-Change the MODEL in `.env` to switch providers:
-
-```env
-# OpenAI
-MODEL=openai:gpt-4o-mini
-API_KEY=your-openai-key
-
-# Groq (fast, free tier available)
-MODEL=groq:llama-3.3-70b-versatile
-API_KEY=your-groq-key
-
-# Anthropic
-MODEL=anthropic:claude-3-5-haiku-latest
-API_KEY=your-anthropic-key
-```
-
-No code changes needed — `src/providers/llm.py` handles all providers.
-
-## Future Expansions
-
-```bash
-spawn add memory
-spawn add tools
-spawn add rag
-spawn add discord
-```
-"""
-
-OPENAI_README_CONTENT = """\
-# {project_name}
-
-An AI chatbot generated with Spawn, using the OpenAI SDK.
-
-## Getting Started
-
-1. Add your API key to `.env`:
-
-```env
-API_KEY=your-api-key-here
-MODEL=gpt-4o-mini
-BASE_URL=https://api.openai.com/v1
-```
-
-2. Run the chatbot:
-
-```bash
-uv run python -m src.main
-```
-
-## Project Structure
-
-```
-{project_name}/
-├── src/
-│   ├── chatbot/        # Conversation logic
-│   ├── providers/      # LLM provider (llm.py)
-│   ├── prompts/        # System prompt definitions
-│   ├── utils/          # Shared helpers
-│   └── main.py         # Entry point
-├── tests/
-├── .env.example
-└── README.md
-```
-
-## Running Tests
-
-```bash
-uv run pytest
-```
-
-## Switching Providers
-
-Edit `BASE_URL` and `MODEL` in `.env` to switch providers.
-
-`API_KEY` is passed directly — no code changes needed.
-
-```env
-# Groq
-BASE_URL=https://api.groq.com/openai/v1
-MODEL=llama-3.3-70b-versatile
-API_KEY=your-groq-key
-
-# OpenRouter
-BASE_URL=https://openrouter.ai/api/v1
-MODEL=openai/gpt-4o-mini
-API_KEY=your-openrouter-key
-
-# Ollama (local)
-BASE_URL=http://localhost:11434/v1
-MODEL=llama3.2
-API_KEY=ollama
-```
-
-## Future Expansions
-
-```bash
-spawn add memory
-spawn add tools
-spawn add rag
-spawn add discord
-```
-"""
+# ─── GitHub Actions ───────────────────────────────────────────────────────
 
 GITHUB_ACTIONS_CI_BASE = """\
 name: CI
