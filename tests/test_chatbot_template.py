@@ -247,3 +247,125 @@ def test_next_steps_contain_run_command():
 def test_next_steps_mention_env():
     t = ChatbotTemplate()
     assert any(".env" in step for step in t.next_steps)
+
+
+# ─── pydantic-ai API correctness ────────────────────────────────────────
+
+import os
+import py_compile
+import tempfile
+
+from spawn.templates.chatbot.content import (
+    ENV_PYDANTIC_GEMINI,
+    PYDANTIC_AI_ANTHROPIC_LLM_CONTENT,
+    PYDANTIC_AI_GEMINI_LLM_CONTENT,
+    PYDANTIC_AI_OLLAMA_LLM_CONTENT,
+    PYDANTIC_AI_OPENAI_LLM_CONTENT,
+    PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
+)
+
+
+def test_pydantic_ai_openai_no_api_key_in_run_sync():
+    """api_key is not a valid run_sync() kwarg in pydantic-ai 2.x."""
+    assert "run_sync(prompt, api_key" not in PYDANTIC_AI_OPENAI_LLM_CONTENT
+
+
+def test_pydantic_ai_anthropic_no_api_key_in_run_sync():
+    """api_key is not a valid run_sync() kwarg in pydantic-ai 2.x."""
+    assert "run_sync(prompt, api_key" not in PYDANTIC_AI_ANTHROPIC_LLM_CONTENT
+
+
+def test_pydantic_ai_gemini_no_api_key_in_run_sync():
+    """api_key is not a valid run_sync() kwarg in pydantic-ai 2.x."""
+    assert "run_sync(prompt, api_key" not in PYDANTIC_AI_GEMINI_LLM_CONTENT
+
+
+def test_pydantic_ai_gemini_uses_correct_provider_prefix():
+    """pydantic-ai 2.0.0 uses google: not google-gla: for Gemini."""
+    assert "google-gla" not in PYDANTIC_AI_GEMINI_LLM_CONTENT
+    assert "google:" in PYDANTIC_AI_GEMINI_LLM_CONTENT
+
+
+def test_env_pydantic_gemini_uses_correct_model_prefix():
+    """ENV_PYDANTIC_GEMINI MODEL must match the provider prefix in llm.py."""
+    assert "google-gla" not in ENV_PYDANTIC_GEMINI
+    assert "MODEL=google:" in ENV_PYDANTIC_GEMINI
+
+
+def test_pydantic_ai_openrouter_uses_openai_chat_model():
+    """Correct pydantic-ai 2.0.0 pattern for custom base_url providers."""
+    assert "OpenAIChatModel" in PYDANTIC_AI_OPENROUTER_LLM_CONTENT
+    assert "OpenAIProvider" in PYDANTIC_AI_OPENROUTER_LLM_CONTENT
+    assert 'model_settings={"provider"' not in PYDANTIC_AI_OPENROUTER_LLM_CONTENT
+    assert "model_settings" not in PYDANTIC_AI_OPENROUTER_LLM_CONTENT
+
+
+def test_pydantic_ai_ollama_uses_openai_chat_model():
+    """Correct pydantic-ai 2.0.0 pattern for local Ollama provider."""
+    assert "OpenAIChatModel" in PYDANTIC_AI_OLLAMA_LLM_CONTENT
+    assert "OpenAIProvider" in PYDANTIC_AI_OLLAMA_LLM_CONTENT
+    assert "model_settings" not in PYDANTIC_AI_OLLAMA_LLM_CONTENT
+
+
+# ─── Python syntax validity ──────────────────────────────────────────────
+
+
+def _assert_valid_python(content: str, label: str) -> None:
+    """Write content to a temp file and verify it compiles."""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".py", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(content)
+        fname = f.name
+    try:
+        py_compile.compile(fname, doraise=True)
+    except py_compile.PyCompileError as e:
+        raise AssertionError(f"{label} is not valid Python: {e}") from e
+    finally:
+        os.unlink(fname)
+
+
+def test_pydantic_ai_openai_llm_is_valid_python():
+    _assert_valid_python(PYDANTIC_AI_OPENAI_LLM_CONTENT, "PYDANTIC_AI_OPENAI_LLM_CONTENT")
+
+
+def test_pydantic_ai_anthropic_llm_is_valid_python():
+    _assert_valid_python(PYDANTIC_AI_ANTHROPIC_LLM_CONTENT, "PYDANTIC_AI_ANTHROPIC_LLM_CONTENT")
+
+
+def test_pydantic_ai_gemini_llm_is_valid_python():
+    _assert_valid_python(PYDANTIC_AI_GEMINI_LLM_CONTENT, "PYDANTIC_AI_GEMINI_LLM_CONTENT")
+
+
+def test_pydantic_ai_openrouter_llm_is_valid_python():
+    _assert_valid_python(PYDANTIC_AI_OPENROUTER_LLM_CONTENT, "PYDANTIC_AI_OPENROUTER_LLM_CONTENT")
+
+
+def test_pydantic_ai_ollama_llm_is_valid_python():
+    _assert_valid_python(PYDANTIC_AI_OLLAMA_LLM_CONTENT, "PYDANTIC_AI_OLLAMA_LLM_CONTENT")
+
+
+# ─── result.output used (not result.data) ────────────────────────────────
+
+
+def test_pydantic_ai_openai_uses_result_output():
+    assert "result.output" in PYDANTIC_AI_OPENAI_LLM_CONTENT
+    assert "result.data" not in PYDANTIC_AI_OPENAI_LLM_CONTENT
+
+
+def test_pydantic_ai_anthropic_uses_result_output():
+    assert "result.output" in PYDANTIC_AI_ANTHROPIC_LLM_CONTENT
+    assert "result.data" not in PYDANTIC_AI_ANTHROPIC_LLM_CONTENT
+
+
+def test_pydantic_ai_gemini_uses_result_output():
+    assert "result.output" in PYDANTIC_AI_GEMINI_LLM_CONTENT
+    assert "result.data" not in PYDANTIC_AI_GEMINI_LLM_CONTENT
+
+
+def test_pydantic_ai_openrouter_uses_result_output():
+    assert "result.output" in PYDANTIC_AI_OPENROUTER_LLM_CONTENT
+
+
+def test_pydantic_ai_ollama_uses_result_output():
+    assert "result.output" in PYDANTIC_AI_OLLAMA_LLM_CONTENT
