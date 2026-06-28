@@ -37,7 +37,7 @@ def test_chatbot_template_starter_files():
 def test_chatbot_pydantic_ai_dependencies():
     t = ChatbotTemplate(framework="pydantic-ai")
     deps = t.get_dependencies()
-    assert "pydantic-ai" in deps
+    assert "pydantic-ai[openai]" in deps
     assert "python-dotenv" in deps
     assert "openai" not in deps
 
@@ -47,7 +47,7 @@ def test_chatbot_openai_sdk_dependencies():
     deps = t.get_dependencies()
     assert "openai" in deps
     assert "python-dotenv" in deps
-    assert "pydantic-ai" not in deps
+    assert "pydantic-ai[openai]" not in deps
 
 
 def test_chatbot_extras_add_deps():

@@ -226,7 +226,7 @@ def test_chatbot_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
          patch.object(ChatbotTemplate, "post_install"):
         ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
     args = mock_install.call_args[0][1]
-    assert "pydantic-ai" in args
+    assert "pydantic-ai[openai]" in args
     assert "python-dotenv" in args
     assert "openai" not in args
 
@@ -240,7 +240,7 @@ def test_chatbot_openai_sdk_install_packages_called(tmp_path, monkeypatch):
     args = mock_install.call_args[0][1]
     assert "openai" in args
     assert "python-dotenv" in args
-    assert "pydantic-ai" not in args
+    assert "pydantic-ai[openai]" not in args
 
 
 def test_chatbot_extras_reach_install_packages(tmp_path, monkeypatch):

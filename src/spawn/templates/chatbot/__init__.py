@@ -96,7 +96,7 @@ class ChatbotTemplate(BaseTemplate):
         if self.framework == "openai-sdk":
             base = ["openai", "python-dotenv"]
         else:
-            base = ["pydantic-ai", "python-dotenv"]
+            base = ["pydantic-ai[openai]", "python-dotenv"]
         if "pytest" in self.extras:
             base += ["pytest"]
         if "ruff" in self.extras:
