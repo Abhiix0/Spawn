@@ -78,11 +78,10 @@ from pydantic_ai import Agent
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "openai:gpt-4o-mini")
-    api_key = os.getenv("OPENAI_API_KEY", "")
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt, api_key=api_key)
+    result = agent.run_sync(prompt)
     return result.output
 """
 
@@ -94,11 +93,10 @@ from pydantic_ai import Agent
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "anthropic:claude-3-5-haiku-latest")
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt, api_key=api_key)
+    result = agent.run_sync(prompt)
     return result.output
 """
 
@@ -109,20 +107,19 @@ from pydantic_ai import Agent
 
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
-    model = os.getenv("MODEL", "google-gla:gemini-1.5-flash")
-    api_key = os.getenv("GOOGLE_API_KEY", "")
+    model = os.getenv("MODEL", "google:gemini-2.0-flash")
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt, api_key=api_key)
+    result = agent.run_sync(prompt)
     return result.output
 """
 
 PYDANTIC_AI_OPENROUTER_LLM_CONTENT = """\
 import os
 
-from openai import AsyncOpenAI
 from pydantic_ai import Agent
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 
@@ -131,12 +128,12 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     api_key = os.getenv("OPENROUTER_API_KEY", "")
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
-    openai_client = AsyncOpenAI(
+    provider = OpenAIProvider(
         api_key=api_key,
         base_url="https://openrouter.ai/api/v1",
     )
-    provider = OpenAIProvider(openai_client=openai_client)
-    agent = Agent(f"openai:{{model_name}}", system_prompt=system_prompt, model_settings={{"provider": provider}})
+    model = OpenAIChatModel(model_name, provider=provider)
+    agent = Agent(model, system_prompt=system_prompt)
     result = agent.run_sync(prompt)
     return result.output
 """
@@ -144,8 +141,8 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
 PYDANTIC_AI_OLLAMA_LLM_CONTENT = """\
 import os
 
-from openai import AsyncOpenAI
 from pydantic_ai import Agent
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 
@@ -154,9 +151,9 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
     history = [m["content"] for m in messages if m["role"] == "user"]
     prompt = history[-1] if history else ""
-    openai_client = AsyncOpenAI(api_key="ollama", base_url=base_url)
-    provider = OpenAIProvider(openai_client=openai_client)
-    agent = Agent(f"openai:{{model_name}}", system_prompt=system_prompt, model_settings={{"provider": provider}})
+    provider = OpenAIProvider(api_key="ollama", base_url=base_url)
+    model = OpenAIChatModel(model_name, provider=provider)
+    agent = Agent(model, system_prompt=system_prompt)
     result = agent.run_sync(prompt)
     return result.output
 """
@@ -378,7 +375,7 @@ MODEL=anthropic:claude-3-5-haiku-latest
 ENV_PYDANTIC_GEMINI = """\
 APP_NAME={project_name}
 GOOGLE_API_KEY=
-MODEL=google-gla:gemini-1.5-flash
+MODEL=google:gemini-2.0-flash
 """
 
 ENV_PYDANTIC_OPENROUTER = """\
