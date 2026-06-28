@@ -69,6 +69,7 @@ def get_project_config() -> ProjectConfig:
     # --- Framework selection ---
     selected_framework: str | None = None
     selected_cli_type: str | None = None
+    selected_provider: str | None = None
     meta = get_metadata(template)
 
     # --- CLI type selection ---
@@ -130,6 +131,45 @@ def get_project_config() -> ProjectConfig:
 
         selected_framework = framework_map[fw_choice]
 
+    # --- Provider selection ---
+    PROVIDER_MAP: dict[str, list[str]] = {
+        "pydantic-ai":  ["openai", "anthropic", "gemini", "openrouter", "ollama"],
+        "openai-sdk":   ["openai", "openrouter", "gemini"],
+        "litellm":      ["openai", "anthropic", "gemini", "openrouter", "ollama"],
+    }
+
+    if meta and meta.available_providers and selected_framework:
+        provider_options = PROVIDER_MAP.get(selected_framework, meta.available_providers)
+        provider_choice_map = {
+            str(i): p for i, p in enumerate(provider_options, start=1)
+        }
+
+        _print_list(provider_options)
+
+        valid_prov_range = len(provider_options)
+        prov_choice = typer.prompt(
+            typer.style(
+                f"Choose Provider [1-{valid_prov_range}]",
+                fg=typer.colors.CYAN,
+            ),
+            default="1",
+        )
+
+        while prov_choice not in provider_choice_map:
+            typer.secho(
+                "Invalid choice. Please select a valid number.",
+                fg=typer.colors.RED,
+            )
+            prov_choice = typer.prompt(
+                typer.style(
+                    f"Choose Provider [1-{valid_prov_range}]",
+                    fg=typer.colors.CYAN,
+                ),
+                default="1",
+            )
+
+        selected_provider = provider_choice_map[prov_choice]
+
     # --- Extras selection ---
     selected_extras: list[str] = []
 
@@ -175,4 +215,5 @@ def get_project_config() -> ProjectConfig:
         framework=selected_framework,
         extras=selected_extras,
         cli_type=selected_cli_type,
+        provider=selected_provider,
     )
