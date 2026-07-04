@@ -250,3 +250,45 @@ def test_chatbot_extras_reach_install_packages(tmp_path, monkeypatch):
     args = mock_install.call_args[0][1]
     assert "ruff" in args
     assert "pytest" in args
+
+
+def test_chatbot_meta_json_has_provider(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with patch("spawn.generators.project_generator.install_packages"), \
+         patch("spawn.generators.project_generator.initialize_uv"), \
+         patch.object(ChatbotTemplate, "post_install"):
+        config = ProjectConfig(
+            name="my-bot", template="chatbot", use_git=False,
+            framework="pydantic-ai", provider="gemini", extras=[],
+        )
+        ProjectGenerator().generate(config)
+    meta = json.loads(
+        (tmp_path / "my-bot" / ".spawn" / "meta.json").read_text(encoding="utf-8")
+    )
+    assert meta["provider"] == "gemini"
+
+
+def test_chatbot_pydantic_ai_only_pydantic_dep(tmp_path, monkeypatch):
+    """pydantic-ai projects should not install openai/anthropic separately."""
+    monkeypatch.chdir(tmp_path)
+    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
+         patch("spawn.generators.project_generator.initialize_uv"), \
+         patch.object(ChatbotTemplate, "post_install"):
+        ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
+    args = mock_install.call_args[0][1]
+    assert "pydantic-ai" in args
+    assert "openai" not in args
+    assert "anthropic" not in args
+    assert "google-genai" not in args
+
+
+def test_chatbot_memory_history_has_pai_functions(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    mem = (tmp_path / "my-bot" / "src" / "memory" / "history.py").read_text(
+        encoding="utf-8"
+    )
+    assert "get_pai_history" in mem
+    assert "append_pai_messages" in mem
+    assert "_pai_history" in mem

@@ -388,3 +388,177 @@ def test_pydantic_ai_openrouter_uses_result_output():
 
 def test_pydantic_ai_ollama_uses_result_output():
     assert "result.output" in PYDANTIC_AI_OLLAMA_LLM_CONTENT
+
+
+# ─── Memory dual-store ────────────────────────────────────────────────────
+
+
+def test_memory_has_get_pai_history():
+    t = ChatbotTemplate()
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    assert "get_pai_history" in mem
+    assert "_pai_history" in mem
+
+
+def test_memory_has_append_pai_messages():
+    t = ChatbotTemplate()
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    assert "append_pai_messages" in mem
+
+
+def test_memory_clear_resets_both_stores():
+    t = ChatbotTemplate()
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    assert "_history.clear()" in mem
+    assert "_pai_history.clear()" in mem
+
+
+def test_memory_type_checking_guard():
+    """pydantic_ai import is guarded by TYPE_CHECKING to avoid
+    import errors in openai-sdk/litellm projects."""
+    t = ChatbotTemplate()
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    assert "TYPE_CHECKING" in mem
+    assert "from pydantic_ai.messages import ModelMessage" in mem
+
+
+# ─── PydanticAI multi-turn memory ────────────────────────────────────────
+
+
+@pytest.mark.parametrize("provider", [
+    "openai", "anthropic", "gemini", "openrouter", "ollama"
+])
+def test_pydantic_ai_sends_message_history(provider):
+    """All pydantic-ai variants must pass message_history to run_sync()."""
+    t = ChatbotTemplate(framework="pydantic-ai", provider=provider)
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "message_history=get_pai_history()" in llm, \
+        f"pydantic-ai+{provider} missing message_history param"
+
+
+@pytest.mark.parametrize("provider", [
+    "openai", "anthropic", "gemini", "openrouter", "ollama"
+])
+def test_pydantic_ai_appends_new_messages(provider):
+    """All pydantic-ai variants must store new messages after each call."""
+    t = ChatbotTemplate(framework="pydantic-ai", provider=provider)
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "append_pai_messages(result.new_messages())" in llm, \
+        f"pydantic-ai+{provider} missing append_pai_messages call"
+
+
+@pytest.mark.parametrize("provider", [
+    "openai", "anthropic", "gemini", "openrouter", "ollama"
+])
+def test_pydantic_ai_imports_memory_functions(provider):
+    """All pydantic-ai variants must import the pai history functions."""
+    t = ChatbotTemplate(framework="pydantic-ai", provider=provider)
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "from src.memory.history import get_pai_history, append_pai_messages" in llm
+
+
+# ─── Dependency simplification ───────────────────────────────────────────
+
+
+@pytest.mark.parametrize("provider", [
+    "openai", "anthropic", "gemini", "openrouter", "ollama"
+])
+def test_pydantic_ai_uses_metapackage_only(provider):
+    """pydantic-ai metapackage bundles all providers — no separate installs."""
+    t = ChatbotTemplate(framework="pydantic-ai", provider=provider)
+    deps = t.get_dependencies()
+    assert "pydantic-ai" in deps
+    assert "openai" not in deps, \
+        f"pydantic-ai+{provider} should not list openai separately"
+    assert "anthropic" not in deps, \
+        f"pydantic-ai+{provider} should not list anthropic separately"
+    assert "google-genai" not in deps, \
+        f"pydantic-ai+{provider} should not list google-genai separately"
+
+
+# ─── All 13 combinations generate complete file sets ─────────────────────
+
+ALL_COMBINATIONS = [
+    ("pydantic-ai",  "openai"),
+    ("pydantic-ai",  "anthropic"),
+    ("pydantic-ai",  "gemini"),
+    ("pydantic-ai",  "openrouter"),
+    ("pydantic-ai",  "ollama"),
+    ("openai-sdk",   "openai"),
+    ("openai-sdk",   "openrouter"),
+    ("openai-sdk",   "gemini"),
+    ("litellm",      "openai"),
+    ("litellm",      "anthropic"),
+    ("litellm",      "gemini"),
+    ("litellm",      "openrouter"),
+    ("litellm",      "ollama"),
+]
+
+REQUIRED_FILES = [
+    "src/__init__.py",
+    "src/chatbot/__init__.py",
+    "src/chatbot/chat.py",
+    "src/providers/__init__.py",
+    "src/providers/llm.py",
+    "src/prompts/__init__.py",
+    "src/prompts/system.txt",
+    "src/memory/__init__.py",
+    "src/memory/history.py",
+    "src/config/__init__.py",
+    "src/config/settings.py",
+    "src/main.py",
+    "tests/__init__.py",
+    "tests/conftest.py",
+    "tests/test_chatbot.py",
+    ".env.example",
+]
+
+
+@pytest.mark.parametrize("framework,provider", ALL_COMBINATIONS)
+def test_all_combinations_generate_required_files(framework, provider):
+    t = ChatbotTemplate(framework=framework, provider=provider)
+    generated = [p for p, _ in t.starter_files]
+    for required in REQUIRED_FILES:
+        assert required in generated, \
+            f"{framework}+{provider} missing {required}"
+
+
+@pytest.mark.parametrize("framework,provider", ALL_COMBINATIONS)
+def test_all_combinations_llm_compiles(framework, provider):
+    """Every llm.py variant must be syntactically valid Python."""
+    t = ChatbotTemplate(framework=framework, provider=provider)
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    _assert_valid_python(llm, f"{framework}+{provider} llm.py")
+
+
+@pytest.mark.parametrize("framework,provider", ALL_COMBINATIONS)
+def test_all_combinations_memory_compiles(framework, provider):
+    """memory/history.py must compile for all combinations."""
+    t = ChatbotTemplate(framework=framework, provider=provider)
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    _assert_valid_python(mem, f"{framework}+{provider} memory/history.py")
+
+
+@pytest.mark.parametrize("framework,provider", ALL_COMBINATIONS)
+def test_all_combinations_have_python_dotenv(framework, provider):
+    t = ChatbotTemplate(framework=framework, provider=provider)
+    assert "python-dotenv" in t.get_dependencies(), \
+        f"{framework}+{provider} missing python-dotenv"
+
+
+@pytest.mark.parametrize("framework,provider", ALL_COMBINATIONS)
+def test_no_utils_dir_generated(framework, provider):
+    t = ChatbotTemplate(framework=framework, provider=provider)
+    paths = [p for p, _ in t.starter_files]
+    assert "src/utils/env.py" not in paths
+    assert "src/utils/__init__.py" not in paths
+    assert "src/utils" not in t.folders
