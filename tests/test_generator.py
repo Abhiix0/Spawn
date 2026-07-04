@@ -530,7 +530,6 @@ def test_chatbot_generator_creates_folders(mock_uv, mock_install, tmp_path, monk
     assert (tmp_path / "demo" / "src" / "chatbot").exists()
     assert (tmp_path / "demo" / "src" / "providers").exists()
     assert (tmp_path / "demo" / "src" / "prompts").exists()
-    assert (tmp_path / "demo" / "src" / "utils").exists()
     assert (tmp_path / "demo" / "tests").exists()
 
 
@@ -599,7 +598,6 @@ def test_chatbot_pydantic_ai_extras_in_dependencies():
     )
     deps = instantiate_template(config).get_dependencies()
     assert "pydantic-ai" in deps
-    assert "openai" in deps
     assert "python-dotenv" in deps
     assert "ruff" in deps
     assert "pytest" in deps

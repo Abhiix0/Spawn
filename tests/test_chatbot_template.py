@@ -46,7 +46,6 @@ def test_folders_include_all_required():
     assert "src/prompts"   in t.folders
     assert "src/memory"    in t.folders
     assert "src/config"    in t.folders
-    assert "src/utils"     in t.folders
     assert "tests"         in t.folders
 
 
@@ -164,8 +163,6 @@ def test_openai_sdk_env_has_plain_model():
 
 @pytest.mark.parametrize("framework,provider,expected_dep", [
     ("pydantic-ai",  "openai",     "pydantic-ai"),
-    ("pydantic-ai",  "anthropic",  "anthropic"),
-    ("pydantic-ai",  "gemini",     "google-genai"),
     ("openai-sdk",   "openai",     "openai"),
     ("litellm",      "openai",     "litellm"),
     ("litellm",      "anthropic",  "litellm"),

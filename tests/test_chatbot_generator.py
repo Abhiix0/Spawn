@@ -64,13 +64,6 @@ def test_chatbot_creates_prompts_dir(tmp_path, monkeypatch):
     assert (tmp_path / "my-bot" / "src" / "prompts").is_dir()
 
 
-def test_chatbot_creates_utils_dir(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    with _mock_uv_and_install():
-        ProjectGenerator().generate(_cfg())
-    assert (tmp_path / "my-bot" / "src" / "utils").is_dir()
-
-
 def test_chatbot_creates_tests_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with _mock_uv_and_install():
@@ -109,13 +102,6 @@ def test_chatbot_creates_system_prompt(tmp_path, monkeypatch):
     with _mock_uv_and_install():
         ProjectGenerator().generate(_cfg())
     assert (tmp_path / "my-bot" / "src" / "prompts" / "system.txt").exists()
-
-
-def test_chatbot_creates_env_util(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    with _mock_uv_and_install():
-        ProjectGenerator().generate(_cfg())
-    assert (tmp_path / "my-bot" / "src" / "utils" / "env.py").exists()
 
 
 def test_chatbot_creates_test_file(tmp_path, monkeypatch):
@@ -226,7 +212,6 @@ def test_chatbot_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
         ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
     args = mock_install.call_args[0][1]
     assert "pydantic-ai" in args
-    assert "openai" in args
     assert "python-dotenv" in args
 
 

@@ -7,7 +7,6 @@ from spawn.templates.chatbot.content import (
     MEMORY_HISTORY_CONTENT,
     SYSTEM_PROMPT_TXT_CONTENT,
     SETTINGS_CONTENT,
-    ENV_UTIL_CONTENT,
     MAIN_CONTENT_NO_RICH,
     MAIN_CONTENT_RICH,
     TEST_CONTENT,
@@ -47,7 +46,6 @@ CHATBOT_FOLDERS = [
     "src/prompts",
     "src/memory",
     "src/config",
-    "src/utils",
     "tests",
 ]
 
@@ -120,8 +118,6 @@ def _build_files(main_content: str, llm_content: str, env_content: str) -> list:
         ("src/memory/history.py",     MEMORY_HISTORY_CONTENT),
         ("src/config/__init__.py",    INIT_CONTENT),
         ("src/config/settings.py",    SETTINGS_CONTENT),
-        ("src/utils/__init__.py",     INIT_CONTENT),
-        ("src/utils/env.py",          ENV_UTIL_CONTENT),
         ("src/main.py",               main_content),
         ("tests/__init__.py",         INIT_CONTENT),
         ("tests/test_chatbot.py",     TEST_CONTENT),
@@ -161,11 +157,11 @@ class ChatbotTemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         dep_map: dict[tuple[str, str], list[str]] = {
-            ("pydantic-ai",  "openai"):     ["pydantic-ai", "openai",       "python-dotenv"],
-            ("pydantic-ai",  "anthropic"):  ["pydantic-ai", "anthropic",    "python-dotenv"],
-            ("pydantic-ai",  "gemini"):     ["pydantic-ai", "google-genai", "python-dotenv"],
-            ("pydantic-ai",  "openrouter"): ["pydantic-ai", "openai",       "python-dotenv"],
-            ("pydantic-ai",  "ollama"):     ["pydantic-ai", "openai",       "python-dotenv"],
+            ("pydantic-ai",  "openai"):     ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai",  "anthropic"):  ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai",  "gemini"):     ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai",  "openrouter"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai",  "ollama"):     ["pydantic-ai", "python-dotenv"],
             ("openai-sdk",   "openai"):     ["openai",       "python-dotenv"],
             ("openai-sdk",   "openrouter"): ["openai",       "python-dotenv"],
             ("openai-sdk",   "gemini"):     ["openai",       "python-dotenv"],

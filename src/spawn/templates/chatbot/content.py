@@ -79,12 +79,6 @@ def get_system_prompt() -> str:
     return prompt_path.read_text(encoding="utf-8").strip()
 """
 
-ENV_UTIL_CONTENT = """\
-from src.config.settings import load_env
-
-__all__ = ["load_env"]
-"""
-
 # ─── PydanticAI ───────────────────────────────────────────────────────────
 
 PYDANTIC_AI_OPENAI_LLM_CONTENT = """\
