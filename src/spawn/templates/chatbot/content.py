@@ -18,7 +18,15 @@ def get_response(user_input: str) -> str:
 """
 
 MEMORY_HISTORY_CONTENT = """\
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pydantic_ai.messages import ModelMessage
+
 _history: list[dict] = []
+_pai_history: list[ModelMessage] = []
 
 
 def append_user(content: str) -> None:
@@ -33,8 +41,17 @@ def get_history() -> list[dict]:
     return list(_history)
 
 
+def get_pai_history() -> list[ModelMessage]:
+    return list(_pai_history)
+
+
+def append_pai_messages(messages: list[ModelMessage]) -> None:
+    _pai_history.extend(messages)
+
+
 def clear() -> None:
     _history.clear()
+    _pai_history.clear()
 """
 
 SYSTEM_PROMPT_TXT_CONTENT = """\
@@ -75,13 +92,16 @@ import os
 
 from pydantic_ai import Agent
 
+from src.memory.history import get_pai_history, append_pai_messages
+
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "openai:gpt-4o-mini")
-    history = [m["content"] for m in messages if m["role"] == "user"]
-    prompt = history[-1] if history else ""
+    user_messages = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = user_messages[-1] if user_messages else ""
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt)
+    result = agent.run_sync(prompt, message_history=get_pai_history())
+    append_pai_messages(result.new_messages())
     return result.output
 """
 
@@ -90,13 +110,16 @@ import os
 
 from pydantic_ai import Agent
 
+from src.memory.history import get_pai_history, append_pai_messages
+
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "anthropic:claude-3-5-haiku-latest")
-    history = [m["content"] for m in messages if m["role"] == "user"]
-    prompt = history[-1] if history else ""
+    user_messages = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = user_messages[-1] if user_messages else ""
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt)
+    result = agent.run_sync(prompt, message_history=get_pai_history())
+    append_pai_messages(result.new_messages())
     return result.output
 """
 
@@ -105,13 +128,16 @@ import os
 
 from pydantic_ai import Agent
 
+from src.memory.history import get_pai_history, append_pai_messages
+
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "google:gemini-2.0-flash")
-    history = [m["content"] for m in messages if m["role"] == "user"]
-    prompt = history[-1] if history else ""
+    user_messages = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = user_messages[-1] if user_messages else ""
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt)
+    result = agent.run_sync(prompt, message_history=get_pai_history())
+    append_pai_messages(result.new_messages())
     return result.output
 """
 
@@ -122,19 +148,22 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from src.memory.history import get_pai_history, append_pai_messages
+
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model_name = os.getenv("MODEL", "openai/gpt-4o-mini")
     api_key = os.getenv("OPENROUTER_API_KEY", "")
-    history = [m["content"] for m in messages if m["role"] == "user"]
-    prompt = history[-1] if history else ""
+    user_messages = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = user_messages[-1] if user_messages else ""
     provider = OpenAIProvider(
         api_key=api_key,
         base_url="https://openrouter.ai/api/v1",
     )
     model = OpenAIChatModel(model_name, provider=provider)
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt)
+    result = agent.run_sync(prompt, message_history=get_pai_history())
+    append_pai_messages(result.new_messages())
     return result.output
 """
 
@@ -145,16 +174,19 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from src.memory.history import get_pai_history, append_pai_messages
+
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model_name = os.getenv("MODEL", "llama3.2")
     base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-    history = [m["content"] for m in messages if m["role"] == "user"]
-    prompt = history[-1] if history else ""
+    user_messages = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = user_messages[-1] if user_messages else ""
     provider = OpenAIProvider(api_key="ollama", base_url=base_url)
     model = OpenAIChatModel(model_name, provider=provider)
     agent = Agent(model, system_prompt=system_prompt)
-    result = agent.run_sync(prompt)
+    result = agent.run_sync(prompt, message_history=get_pai_history())
+    append_pai_messages(result.new_messages())
     return result.output
 """
 
