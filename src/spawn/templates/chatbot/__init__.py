@@ -146,7 +146,7 @@ class ChatbotTemplate(BaseTemplate):
             starter_files=_build_files(main_content, llm_content, env_content),
             next_steps=[
                 "cd {project_name}",
-                "cp .env.example .env  # then fill in your API key",
+                "Rename .env.example to .env and fill in your API key",
                 "uv run python -m src.main",
             ],
         )

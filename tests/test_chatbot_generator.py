@@ -179,13 +179,19 @@ def test_chatbot_openai_sdk_llm_uses_openai_client(tmp_path, monkeypatch):
 
 def test_chatbot_creates_spawn_meta_json(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    config = ProjectConfig(
+        name="my-bot", template="chatbot", use_git=False,
+        framework="pydantic-ai", provider="openai", extras=[],
+    )
     with _mock_uv_and_install():
-        ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
+        ProjectGenerator().generate(config)
     meta = json.loads(
         (tmp_path / "my-bot" / ".spawn" / "meta.json").read_text(encoding="utf-8")
     )
     assert meta["intent"] == "chatbot"
     assert meta["framework"] == "pydantic-ai"
+    assert "provider" in meta
+    assert meta["provider"] == "openai"
 
 
 def test_chatbot_openai_sdk_meta_json(tmp_path, monkeypatch):
@@ -197,6 +203,7 @@ def test_chatbot_openai_sdk_meta_json(tmp_path, monkeypatch):
     )
     assert meta["intent"] == "chatbot"
     assert meta["framework"] == "openai-sdk"
+    assert "provider" in meta
 
 
 # ---------------------------------------------------------------------------

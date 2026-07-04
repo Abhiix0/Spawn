@@ -76,6 +76,7 @@ class ProjectGenerator:
                     {
                         "intent": config.template,
                         "framework": config.framework,
+                        "provider": config.provider,
                         "spawn_version": __version__,
                     },
                     indent=2,
