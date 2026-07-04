@@ -32,6 +32,7 @@ from spawn.templates.chatbot.content import (
     ENV_GEMINI,
     ENV_OPENROUTER,
     ENV_OLLAMA,
+    ENV_LITELLM_OLLAMA,
     ENV_PYDANTIC_OPENAI,
     ENV_PYDANTIC_ANTHROPIC,
     ENV_PYDANTIC_GEMINI,
@@ -84,6 +85,15 @@ _ENV_MAP_GENERIC: dict[str, str] = {
     "ollama":     ENV_OLLAMA,
 }
 
+# litellm+ollama uses OLLAMA_API_BASE (litellm convention) instead of OLLAMA_BASE_URL
+_ENV_MAP_LITELLM: dict[str, str] = {
+    "openai":     ENV_OPENAI,
+    "anthropic":  ENV_ANTHROPIC,
+    "gemini":     ENV_GEMINI,
+    "openrouter": ENV_OPENROUTER,
+    "ollama":     ENV_LITELLM_OLLAMA,
+}
+
 
 def _resolve_llm(framework: str, provider: str) -> str:
     return _LLM_MAP.get((framework, provider), PYDANTIC_AI_OPENAI_LLM_CONTENT)
@@ -92,6 +102,8 @@ def _resolve_llm(framework: str, provider: str) -> str:
 def _resolve_env(framework: str, provider: str) -> str:
     if framework == "pydantic-ai":
         return _ENV_MAP_PYDANTIC.get(provider, ENV_PYDANTIC_OPENAI)
+    if framework == "litellm":
+        return _ENV_MAP_LITELLM.get(provider, ENV_OPENAI)
     return _ENV_MAP_GENERIC.get(provider, ENV_OPENAI)
 
 

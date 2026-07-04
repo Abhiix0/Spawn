@@ -135,7 +135,7 @@ def test_pydantic_ai_no_setdefault_openai_key():
     ("litellm",      "anthropic",  "ANTHROPIC_API_KEY"),
     ("litellm",      "gemini",     "GOOGLE_API_KEY"),
     ("litellm",      "openrouter", "OPENROUTER_API_KEY"),
-    ("litellm",      "ollama",     "OLLAMA_BASE_URL"),
+    ("litellm",      "ollama",     "OLLAMA_API_BASE"),
 ])
 def test_env_example_correct_key(framework, provider, expected_key):
     t = ChatbotTemplate(framework=framework, provider=provider)

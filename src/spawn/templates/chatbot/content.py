@@ -270,8 +270,9 @@ import litellm
 
 def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "ollama/llama3.2")
+    base_url = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
     full_messages = [{{"role": "system", "content": system_prompt}}] + messages
-    response = litellm.completion(model=model, messages=full_messages)
+    response = litellm.completion(model=model, messages=full_messages, api_base=base_url)
     return response.choices[0].message.content or ""
 """
 
@@ -358,6 +359,13 @@ OLLAMA_BASE_URL=http://localhost:11434
 MODEL=llama3.2
 """
 
+# litellm+ollama uses a different env var for the base URL
+ENV_LITELLM_OLLAMA = """\
+APP_NAME={project_name}
+OLLAMA_API_BASE=http://localhost:11434
+MODEL=ollama/llama3.2
+"""
+
 # Provider-prefixed MODEL for pydantic-ai variants
 
 ENV_PYDANTIC_OPENAI = """\
@@ -392,11 +400,12 @@ MODEL=llama3.2
 
 # ─── Test content ─────────────────────────────────────────────────────────
 
+# BUG FIX: removed unused imports MagicMock and get_llm_response
+# which caused ruff F401 failures in generated projects with ruff extra selected
 TEST_CONTENT = """\
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from src.chatbot.chat import get_response
-from src.providers.llm import get_llm_response
 
 
 def test_get_response_returns_string():
