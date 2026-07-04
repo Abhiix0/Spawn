@@ -229,6 +229,29 @@ def test_memory_history_has_required_functions():
     assert "clear"            in mem
 
 
+# ─── Conftest ─────────────────────────────────────────────────────────────
+
+
+def test_conftest_py_is_generated():
+    t = ChatbotTemplate()
+    paths = [p for p, _ in t.starter_files]
+    assert "tests/conftest.py" in paths
+
+
+def test_conftest_has_autouse_fixture():
+    t = ChatbotTemplate()
+    files = dict(t.starter_files)
+    conftest = files["tests/conftest.py"]
+    assert "autouse=True" in conftest
+    assert "clear()" in conftest
+    assert "reset_memory" in conftest
+
+
+def test_conftest_is_valid_python():
+    from spawn.templates.chatbot.content import CONFTEST_CONTENT
+    _assert_valid_python(CONFTEST_CONTENT, "CONFTEST_CONTENT")
+
+
 # ─── README ───────────────────────────────────────────────────────────────
 
 

@@ -428,6 +428,20 @@ MODEL=llama3.2
 
 # BUG FIX: removed unused imports MagicMock and get_llm_response
 # which caused ruff F401 failures in generated projects with ruff extra selected
+CONFTEST_CONTENT = """\
+import pytest
+
+from src.memory.history import clear
+
+
+@pytest.fixture(autouse=True)
+def reset_memory():
+    \"\"\"Reset conversation history before every test.\"\"\"
+    clear()
+    yield
+    clear()
+"""
+
 TEST_CONTENT = """\
 from unittest.mock import patch
 

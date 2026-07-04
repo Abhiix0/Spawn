@@ -111,6 +111,13 @@ def test_chatbot_creates_test_file(tmp_path, monkeypatch):
     assert (tmp_path / "my-bot" / "tests" / "test_chatbot.py").exists()
 
 
+def test_chatbot_creates_conftest(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    assert (tmp_path / "my-bot" / "tests" / "conftest.py").exists()
+
+
 def test_chatbot_creates_env_example(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with _mock_uv_and_install():

@@ -7,6 +7,7 @@ from spawn.templates.chatbot.content import (
     MEMORY_HISTORY_CONTENT,
     SYSTEM_PROMPT_TXT_CONTENT,
     SETTINGS_CONTENT,
+    CONFTEST_CONTENT,
     MAIN_CONTENT_NO_RICH,
     MAIN_CONTENT_RICH,
     TEST_CONTENT,
@@ -120,6 +121,7 @@ def _build_files(main_content: str, llm_content: str, env_content: str) -> list:
         ("src/config/settings.py",    SETTINGS_CONTENT),
         ("src/main.py",               main_content),
         ("tests/__init__.py",         INIT_CONTENT),
+        ("tests/conftest.py",         CONFTEST_CONTENT),
         ("tests/test_chatbot.py",     TEST_CONTENT),
         (".env.example",              env_content),
     ]
