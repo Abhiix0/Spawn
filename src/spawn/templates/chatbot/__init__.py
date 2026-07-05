@@ -19,25 +19,30 @@ from spawn.templates.chatbot.content import (
     PYDANTIC_AI_GEMINI_LLM_CONTENT,
     PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
     PYDANTIC_AI_OLLAMA_LLM_CONTENT,
+    PYDANTIC_AI_GROQ_LLM_CONTENT,
     OPENAI_SDK_OPENAI_LLM_CONTENT,
     OPENAI_SDK_OPENROUTER_LLM_CONTENT,
     OPENAI_SDK_GEMINI_LLM_CONTENT,
+    OPENAI_SDK_GROQ_LLM_CONTENT,
     LITELLM_OPENAI_LLM_CONTENT,
     LITELLM_ANTHROPIC_LLM_CONTENT,
     LITELLM_GEMINI_LLM_CONTENT,
     LITELLM_OPENROUTER_LLM_CONTENT,
     LITELLM_OLLAMA_LLM_CONTENT,
+    LITELLM_GROQ_LLM_CONTENT,
     ENV_OPENAI,
     ENV_ANTHROPIC,
     ENV_GEMINI,
     ENV_OPENROUTER,
     ENV_OLLAMA,
     ENV_LITELLM_OLLAMA,
+    ENV_GROQ,
     ENV_PYDANTIC_OPENAI,
     ENV_PYDANTIC_ANTHROPIC,
     ENV_PYDANTIC_GEMINI,
     ENV_PYDANTIC_OPENROUTER,
     ENV_PYDANTIC_OLLAMA,
+    ENV_PYDANTIC_GROQ,
     make_readme,
 )
 
@@ -57,14 +62,17 @@ _LLM_MAP: dict[tuple[str, str], str] = {
     ("pydantic-ai",  "gemini"):     PYDANTIC_AI_GEMINI_LLM_CONTENT,
     ("pydantic-ai",  "openrouter"): PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
     ("pydantic-ai",  "ollama"):     PYDANTIC_AI_OLLAMA_LLM_CONTENT,
+    ("pydantic-ai",  "groq"):       PYDANTIC_AI_GROQ_LLM_CONTENT,
     ("openai-sdk",   "openai"):     OPENAI_SDK_OPENAI_LLM_CONTENT,
     ("openai-sdk",   "openrouter"): OPENAI_SDK_OPENROUTER_LLM_CONTENT,
     ("openai-sdk",   "gemini"):     OPENAI_SDK_GEMINI_LLM_CONTENT,
+    ("openai-sdk",   "groq"):       OPENAI_SDK_GROQ_LLM_CONTENT,
     ("litellm",      "openai"):     LITELLM_OPENAI_LLM_CONTENT,
     ("litellm",      "anthropic"):  LITELLM_ANTHROPIC_LLM_CONTENT,
     ("litellm",      "gemini"):     LITELLM_GEMINI_LLM_CONTENT,
     ("litellm",      "openrouter"): LITELLM_OPENROUTER_LLM_CONTENT,
     ("litellm",      "ollama"):     LITELLM_OLLAMA_LLM_CONTENT,
+    ("litellm",      "groq"):       LITELLM_GROQ_LLM_CONTENT,
 }
 
 # Maps provider → env example (pydantic-ai uses prefixed MODEL format)
@@ -74,6 +82,7 @@ _ENV_MAP_PYDANTIC: dict[str, str] = {
     "gemini":     ENV_PYDANTIC_GEMINI,
     "openrouter": ENV_PYDANTIC_OPENROUTER,
     "ollama":     ENV_PYDANTIC_OLLAMA,
+    "groq":       ENV_PYDANTIC_GROQ,
 }
 
 _ENV_MAP_GENERIC: dict[str, str] = {
@@ -82,6 +91,7 @@ _ENV_MAP_GENERIC: dict[str, str] = {
     "gemini":     ENV_GEMINI,
     "openrouter": ENV_OPENROUTER,
     "ollama":     ENV_OLLAMA,
+    "groq":       ENV_GROQ,
 }
 
 # litellm+ollama uses OLLAMA_API_BASE (litellm convention) instead of OLLAMA_BASE_URL
@@ -91,6 +101,7 @@ _ENV_MAP_LITELLM: dict[str, str] = {
     "gemini":     ENV_GEMINI,
     "openrouter": ENV_OPENROUTER,
     "ollama":     ENV_LITELLM_OLLAMA,
+    "groq":       ENV_GROQ,
 }
 
 
@@ -164,14 +175,17 @@ class ChatbotTemplate(BaseTemplate):
             ("pydantic-ai",  "gemini"):     ["pydantic-ai", "python-dotenv"],
             ("pydantic-ai",  "openrouter"): ["pydantic-ai", "python-dotenv"],
             ("pydantic-ai",  "ollama"):     ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai",  "groq"):       ["pydantic-ai", "python-dotenv"],
             ("openai-sdk",   "openai"):     ["openai",       "python-dotenv"],
             ("openai-sdk",   "openrouter"): ["openai",       "python-dotenv"],
             ("openai-sdk",   "gemini"):     ["openai",       "python-dotenv"],
+            ("openai-sdk",   "groq"):       ["openai",       "python-dotenv"],
             ("litellm",      "openai"):     ["litellm",      "python-dotenv"],
             ("litellm",      "anthropic"):  ["litellm",      "python-dotenv"],
             ("litellm",      "gemini"):     ["litellm",      "python-dotenv"],
             ("litellm",      "openrouter"): ["litellm",      "python-dotenv"],
             ("litellm",      "ollama"):     ["litellm",      "python-dotenv"],
+            ("litellm",      "groq"):       ["litellm",      "python-dotenv"],
         }
 
         base = list(dep_map.get((self.framework, self.provider), ["pydantic-ai", "openai", "python-dotenv"]))
