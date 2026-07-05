@@ -184,6 +184,24 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     return result.output
 """
 
+PYDANTIC_AI_GROQ_LLM_CONTENT = """\
+import os
+
+from pydantic_ai import Agent
+
+from src.memory.history import get_pai_history, append_pai_messages
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "groq:llama-3.1-8b-instant")
+    user_messages = [m["content"] for m in messages if m["role"] == "user"]
+    prompt = user_messages[-1] if user_messages else ""
+    agent = Agent(model, system_prompt=system_prompt)
+    result = agent.run_sync(prompt, message_history=get_pai_history())
+    append_pai_messages(result.new_messages())
+    return result.output
+"""
+
 # ─── OpenAI SDK ───────────────────────────────────────────────────────────
 
 OPENAI_SDK_OPENAI_LLM_CONTENT = """\
@@ -229,6 +247,23 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     )
     model = os.getenv("MODEL", "gemini-1.5-flash")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = client.chat.completions.create(model=model, messages=full_messages)
+    return response.choices[0].message.content or ""
+"""
+
+OPENAI_SDK_GROQ_LLM_CONTENT = """\
+import os
+
+from openai import OpenAI
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    client = OpenAI(
+        api_key=os.getenv("GROQ_API_KEY", ""),
+        base_url="https://api.groq.com/openai/v1",
+    )
+    model = os.getenv("MODEL", "llama-3.1-8b-instant")
     full_messages = [{{"role": "system", "content": system_prompt}}] + messages
     response = client.chat.completions.create(model=model, messages=full_messages)
     return response.choices[0].message.content or ""
@@ -299,6 +334,19 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     base_url = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
     full_messages = [{{"role": "system", "content": system_prompt}}] + messages
     response = litellm.completion(model=model, messages=full_messages, api_base=base_url)
+    return response.choices[0].message.content or ""
+"""
+
+LITELLM_GROQ_LLM_CONTENT = """\
+import os
+
+import litellm
+
+
+def get_llm_response(messages: list[dict], system_prompt: str) -> str:
+    model = os.getenv("MODEL", "groq/llama-3.1-8b-instant")
+    full_messages = [{{"role": "system", "content": system_prompt}}] + messages
+    response = litellm.completion(model=model, messages=full_messages)
     return response.choices[0].message.content or ""
 """
 
@@ -392,6 +440,12 @@ OLLAMA_API_BASE=http://localhost:11434
 MODEL=ollama/llama3.2
 """
 
+ENV_GROQ = """\
+APP_NAME={project_name}
+GROQ_API_KEY=
+MODEL=llama-3.1-8b-instant
+"""
+
 # Provider-prefixed MODEL for pydantic-ai variants
 
 ENV_PYDANTIC_OPENAI = """\
@@ -422,6 +476,12 @@ ENV_PYDANTIC_OLLAMA = """\
 APP_NAME={project_name}
 OLLAMA_BASE_URL=http://localhost:11434
 MODEL=llama3.2
+"""
+
+ENV_PYDANTIC_GROQ = """\
+APP_NAME={project_name}
+GROQ_API_KEY=
+MODEL=groq:llama-3.1-8b-instant
 """
 
 # ─── Test content ─────────────────────────────────────────────────────────
@@ -479,6 +539,7 @@ def make_readme(framework: str, provider: str) -> str:
         "gemini":      "GOOGLE_API_KEY=your-key",
         "openrouter":  "OPENROUTER_API_KEY=your-key",
         "ollama":      "OLLAMA_BASE_URL=http://localhost:11434",
+        "groq":        "GROQ_API_KEY=your-key",
     }
     key_line = provider_key_map.get(provider, "API_KEY=your-key")
     return (
