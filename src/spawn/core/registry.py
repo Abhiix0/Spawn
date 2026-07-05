@@ -61,7 +61,7 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         description="Conversational AI with PydanticAI, OpenAI SDK, or LiteLLM",
         template_class=ChatbotTemplate,
         available_frameworks=["pydantic-ai", "openai-sdk", "litellm"],
-        available_providers=["openai", "anthropic", "gemini", "openrouter", "ollama"],
+        available_providers=["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
         available_extras=["ruff", "pytest", "rich", "github-actions"],
     ),
 }

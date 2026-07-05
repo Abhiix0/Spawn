@@ -133,9 +133,9 @@ def get_project_config() -> ProjectConfig:
 
     # --- Provider selection ---
     PROVIDER_MAP: dict[str, list[str]] = {
-        "pydantic-ai":  ["openai", "anthropic", "gemini", "openrouter", "ollama"],
-        "openai-sdk":   ["openai", "openrouter", "gemini"],
-        "litellm":      ["openai", "anthropic", "gemini", "openrouter", "ollama"],
+        "pydantic-ai":  ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
+        "openai-sdk":   ["openai", "openrouter", "gemini", "groq"],
+        "litellm":      ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
     }
 
     if meta and meta.available_providers and selected_framework:
