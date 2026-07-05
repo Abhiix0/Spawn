@@ -141,6 +141,8 @@ def test_chatbot_metadata():
     assert "ruff" in meta.available_extras
     assert "pytest" in meta.available_extras
     assert "github-actions" in meta.available_extras
+    assert "ollama" in meta.available_providers
+    assert "groq" in meta.available_providers
     assert meta.available_cli_types == []
 
 

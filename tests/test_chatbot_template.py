@@ -491,14 +491,17 @@ ALL_COMBINATIONS = [
     ("pydantic-ai",  "gemini"),
     ("pydantic-ai",  "openrouter"),
     ("pydantic-ai",  "ollama"),
+    ("pydantic-ai",  "groq"),
     ("openai-sdk",   "openai"),
     ("openai-sdk",   "openrouter"),
     ("openai-sdk",   "gemini"),
+    ("openai-sdk",   "groq"),
     ("litellm",      "openai"),
     ("litellm",      "anthropic"),
     ("litellm",      "gemini"),
     ("litellm",      "openrouter"),
     ("litellm",      "ollama"),
+    ("litellm",      "groq"),
 ]
 
 REQUIRED_FILES = [
@@ -562,3 +565,53 @@ def test_no_utils_dir_generated(framework, provider):
     assert "src/utils/env.py" not in paths
     assert "src/utils/__init__.py" not in paths
     assert "src/utils" not in t.folders
+
+
+# ─── Groq-specific ───────────────────────────────────────────────────────
+
+
+def test_pydantic_ai_groq_uses_groq_prefix():
+    t = ChatbotTemplate(framework="pydantic-ai", provider="groq")
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "groq:llama-3.1-8b-instant" in llm
+
+
+def test_pydantic_ai_groq_has_multi_turn_memory():
+    t = ChatbotTemplate(framework="pydantic-ai", provider="groq")
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "message_history=get_pai_history()" in llm
+    assert "append_pai_messages(result.new_messages())" in llm
+
+
+def test_openai_sdk_groq_uses_groq_base_url():
+    t = ChatbotTemplate(framework="openai-sdk", provider="groq")
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "api.groq.com" in llm
+    assert "GROQ_API_KEY" in llm
+
+
+def test_litellm_groq_uses_groq_prefix():
+    t = ChatbotTemplate(framework="litellm", provider="groq")
+    files = dict(t.starter_files)
+    llm = files["src/providers/llm.py"]
+    assert "groq/llama-3.1-8b-instant" in llm
+
+
+@pytest.mark.parametrize("framework", ["pydantic-ai", "openai-sdk", "litellm"])
+def test_groq_env_has_groq_api_key(framework):
+    t = ChatbotTemplate(framework=framework, provider="groq")
+    files = dict(t.starter_files)
+    env = files[".env.example"].format_map({"project_name": "test"})
+    assert "GROQ_API_KEY" in env
+
+
+@pytest.mark.parametrize("framework", ["pydantic-ai", "openai-sdk", "litellm"])
+def test_groq_deps_correct(framework):
+    t = ChatbotTemplate(framework=framework, provider="groq")
+    deps = t.get_dependencies()
+    assert "python-dotenv" in deps
+    # groq is bundled in pydantic-ai metapackage, no separate dep needed
+    assert "groq" not in deps
