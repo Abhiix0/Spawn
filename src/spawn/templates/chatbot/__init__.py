@@ -43,6 +43,7 @@ from spawn.templates.chatbot.content import (
     ENV_PYDANTIC_OPENROUTER,
     ENV_PYDANTIC_OLLAMA,
     ENV_PYDANTIC_GROQ,
+    ENV_LITELLM_GROQ,
     make_readme,
 )
 
@@ -101,7 +102,7 @@ _ENV_MAP_LITELLM: dict[str, str] = {
     "gemini":     ENV_GEMINI,
     "openrouter": ENV_OPENROUTER,
     "ollama":     ENV_LITELLM_OLLAMA,
-    "groq":       ENV_GROQ,
+    "groq":       ENV_LITELLM_GROQ,
 }
 
 
@@ -175,7 +176,7 @@ class ChatbotTemplate(BaseTemplate):
             ("pydantic-ai",  "gemini"):     ["pydantic-ai", "python-dotenv"],
             ("pydantic-ai",  "openrouter"): ["pydantic-ai", "python-dotenv"],
             ("pydantic-ai",  "ollama"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",  "groq"):       ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai",  "groq"):       ["pydantic-ai[groq]", "python-dotenv"],
             ("openai-sdk",   "openai"):     ["openai",       "python-dotenv"],
             ("openai-sdk",   "openrouter"): ["openai",       "python-dotenv"],
             ("openai-sdk",   "gemini"):     ["openai",       "python-dotenv"],

@@ -484,6 +484,12 @@ GROQ_API_KEY=
 MODEL=groq:llama-3.1-8b-instant
 """
 
+ENV_LITELLM_GROQ = """\
+APP_NAME={project_name}
+GROQ_API_KEY=
+MODEL=groq/llama-3.1-8b-instant
+"""
+
 # ─── Test content ─────────────────────────────────────────────────────────
 
 # BUG FIX: removed unused imports MagicMock and get_llm_response
