@@ -111,6 +111,13 @@ def _resolve_llm(framework: str, provider: str) -> str:
     return _LLM_MAP.get((framework, provider), PYDANTIC_AI_OPENAI_LLM_CONTENT)
 
 
+def get_supported_providers(framework: str) -> list[str]:
+    """Return providers supported for a given framework, in menu order."""
+    order = ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"]
+    supported = {provider for (fw, provider) in _LLM_MAP if fw == framework}
+    return [p for p in order if p in supported]
+
+
 def _resolve_env(framework: str, provider: str) -> str:
     if framework == "pydantic-ai":
         return _ENV_MAP_PYDANTIC.get(provider, ENV_PYDANTIC_OPENAI)

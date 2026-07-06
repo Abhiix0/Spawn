@@ -5,6 +5,7 @@ from rich.text import Text
 from spawn.utils.console import console
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import list_templates, get_metadata
+from spawn.templates.chatbot import get_supported_providers
 from spawn.utils.validators import validate_project_name
 from spawn.core.exceptions import SpawnError
 
@@ -132,14 +133,12 @@ def get_project_config() -> ProjectConfig:
         selected_framework = framework_map[fw_choice]
 
     # --- Provider selection ---
-    PROVIDER_MAP: dict[str, list[str]] = {
-        "pydantic-ai":  ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
-        "openai-sdk":   ["openai", "openrouter", "gemini", "groq"],
-        "litellm":      ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
-    }
-
     if meta and meta.available_providers and selected_framework:
-        provider_options = PROVIDER_MAP.get(selected_framework, meta.available_providers)
+        provider_options = (
+            get_supported_providers(selected_framework)
+            if selected_framework
+            else meta.available_providers
+        )
         provider_choice_map = {
             str(i): p for i, p in enumerate(provider_options, start=1)
         }
