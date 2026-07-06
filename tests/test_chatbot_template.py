@@ -426,6 +426,26 @@ def test_memory_type_checking_guard():
     assert "from pydantic_ai.messages import ModelMessage" in mem
 
 
+def test_openai_sdk_memory_has_no_pai_history():
+    """openai-sdk projects get the base history without pydantic-ai dead code."""
+    t = ChatbotTemplate(framework="openai-sdk")
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    assert "get_pai_history" not in mem
+    assert "_pai_history" not in mem
+    assert "append_pai_messages" not in mem
+
+
+def test_litellm_memory_has_no_pai_history():
+    """litellm projects get the base history without pydantic-ai dead code."""
+    t = ChatbotTemplate(framework="litellm")
+    files = dict(t.starter_files)
+    mem = files["src/memory/history.py"]
+    assert "get_pai_history" not in mem
+    assert "_pai_history" not in mem
+    assert "append_pai_messages" not in mem
+
+
 # ─── PydanticAI multi-turn memory ────────────────────────────────────────
 
 

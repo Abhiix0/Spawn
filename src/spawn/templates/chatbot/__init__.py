@@ -4,7 +4,8 @@ from spawn.templates.base import BaseTemplate
 from spawn.templates.chatbot.content import (
     INIT_CONTENT,
     CHAT_CONTENT,
-    MEMORY_HISTORY_CONTENT,
+    MEMORY_HISTORY_CONTENT_BASE,
+    MEMORY_HISTORY_CONTENT_PYDANTIC,
     SYSTEM_PROMPT_TXT_CONTENT,
     SETTINGS_CONTENT,
     CONFTEST_CONTENT,
@@ -118,7 +119,7 @@ def _resolve_env(framework: str, provider: str) -> str:
     return _ENV_MAP_GENERIC.get(provider, ENV_OPENAI)
 
 
-def _build_files(main_content: str, llm_content: str, env_content: str) -> list:
+def _build_files(main_content: str, llm_content: str, env_content: str, memory_content: str) -> list:
     return [
         ("src/__init__.py",           INIT_CONTENT),
         ("src/chatbot/__init__.py",   INIT_CONTENT),
@@ -128,7 +129,7 @@ def _build_files(main_content: str, llm_content: str, env_content: str) -> list:
         ("src/prompts/__init__.py",   INIT_CONTENT),
         ("src/prompts/system.txt",    SYSTEM_PROMPT_TXT_CONTENT),
         ("src/memory/__init__.py",    INIT_CONTENT),
-        ("src/memory/history.py",     MEMORY_HISTORY_CONTENT),
+        ("src/memory/history.py",     memory_content),
         ("src/config/__init__.py",    INIT_CONTENT),
         ("src/config/settings.py",    SETTINGS_CONTENT),
         ("src/main.py",               main_content),
@@ -153,11 +154,16 @@ class ChatbotTemplate(BaseTemplate):
         llm_content  = _resolve_llm(self.framework, self.provider)
         env_content  = _resolve_env(self.framework, self.provider)
         main_content = MAIN_CONTENT_RICH if "rich" in self.extras else MAIN_CONTENT_NO_RICH
+        memory_content = (
+            MEMORY_HISTORY_CONTENT_PYDANTIC
+            if self.framework == "pydantic-ai"
+            else MEMORY_HISTORY_CONTENT_BASE
+        )
 
         super().__init__(
             name="AI Chatbot",
             folders=list(CHATBOT_FOLDERS),
-            starter_files=_build_files(main_content, llm_content, env_content),
+            starter_files=_build_files(main_content, llm_content, env_content, memory_content),
             next_steps=[
                 "cd {project_name}",
                 "Rename .env.example to .env and fill in your API key",

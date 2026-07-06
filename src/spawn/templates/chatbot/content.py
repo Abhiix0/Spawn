@@ -17,7 +17,27 @@ def get_response(user_input: str) -> str:
     return response
 """
 
-MEMORY_HISTORY_CONTENT = """\
+MEMORY_HISTORY_CONTENT_BASE = """\
+_history: list[dict] = []
+
+
+def append_user(content: str) -> None:
+    _history.append({{"role": "user", "content": content}})
+
+
+def append_assistant(content: str) -> None:
+    _history.append({{"role": "assistant", "content": content}})
+
+
+def get_history() -> list[dict]:
+    return list(_history)
+
+
+def clear() -> None:
+    _history.clear()
+"""
+
+MEMORY_HISTORY_CONTENT_PYDANTIC = """\
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
