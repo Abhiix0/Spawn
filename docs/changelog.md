@@ -10,8 +10,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **AI Chatbot intent** — generates a fully runnable conversational AI project
   with runtime memory, centralized prompt management, and provider abstraction
 - **3 frameworks**: PydanticAI, OpenAI SDK, LiteLLM
-- **5 providers**: OpenAI, Anthropic, Gemini, OpenRouter, Ollama
-- **13 supported combinations** — each generates correct dependencies,
+- **6 providers**: OpenAI, Anthropic, Gemini, OpenRouter, Ollama, Groq
+- **16 supported combinations** — each generates correct dependencies,
   provider-specific env vars, and working llm.py out of the box
 - **Runtime memory** — `src/memory/history.py` maintains conversation
   context across turns within a session; no database required
