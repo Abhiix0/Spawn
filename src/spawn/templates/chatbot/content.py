@@ -80,7 +80,6 @@ Answer questions clearly and concisely.
 """
 
 SETTINGS_CONTENT = """\
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -88,10 +87,6 @@ from dotenv import load_dotenv
 
 def load_env() -> None:
     load_dotenv()
-
-
-def get_model() -> str:
-    return os.getenv("MODEL", "")
 
 
 def get_system_prompt() -> str:
