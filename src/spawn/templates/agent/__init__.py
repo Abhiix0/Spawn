@@ -120,7 +120,7 @@ class AgentTemplate(BaseTemplate):
             next_steps=[
                 "cd {project_name}",
                 "Rename .env.example to .env and fill in your API key",
-                "uv run python src/main.py",
+                "uv run python -m src.main",
             ],
         )
 

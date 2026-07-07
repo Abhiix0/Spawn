@@ -265,6 +265,7 @@ APP_NAME={project_name}
 OPENAI_API_KEY=
 OPENAI_BASE_URL=https://openrouter.ai/api/v1
 MODEL=openai/gpt-4o-mini
+OPENAI_AGENTS_DISABLE_TRACING=1
 """
 
 # ─── README ───────────────────────────────────────────────────────────────
@@ -290,7 +291,7 @@ def make_readme(framework: str, provider: str) -> str:
         "```\n\n"
         "2. Run the agent:\n\n"
         "```bash\n"
-        "uv run python src/main.py\n"
+        "uv run python -m src.main\n"
         "```\n\n"
         "## Example\n\n"
         "```\n"

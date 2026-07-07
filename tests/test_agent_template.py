@@ -217,4 +217,4 @@ def test_next_steps_has_rename_instruction():
 
 def test_next_steps_has_run_command():
     t = AgentTemplate()
-    assert any("src/main.py" in s for s in t.next_steps)
+    assert any("src.main" in s for s in t.next_steps)
