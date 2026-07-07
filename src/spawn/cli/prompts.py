@@ -5,7 +5,8 @@ from rich.text import Text
 from spawn.utils.console import console
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import list_templates, get_metadata
-from spawn.templates.chatbot import get_supported_providers
+from spawn.templates.chatbot import get_supported_providers as get_chatbot_providers
+from spawn.templates.agent import get_supported_providers as get_agent_providers
 from spawn.utils.validators import validate_project_name
 from spawn.core.exceptions import SpawnError
 
@@ -134,11 +135,12 @@ def get_project_config() -> ProjectConfig:
 
     # --- Provider selection ---
     if meta and meta.available_providers and selected_framework:
-        provider_options = (
-            get_supported_providers(selected_framework)
-            if selected_framework
-            else meta.available_providers
-        )
+        if meta.slug == "agent":
+            provider_options = get_agent_providers(selected_framework)
+        elif meta.slug == "chatbot":
+            provider_options = get_chatbot_providers(selected_framework)
+        else:
+            provider_options = meta.available_providers
         provider_choice_map = {
             str(i): p for i, p in enumerate(provider_options, start=1)
         }
