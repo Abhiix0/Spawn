@@ -25,7 +25,7 @@ def test_list_templates_returns_all():
     assert "cli" in slugs
     assert "automation" in slugs
     assert "chatbot" in slugs
-    assert len(slugs) == 4
+    assert len(slugs) == 5
 
 
 def test_get_metadata_returns_none_for_unknown():
@@ -149,3 +149,20 @@ def test_chatbot_metadata():
 def test_chatbot_in_list_templates():
     slugs = [m.slug for m in list_templates()]
     assert "chatbot" in slugs
+
+
+def test_agent_template_is_registered():
+    from spawn.templates.agent import AgentTemplate
+    from spawn.core.registry import get_template
+    t = get_template("agent")
+    assert t is not None
+    assert isinstance(t, AgentTemplate)
+
+
+def test_agent_metadata():
+    meta = get_metadata("agent")
+    assert meta is not None
+    assert meta.slug == "agent"
+    assert meta.display_name == "AI Agent"
+    assert "pydantic-ai" in meta.available_frameworks
+    assert "openai-agents" in meta.available_frameworks

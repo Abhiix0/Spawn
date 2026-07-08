@@ -10,6 +10,7 @@ from spawn.templates.backend_api import BackendAPITemplate
 from spawn.templates.cli_application import CLITemplate
 from spawn.templates.automation import AutomationTemplate
 from spawn.templates.chatbot import ChatbotTemplate
+from spawn.templates.agent import AgentTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -63,6 +64,15 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         available_frameworks=["pydantic-ai", "openai-sdk", "litellm"],
         available_providers=["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
         available_extras=["ruff", "pytest", "rich", "github-actions"],
+    ),
+    "agent": TemplateMetadata(
+        slug="agent",
+        display_name="AI Agent",
+        description="Tool-calling agent with PydanticAI or OpenAI Agents SDK",
+        template_class=AgentTemplate,
+        available_frameworks=["pydantic-ai", "openai-agents"],
+        available_providers=["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
+        available_extras=["ruff", "pytest", "github-actions"],
     ),
 }
 

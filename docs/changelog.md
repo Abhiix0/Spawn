@@ -3,6 +3,34 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v0.7.0 — 2026
+
+### New Features
+
+- **AI Agent intent** — generates a fully runnable tool-calling agent project
+  with `src/agent/`, `src/tools/`, `src/prompts/`, `src/config/`
+- **2 frameworks**: PydanticAI, OpenAI Agents SDK
+- **Provider-agnostic architecture** — users select a framework, not a provider;
+  PydanticAI supports 6 providers (OpenAI, Anthropic, Gemini, OpenRouter, Ollama,
+  Groq), OpenAI Agents SDK supports 2 (OpenAI, OpenRouter)
+- **Calculator tool** — every generated agent ships with one working example
+  tool, demonstrating real tool invocation with no API keys or external services
+- **Centralized prompts** — `src/prompts/agent_prompt.txt` is editable without
+  touching Python code
+- **Provider-specific env vars and dependencies** — correct `.env.example` and
+  `pyproject.toml` dependencies generated per framework + provider combination
+  (e.g. `pydantic-ai[groq]` for the Groq combination)
+
+### Internal
+
+- Registry: `agent` slug added with `available_frameworks`, `available_providers`,
+  and `available_extras`
+- `AgentTemplate` follows the same `BaseTemplate` contract as chatbot/automation
+  (`get_dependencies()`, `get_readme_content()`, `post_install()`, `next_steps`)
+- CLI prompt flow filters provider choices per selected framework via
+  `get_supported_providers()`, preventing invalid framework/provider combos
+- Version bumped to `0.7.0`
+
 ## v0.6.0 — 2026
 
 ### New Features
