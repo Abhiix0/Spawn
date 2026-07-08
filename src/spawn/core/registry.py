@@ -11,6 +11,7 @@ from spawn.templates.cli_application import CLITemplate
 from spawn.templates.automation import AutomationTemplate
 from spawn.templates.chatbot import ChatbotTemplate
 from spawn.templates.agent import AgentTemplate
+from spawn.templates.rag import RAGTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -72,6 +73,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         template_class=AgentTemplate,
         available_frameworks=["pydantic-ai", "openai-agents"],
         available_providers=["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
+        available_extras=["ruff", "pytest", "github-actions"],
+    ),
+    "rag": TemplateMetadata(
+        slug="rag",
+        display_name="RAG System",
+        description="Retrieval-Augmented Generation with LlamaIndex and ChromaDB",
+        template_class=RAGTemplate,
         available_extras=["ruff", "pytest", "github-actions"],
     ),
 }
