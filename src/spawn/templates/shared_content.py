@@ -50,4 +50,8 @@ htmlcov/
 
 # Logs
 logs/*.log
+
+# ChromaDB vector store (regenerate with: delete chroma_db/ and re-run)
+chroma_db/
+!chroma_db/.gitkeep
 """
