@@ -166,3 +166,21 @@ def test_agent_metadata():
     assert meta.display_name == "AI Agent"
     assert "pydantic-ai" in meta.available_frameworks
     assert "openai-agents" in meta.available_frameworks
+
+
+def test_rag_is_registered():
+    from spawn.templates.rag import RAGTemplate
+    t = get_template("rag")
+    assert t is not None
+    assert isinstance(t, RAGTemplate)
+
+
+def test_rag_metadata():
+    meta = get_metadata("rag")
+    assert meta is not None
+    assert meta.slug == "rag"
+    assert meta.display_name == "RAG System"
+    assert not meta.available_frameworks
+    assert not meta.available_providers
+    assert "ruff" in meta.available_extras
+    assert "pytest" in meta.available_extras
