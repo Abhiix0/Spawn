@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -92,8 +92,10 @@ Spawn rejects names with spaces or special characters, and tells you immediately
   2  CLI Application
   3  Automation Tool
   4  AI Chatbot
+  5  AI Agent
+  6  RAG System
 
-Choose Template [1-4]: 1
+Choose Template [1-6]: 1
 ```
 
 **Step 3 — Additional prompts** *(template-dependent)*
@@ -284,7 +286,8 @@ my-chatbot/
 │   ├── chatbot/
 │   ├── providers/
 │   ├── prompts/
-│   ├── utils/
+│   ├── memory/
+│   ├── config/
 │   └── main.py
 ├── tests/
 ├── .env.example
@@ -293,9 +296,119 @@ my-chatbot/
 
 ```bash
 cd my-chatbot
-# Add API_KEY to .env
+# Add API key to .env
 uv run python -m src.main
 ```
+
+**AI Chatbot — Framework and provider**
+
+```
+  1  pydantic-ai
+  2  openai-sdk
+  3  litellm
+
+Choose Framework [1-3]: 1
+
+  1  openai
+  2  anthropic
+  3  gemini
+  4  openrouter
+  5  ollama
+  6  groq
+
+Choose Provider [1-6]: 1
+```
+
+---
+
+### `[5]` AI Agent
+
+Best for: task automation, research assistants, tool-calling workflows.
+
+```
+my-agent/
+├── src/
+│   ├── agent/
+│   ├── tools/
+│   ├── prompts/
+│   ├── config/
+│   └── main.py
+├── tests/
+├── .env.example
+└── README.md
+```
+
+```bash
+cd my-agent
+# Add API key to .env
+uv run python -m src.main
+```
+
+**AI Agent — Framework and provider**
+
+```
+  1  pydantic-ai
+  2  openai-agents
+
+Choose Framework [1-2]: 1
+
+  1  openai
+  2  anthropic
+  3  gemini
+  4  openrouter
+  5  ollama
+  6  groq
+
+Choose Provider [1-6]: 1
+```
+
+Note: if you pick `openai-agents`, only `openai` and `openrouter` appear as provider choices — the list is filtered per framework.
+
+Every generated AI Agent project ships with one working tool (a calculator) so you can see tool-calling work immediately, with no external services or extra API keys required beyond your chosen provider.
+
+---
+
+### `[6]` RAG System
+
+Best for: documentation Q&A, knowledge base search, document retrieval.
+
+```
+my-rag/
+├── data/
+│   └── sample_knowledge.md
+├── src/
+│   ├── knowledge/
+│   ├── ingestion/
+│   ├── retrieval/
+│   ├── config/
+│   └── main.py
+├── tests/
+├── chroma_db/        # created on first run
+├── .env.example
+└── README.md
+```
+
+```bash
+cd my-rag
+# Add OPENAI_API_KEY to .env
+uv run python -m src.main
+# Documents are ingested automatically on first run
+```
+
+**RAG System — Extras only, no framework/provider prompt**
+
+```
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+RAG System uses a fixed stack (LlamaIndex + ChromaDB + OpenAI) — there's no framework or provider choice. On first run, it automatically ingests documents from `data/` into a local ChromaDB index, then lets you ask questions against them.
+
+Requires an `OPENAI_API_KEY` (used for both the LLM and embeddings).
 
 ---
 
@@ -341,7 +454,7 @@ spawn doctor ./path/to/project
 
 ```bash
 spawn version
-# → Spawn v0.6.0
+# → Spawn v0.8.0
 ```
 
 ### Publish to GitHub
@@ -378,8 +491,8 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **CLI Application intent** — Typer, Click, Argparse with Utility/Interactive sub-types (v0.4.0)
 - [x] **Automation Tool intent** — workflow-based automation with logging, tasks, and integrations (v0.5.0)
 - [x] **AI Chatbot intent** — PydanticAI and OpenAI SDK with provider abstraction (v0.6.0)
-- [ ] **AI Agent intent** — tool-calling agent scaffold (v0.7.0)
-- [ ] **RAG System intent** — retrieval-augmented generation scaffold (v0.8.0)
+- [x] **AI Agent intent** — tool-calling agent scaffold with PydanticAI and OpenAI Agents SDK (v0.7.0)
+- [x] **RAG System intent** — retrieval-augmented generation with LlamaIndex and ChromaDB (v0.8.0)
 - [ ] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
 
 ---
