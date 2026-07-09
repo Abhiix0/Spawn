@@ -3,6 +3,41 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v0.8.0 — 2026
+
+### New Features
+
+- **RAG System intent** — generates a fully runnable Retrieval-Augmented Generation
+  project using a fixed stack: LlamaIndex + ChromaDB + OpenAI
+- **Fixed stack, no framework/provider prompt** — RAG skips the framework/provider
+  selection entirely; `spawn create` goes straight from intent to extras
+- **Auto-ingestion on first run** — if `chroma_db/` is empty, `src/main.py` ingests
+  everything in `data/` automatically before accepting questions; no separate ingest
+  command required
+- **Sample knowledge base** — every generated project ships with
+  `data/sample_knowledge.md` so users get a working Q&A demo immediately, with zero
+  setup beyond an API key
+- **Local vector persistence** — `src/knowledge/index.py` owns a
+  `chromadb.PersistentClient` writing to `chroma_db/`, shared by both ingestion and
+  retrieval
+- **Correct modern LlamaIndex packaging** — installs `llama-index-core`,
+  `llama-index-vector-stores-chroma`, `llama-index-embeddings-openai`,
+  `llama-index-llms-openai`, and `chromadb` explicitly, instead of the heavy
+  `llama-index` meta-package
+- **`chroma_db/` gitignored correctly** — binary ChromaDB files are excluded via
+  `.gitignore`, while a `.gitkeep` keeps the directory tracked in git
+
+### Internal
+
+- Registry: `rag` slug added with `available_extras` only — no `available_frameworks`
+  or `available_providers`
+- `RAGTemplate` follows the same `BaseTemplate` contract as other intents
+  (`get_dependencies()`, `get_readme_content()`, `post_install()`, `next_steps`)
+- `prompts.py` required no changes — empty `available_frameworks` and
+  `available_providers` already skip those prompts automatically
+- `shared_content.py`'s `GITIGNORE_CONTENT` extended with a `chroma_db/` rule
+- Version bumped to `0.8.0`
+
 ## v0.7.0 — 2026
 
 ### New Features
