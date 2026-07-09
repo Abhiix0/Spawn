@@ -112,7 +112,8 @@ def get_storage_context() -> StorageContext:
 def index_exists() -> bool:
     if not CHROMA_PATH.exists():
         return False
-    return any(CHROMA_PATH.iterdir())
+    sqlite_file = CHROMA_PATH / "chroma.sqlite3"
+    return sqlite_file.exists() and sqlite_file.stat().st_size > 0
 """
 
 # ─── Ingestion ────────────────────────────────────────────────────────────
@@ -121,6 +122,7 @@ INGESTION_CONTENT = """\
 from pathlib import Path
 
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
+from openai import APIError, AuthenticationError, RateLimitError
 
 from src.knowledge.index import get_storage_context
 
@@ -136,11 +138,27 @@ def ingest_documents() -> VectorStoreIndex:
     ).load_data()
     print(f"Loaded {{len(documents)}} document(s).")
     storage_context = get_storage_context()
-    index = VectorStoreIndex.from_documents(
-        documents,
-        storage_context=storage_context,
-        show_progress=True,
-    )
+    try:
+        index = VectorStoreIndex.from_documents(
+            documents,
+            storage_context=storage_context,
+            show_progress=True,
+        )
+    except AuthenticationError:
+        raise RuntimeError(
+            "OpenAI rejected your API key. Check OPENAI_API_KEY in .env."
+        ) from None
+    except RateLimitError as e:
+        if "insufficient_quota" in str(e):
+            raise RuntimeError(
+                "Your OpenAI account has no available quota/credits. "
+                "Check billing at https://platform.openai.com/settings/organization/billing"
+            ) from None
+        raise RuntimeError(
+            "OpenAI rate limit hit. Wait a moment and try again."
+        ) from None
+    except APIError as e:
+        raise RuntimeError(f"OpenAI API error: {{e}}") from None
     print("Ingestion complete. Index stored in chroma_db/")
     return index
 """
@@ -208,6 +226,9 @@ def main() -> None:
             ingest_documents()
         except RuntimeError as e:
             print(f"\\n[Error] {{e}}\\n")
+            import shutil
+            from pathlib import Path
+            shutil.rmtree(Path("chroma_db"), ignore_errors=True)
             return
         print()
     print("Ask a question (or type 'quit' to exit):\\n")
@@ -260,6 +281,15 @@ def test_index_exists_true_when_has_file(tmp_path, monkeypatch):
     (chroma / "chroma.sqlite3").write_text("db")
     from src.knowledge.index import index_exists
     assert index_exists()
+
+
+def test_index_exists_false_when_sqlite_file_empty(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    chroma = tmp_path / "chroma_db"
+    chroma.mkdir()
+    (chroma / "chroma.sqlite3").write_bytes(b"")
+    from src.knowledge.index import index_exists
+    assert not index_exists()
 
 
 def test_sample_knowledge_file_exists():

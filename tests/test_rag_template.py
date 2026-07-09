@@ -97,6 +97,9 @@ def test_knowledge_index_has_exists_check():
     files = dict(t.starter_files)
     index = files["src/knowledge/index.py"]
     assert "index_exists" in index
+    # Verify it checks for the specific sqlite marker, not "any file"
+    assert "chroma.sqlite3" in index
+    assert "st_size" in index
 
 
 def test_ingestion_loads_txt_and_md():
