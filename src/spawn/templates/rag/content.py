@@ -137,6 +137,7 @@ def ingest_documents() -> VectorStoreIndex:
 
 RETRIEVAL_CONTENT = """\
 from llama_index.core import VectorStoreIndex
+from openai import APIError, AuthenticationError, RateLimitError
 
 from src.knowledge.index import get_storage_context, get_vector_store
 
@@ -155,7 +156,23 @@ def answer_question(question: str) -> str:
     query_engine = index.as_query_engine(
         similarity_top_k=3,
     )
-    response = query_engine.query(question)
+    try:
+        response = query_engine.query(question)
+    except AuthenticationError:
+        raise RuntimeError(
+            "OpenAI rejected your API key. Check OPENAI_API_KEY in .env."
+        ) from None
+    except RateLimitError as e:
+        if "insufficient_quota" in str(e):
+            raise RuntimeError(
+                "Your OpenAI account has no available quota/credits. "
+                "Check billing at https://platform.openai.com/settings/organization/billing"
+            ) from None
+        raise RuntimeError(
+            "OpenAI rate limit hit. Wait a moment and try again."
+        ) from None
+    except APIError as e:
+        raise RuntimeError(f"OpenAI API error: {{e}}") from None
     return str(response)
 """
 
@@ -175,7 +192,11 @@ def main() -> None:
     print("-" * 40)
     if not index_exists():
         print("No index found. Running ingestion...\\n")
-        ingest_documents()
+        try:
+            ingest_documents()
+        except RuntimeError as e:
+            print(f"\\n[Error] {{e}}\\n")
+            return
         print()
     print("Ask a question (or type 'quit' to exit):\\n")
     while True:
@@ -184,8 +205,12 @@ def main() -> None:
             continue
         if question.lower() in ("quit", "exit"):
             break
-        answer = answer_question(question)
-        print(f"\\nAnswer: {{answer}}\\n")
+        try:
+            answer = answer_question(question)
+            print(f"\\nAnswer: {{answer}}\\n")
+        except RuntimeError as e:
+            print(f"\\n[Error] {{e}}\\n")
+            continue
 
 
 if __name__ == "__main__":
@@ -242,6 +267,48 @@ def test_answer_question_mock():
 
     assert isinstance(result, str)
     assert len(result) > 0
+
+
+def test_answer_question_rate_limit_raises_runtime_error():
+    from openai import RateLimitError
+
+    mock_engine = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 429
+    mock_engine.query.side_effect = RateLimitError(
+        "insufficient_quota", response=mock_response, body=None
+    )
+    mock_index = MagicMock()
+    mock_index.as_query_engine.return_value = mock_engine
+
+    with patch("src.retrieval.retrieve.load_index", return_value=mock_index):
+        from src.retrieval.retrieve import answer_question
+        try:
+            answer_question("What is Spawn?")
+            assert False, "Expected RuntimeError"
+        except RuntimeError as e:
+            assert "quota" in str(e).lower() or "rate limit" in str(e).lower()
+
+
+def test_answer_question_api_error_raises_runtime_error():
+    from openai import APIError
+
+    mock_engine = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_engine.query.side_effect = APIError(
+        "server error", response=mock_response, body=None
+    )
+    mock_index = MagicMock()
+    mock_index.as_query_engine.return_value = mock_engine
+
+    with patch("src.retrieval.retrieve.load_index", return_value=mock_index):
+        from src.retrieval.retrieve import answer_question
+        try:
+            answer_question("What is Spawn?")
+            assert False, "Expected RuntimeError"
+        except RuntimeError as e:
+            assert "OpenAI API error" in str(e)
 """
 
 # ─── Env ──────────────────────────────────────────────────────────────────
