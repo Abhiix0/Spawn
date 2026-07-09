@@ -266,3 +266,56 @@ def test_gitignore_excludes_chroma_db():
 def test_gitignore_keeps_gitkeep():
     from spawn.templates.shared_content import GITIGNORE_CONTENT
     assert "!chroma_db/.gitkeep" in GITIGNORE_CONTENT
+
+
+# ─── Collection name sanitizer ───────────────────────────────────────────
+
+
+def test_collection_name_is_valid_for_various_project_names():
+    import re
+    import types
+
+    t = RAGTemplate()
+    files = dict(t.starter_files)
+    raw_index = files["src/knowledge/index.py"]
+
+    pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{1,510}[a-zA-Z0-9]$")
+
+    for project_name in ["my-rag", "ab", "x", "my rag project"]:
+        rendered = raw_index.format_map({"project_name": project_name})
+        ns: dict = {}
+        # Stub out heavy imports so exec works without llama-index installed
+        for mod in [
+            "chromadb", "llama_index", "llama_index.core",
+            "llama_index.vector_stores", "llama_index.vector_stores.chroma",
+        ]:
+            ns[mod] = types.ModuleType(mod)
+        import sys
+        stubs = {}
+        for mod in [
+            "chromadb", "llama_index", "llama_index.core",
+            "llama_index.vector_stores", "llama_index.vector_stores.chroma",
+        ]:
+            stubs[mod] = sys.modules.get(mod)
+            sys.modules[mod] = types.ModuleType(mod)
+        # Provide minimal fakes so the module-level code executes
+        import types as _types
+        llama_core = _types.ModuleType("llama_index.core")
+        llama_core.StorageContext = object  # type: ignore[attr-defined]
+        sys.modules["llama_index.core"] = llama_core
+        vs_fake = _types.ModuleType("llama_index.vector_stores.chroma")
+        vs_fake.ChromaVectorStore = object  # type: ignore[attr-defined]
+        sys.modules["llama_index.vector_stores.chroma"] = vs_fake
+        try:
+            exec(compile(rendered, "<string>", "exec"), ns)  # noqa: S102
+        finally:
+            for mod, orig in stubs.items():
+                if orig is None:
+                    sys.modules.pop(mod, None)
+                else:
+                    sys.modules[mod] = orig
+        collection_name = ns.get("COLLECTION_NAME", "")
+        assert pattern.match(collection_name), (
+            f"project_name={project_name!r} → COLLECTION_NAME={collection_name!r} "
+            "does not match ChromaDB constraints"
+        )

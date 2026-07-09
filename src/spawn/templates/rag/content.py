@@ -77,14 +77,26 @@ def configure_llm() -> None:
 # ─── Knowledge index ──────────────────────────────────────────────────────
 
 KNOWLEDGE_INDEX_CONTENT = """\
+import re
 from pathlib import Path
 
 import chromadb
 from llama_index.core import StorageContext
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
+
+def _sanitize_collection_name(name: str) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9._-]", "-", name)
+    cleaned = cleaned.strip("-._")
+    if len(cleaned) < 3:
+        cleaned = f"rag-{{cleaned}}".strip("-._")
+    if len(cleaned) < 3:
+        cleaned = "rag-collection"
+    return cleaned[:512]
+
+
 CHROMA_PATH = Path("chroma_db")
-COLLECTION_NAME = "{project_name}"
+COLLECTION_NAME = _sanitize_collection_name("{project_name}")
 
 
 def get_vector_store() -> ChromaVectorStore:
