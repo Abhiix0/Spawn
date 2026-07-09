@@ -110,3 +110,11 @@ class RAGTemplate(BaseTemplate):
         # but the actual DB files are gitignored
         gitkeep = project_path / "chroma_db" / ".gitkeep"
         gitkeep.write_text("", encoding="utf-8")
+
+        gitignore_path = project_path / ".gitignore"
+        current_gitignore = gitignore_path.read_text(encoding="utf-8")
+        rag_ignore_rules = "\n# RAG vector database\nchroma_db/*\n!chroma_db/.gitkeep\n"
+        if "chroma_db/*" not in current_gitignore:
+            gitignore_path.write_text(
+                current_gitignore + rag_ignore_rules, encoding="utf-8"
+            )
