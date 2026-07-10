@@ -1,8 +1,6 @@
 import json
 
-# ─── Data Analysis ────────────────────────────────────────────────────────
-
-DATA_ANALYSIS_SAMPLE_CSV = """\
+SAMPLE_CSV = """\
 date,category,value
 2024-01-05,Electronics,1200
 2024-01-12,Clothing,430
@@ -23,7 +21,7 @@ date,category,value
 2024-04-25,Clothing,480
 """
 
-DATA_ANALYSIS_NOTEBOOK_CONTENT = json.dumps(
+NOTEBOOK_CONTENT = json.dumps(
     {
         "nbformat": 4,
         "nbformat_minor": 5,
@@ -95,7 +93,7 @@ DATA_ANALYSIS_NOTEBOOK_CONTENT = json.dumps(
     indent=2,
 )
 
-DATA_ANALYSIS_TEST_CONTENT = """\
+TEST_CONTENT = """\
 import os
 from pathlib import Path
 
@@ -110,8 +108,6 @@ def test_sample_csv_exists_and_nonempty():
 
 
 def test_reports_directory_exists():
-    # The reports/ directory is created by the notebook on first run.
-    # This test just verifies it is present in the generated project.
     reports_path = Path("reports")
     assert reports_path.exists(), (
         "reports/ directory missing — run the notebook first to generate it"
@@ -119,21 +115,20 @@ def test_reports_directory_exists():
 """
 
 
-def make_data_analysis_readme() -> str:
+def make_readme() -> str:
     return (
         "# {project_name}\n\n"
         "A Data Analysis project generated with Spawn using pandas, matplotlib, and Jupyter.\n\n"
         "## Getting Started\n\n"
-        "1. Rename `.env.example` to `.env` (if needed)\n\n"
-        "2. Install dependencies:\n\n"
+        "1. Install dependencies:\n\n"
         "```bash\n"
         "uv sync\n"
         "```\n\n"
-        "3. Launch the notebook:\n\n"
+        "2. Launch the notebook:\n\n"
         "```bash\n"
         "uv run jupyter notebook\n"
         "```\n\n"
-        "4. Open `notebooks/analysis.ipynb` and run all cells.\n"
+        "3. Open `notebooks/analysis.ipynb` and run all cells.\n"
         "   A bar chart is saved to `reports/summary.png` automatically.\n\n"
         "## Example\n\n"
         "```\n"
@@ -145,12 +140,11 @@ def make_data_analysis_readme() -> str:
         "```\n"
         "{project_name}/\n"
         "├── data/\n"
-        "│   └── sample.csv          # Sample sales data (replace with your own)\n"
+        "│   └── sample.csv          # Sample sales data\n"
         "├── notebooks/\n"
         "│   └── analysis.ipynb      # Main analysis notebook\n"
         "├── reports/                # Generated charts and outputs\n"
-        "│   └── summary.png\n"
-        "├── src/                    # Optional Python modules\n"
+        "├── src/\n"
         "├── tests/\n"
         "│   └── test_analysis.py\n"
         "└── README.md\n"
