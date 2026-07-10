@@ -1,13 +1,20 @@
 from spawn.templates.base import BaseTemplate
 from spawn.templates.data_project.analysis import DataAnalysisTemplate
 from spawn.templates.data_project.dashboard import DashboardTemplate
+from spawn.templates.data_project.etl import ETLPipelineTemplate
+
+_SUBTEMPLATE_MAP = {
+    "Data Analysis": DataAnalysisTemplate,
+    "Dashboard":     DashboardTemplate,
+    "ETL Pipeline":  ETLPipelineTemplate,
+}
 
 
 class DataProjectTemplate(BaseTemplate):
     """
-    Dispatcher that delegates to a per-data_type subtemplate.
+    Dispatcher that returns the appropriate per-data_type subtemplate.
 
-    Behaves like any other BaseTemplate from the outside — the registry,
+    Uses __new__ so the returned object IS the subtemplate — the registry,
     generator, and prompts.py never need to know about the subtemplates.
     """
 
@@ -16,15 +23,10 @@ class DataProjectTemplate(BaseTemplate):
         data_type: str = "Data Analysis",
         extras: list[str] | None = None,
     ) -> BaseTemplate:  # type: ignore[misc]
-        _map = {
-            "Data Analysis": DataAnalysisTemplate,
-            "Dashboard":     DashboardTemplate,
-        }
-        klass = _map.get(data_type)
+        klass = _SUBTEMPLATE_MAP.get(data_type)
         if klass is not None:
             return klass(extras=extras)
-        # Unimplemented types — return a no-op skeleton so the CLI
-        # doesn't crash while other data_types are still in progress.
+        # Unimplemented type (e.g. Machine Learning) — return a no-op skeleton
         instance = super().__new__(cls)
         return instance
 
@@ -33,9 +35,9 @@ class DataProjectTemplate(BaseTemplate):
         data_type: str = "Data Analysis",
         extras: list[str] | None = None,
     ) -> None:
-        # Only reached for unimplemented data_types (ETL, ML)
-        if isinstance(self, (DataAnalysisTemplate, DashboardTemplate)):
-            return  # already fully initialised by subclass __init__
+        # Only reached for unimplemented data_types
+        if isinstance(self, tuple(_SUBTEMPLATE_MAP.values())):
+            return
         self.data_type = data_type
         self.extras = extras or []
         super().__init__(
