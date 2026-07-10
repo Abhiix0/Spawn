@@ -200,3 +200,37 @@ def make_readme() -> str:
         "uv run pytest\n"
         "```\n"
     )
+
+# ─── GitHub Actions ───────────────────────────────────────────────────────
+
+GITHUB_ACTIONS_CI_BASE = """\
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+"""
+
+GITHUB_ACTIONS_CI_RUFF_STEP = """\
+      - name: Lint
+        run: uv run ruff check .
+"""
+
+GITHUB_ACTIONS_CI_PYTEST_STEP = """\
+      - name: Test
+        run: uv run pytest
+"""

@@ -6,6 +6,9 @@ from spawn.templates.data_project.analysis.content import (
     NOTEBOOK_CONTENT,
     TEST_CONTENT,
     make_readme,
+    GITHUB_ACTIONS_CI_BASE,
+    GITHUB_ACTIONS_CI_RUFF_STEP,
+    GITHUB_ACTIONS_CI_PYTEST_STEP,
 )
 
 FOLDERS = ["data", "notebooks", "reports", "src", "tests"]
@@ -28,6 +31,11 @@ NEXT_STEPS = [
 
 
 class DataAnalysisTemplate(BaseTemplate):
+    data_type = "Data Analysis"
+    _CI_BASE = GITHUB_ACTIONS_CI_BASE
+    _CI_RUFF_STEP = GITHUB_ACTIONS_CI_RUFF_STEP
+    _CI_PYTEST_STEP = GITHUB_ACTIONS_CI_PYTEST_STEP
+
     def __init__(self, extras: list[str] | None = None) -> None:
         self.extras = extras or []
         super().__init__(
@@ -62,14 +70,5 @@ class DataAnalysisTemplate(BaseTemplate):
                 file_path.write_text(content.format_map(context), encoding="utf-8")
 
     def post_install(self, project_path: Path) -> None:
-        if not any(e in self.extras for e in ("pytest", "ruff")):
-            return
-        pyproject = project_path / "pyproject.toml"
-        current = pyproject.read_text(encoding="utf-8")
-        additions = ""
-        if "pytest" in self.extras:
-            additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
-        if "ruff" in self.extras:
-            additions += "\n[tool.ruff]\nline-length = 88\n"
-        if additions:
-            pyproject.write_text(current + additions, encoding="utf-8")
+        from spawn.templates.data_project import _DataProjectPostInstallMixin
+        _DataProjectPostInstallMixin.post_install(self, project_path)  # type: ignore[arg-type]
