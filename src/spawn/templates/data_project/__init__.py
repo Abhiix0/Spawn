@@ -2,11 +2,13 @@ from spawn.templates.base import BaseTemplate
 from spawn.templates.data_project.analysis import DataAnalysisTemplate
 from spawn.templates.data_project.dashboard import DashboardTemplate
 from spawn.templates.data_project.etl import ETLPipelineTemplate
+from spawn.templates.data_project.ml import MLProjectTemplate
 
 _SUBTEMPLATE_MAP = {
-    "Data Analysis": DataAnalysisTemplate,
-    "Dashboard":     DashboardTemplate,
-    "ETL Pipeline":  ETLPipelineTemplate,
+    "Data Analysis":    DataAnalysisTemplate,
+    "Dashboard":        DashboardTemplate,
+    "ETL Pipeline":     ETLPipelineTemplate,
+    "Machine Learning": MLProjectTemplate,
 }
 
 
@@ -26,7 +28,7 @@ class DataProjectTemplate(BaseTemplate):
         klass = _SUBTEMPLATE_MAP.get(data_type)
         if klass is not None:
             return klass(extras=extras)
-        # Unimplemented type (e.g. Machine Learning) — return a no-op skeleton
+        # Unknown data_type — return a no-op skeleton so the CLI doesn't crash
         instance = super().__new__(cls)
         return instance
 
@@ -35,7 +37,7 @@ class DataProjectTemplate(BaseTemplate):
         data_type: str = "Data Analysis",
         extras: list[str] | None = None,
     ) -> None:
-        # Only reached for unimplemented data_types
+        # Only reached for unrecognised data_types
         if isinstance(self, tuple(_SUBTEMPLATE_MAP.values())):
             return
         self.data_type = data_type
