@@ -48,14 +48,18 @@ def get_project_config() -> ProjectConfig:
     # --- Template selection ---
     templates = list_templates()
 
+    # registry templates in order, then the sentinel for Custom Structure
     choice_map = {
         str(i): meta.slug
         for i, meta in enumerate(templates, start=1)
     }
+    custom_index = str(len(templates) + 1)
+    choice_map[custom_index] = "__custom_structure__"
 
-    _print_list([meta.display_name for meta in templates])
+    display_names = [meta.display_name for meta in templates] + ["Custom Structure"]
+    _print_list(display_names)
 
-    valid_range = len(templates)
+    valid_range = len(display_names)
     choice = typer.prompt(
         typer.style(f"Choose Template [1-{valid_range}]", fg=typer.colors.CYAN)
     )
@@ -65,6 +69,9 @@ def get_project_config() -> ProjectConfig:
         choice = typer.prompt(
             typer.style(f"Choose Template [1-{valid_range}]", fg=typer.colors.CYAN)
         )
+
+    if choice_map[choice] == "__custom_structure__":
+        return _get_custom_structure_config(project_name)
 
     template = choice_map[choice]
 
@@ -254,3 +261,56 @@ def get_project_config() -> ProjectConfig:
         data_type=selected_data_type,
         provider=selected_provider,
     )
+
+def _get_custom_structure_config(project_name: str) -> ProjectConfig:
+    """
+    Interactive prompt for the Custom Structure path.
+
+    Reads a pasted structure, previews detected folders/files, confirms
+    Git/uv preferences, then raises SpawnError until Phase 4 wires in
+    the required ProjectConfig fields.
+    """
+    import sys
+
+    from spawn.core.exceptions import StructureParseError
+    from spawn.generators.custom_structure import parse_structure
+
+    console.print()
+    console.print(
+        "[cyan]Paste your project structure.[/cyan]\n"
+        "[dim]Supported formats: Tree (├──/└──), Markdown list (- item), "
+        "Indented hierarchy[/dim]\n"
+        "[dim]Finish with Ctrl+D (Ctrl+Z then Enter on Windows)[/dim]"
+    )
+
+    raw = sys.stdin.read()
+
+    try:
+        entries = parse_structure(raw)
+    except StructureParseError as e:
+        typer.secho(str(e), fg=typer.colors.RED)
+        raise SpawnError("Could not parse structure.") from e
+
+    folders = [e for e in entries if not e.is_file]
+    files   = [e for e in entries if e.is_file]
+
+    console.print()
+    console.print("[bold]Detected[/bold]")
+    console.print(f"Folders : {len(folders)}")
+    console.print(f"Files   : {len(files)}")
+    console.print()
+
+    typer.confirm(
+        typer.style("Initialize Git?", fg=typer.colors.CYAN), default=True
+    )
+    typer.confirm(
+        typer.style("Initialize uv?", fg=typer.colors.CYAN), default=True
+    )
+    proceed = typer.confirm(
+        typer.style("Proceed?", fg=typer.colors.CYAN), default=True
+    )
+
+    if not proceed:
+        raise SpawnError("Cancelled.")
+
+    raise SpawnError("Custom Structure model wiring lands in Phase 4")
