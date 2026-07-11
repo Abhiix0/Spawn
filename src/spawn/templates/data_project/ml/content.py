@@ -166,16 +166,19 @@ def make_readme() -> str:
         "## Example\n\n"
         "```\n"
         "$ uv run python src/train.py\n"
-        "Test accuracy: 0.9750\n"
+        "Test accuracy: 1.0000\n"
         "Model saved to models/model.joblib\n"
         "Experiment logged to experiments/20240101_120000.json\n"
         "```\n\n"
+        "Note: the bundled sample dataset is intentionally easy to classify, so\n"
+        "accuracy will typically be 1.0 — replace `data/dataset.csv` with your own\n"
+        "data for realistic results.\n\n"
         "## Experiment Tracking\n\n"
         "Every training run appends a new file to `experiments/`:\n\n"
         "```json\n"
         "{{\n"
         '  "timestamp": "20240101_120000",\n'
-        '  "accuracy": 0.975,\n'
+        '  "accuracy": 1.0,\n'
         '  "model_type": "RandomForestClassifier",\n'
         '  "n_train": 32,\n'
         '  "n_test": 8\n'
