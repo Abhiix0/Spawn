@@ -173,7 +173,7 @@ def test_agent_meta_json_has_correct_intent(tmp_path, monkeypatch):
     assert meta["intent"] == "agent"
     assert meta["framework"] == "pydantic-ai"
     assert meta["provider"] == "openai"
-    assert meta["spawn_version"] == "0.9.0"
+    assert meta["spawn_version"] == "1.0.0"
 
 
 def test_agent_meta_json_openai_agents(tmp_path, monkeypatch):
