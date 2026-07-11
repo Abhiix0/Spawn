@@ -14,8 +14,7 @@ def test_backend_api_template_is_registered():
 
 def test_removed_slugs_return_none():
     assert get_template("python") is None
-    assert get_template("data-science") is None
-    assert get_template("ml") is None
+    assert get_template("fastapi") is None
 
 
 def test_list_templates_returns_all():
@@ -25,7 +24,7 @@ def test_list_templates_returns_all():
     assert "cli" in slugs
     assert "automation" in slugs
     assert "chatbot" in slugs
-    assert len(slugs) == 6
+    assert len(slugs) == 7
 
 
 def test_get_metadata_returns_none_for_unknown():

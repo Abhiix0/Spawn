@@ -71,6 +71,7 @@ def get_project_config() -> ProjectConfig:
     # --- Framework selection ---
     selected_framework: str | None = None
     selected_cli_type: str | None = None
+    selected_data_type: str | None = None
     selected_provider: str | None = None
     meta = get_metadata(template)
 
@@ -107,6 +108,40 @@ def get_project_config() -> ProjectConfig:
             )
 
         selected_cli_type = cli_type_map[ct_choice]
+
+    # --- Data type selection ---
+    if meta and meta.available_data_types:
+        data_types = meta.available_data_types
+        data_type_map = {
+            str(i): dt
+            for i, dt in enumerate(data_types, start=1)
+        }
+
+        _print_list(data_types)
+
+        valid_dt_range = len(data_types)
+        dt_choice = typer.prompt(
+            typer.style(
+                f"Choose Project Type [1-{valid_dt_range}]",
+                fg=typer.colors.CYAN,
+            ),
+            default="1",
+        )
+
+        while dt_choice not in data_type_map:
+            typer.secho(
+                "Invalid choice. Please select a valid number.",
+                fg=typer.colors.RED,
+            )
+            dt_choice = typer.prompt(
+                typer.style(
+                    f"Choose Project Type [1-{valid_dt_range}]",
+                    fg=typer.colors.CYAN,
+                ),
+                default="1",
+            )
+
+        selected_data_type = data_type_map[dt_choice]
 
     # --- Framework selection ---
     if meta and meta.available_frameworks:
@@ -216,5 +251,6 @@ def get_project_config() -> ProjectConfig:
         framework=selected_framework,
         extras=selected_extras,
         cli_type=selected_cli_type,
+        data_type=selected_data_type,
         provider=selected_provider,
     )

@@ -3,6 +3,25 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v0.9.0 — 2026
+
+### Added
+
+- Data Project intent — 4 sub-types: Data Analysis, Dashboard, ETL Pipeline, Machine Learning
+- Data Analysis: pandas + Jupyter notebook workflow with sample dataset
+- Dashboard: Streamlit + Plotly interactive dashboard with sidebar filtering
+- ETL Pipeline: configurable input/output paths via `.env`, data cleaning demo
+- Machine Learning: RandomForestClassifier training script with per-run experiment logging to `experiments/`
+- `ProjectConfig.data_type` field and matching CLI selection prompt ("Choose Project Type")
+- Type-specific `.gitignore` rules for generated data artifacts (CSVs, models, experiment logs, notebook checkpoints)
+
+### Fixed
+
+- ETL `pipelines/run.py` next-step instruction caused `ModuleNotFoundError` — changed from script invocation (`python pipelines/run.py`) to module invocation (`python -m pipelines.run`)
+- Dashboard used deprecated Streamlit `use_container_width` parameter, replaced with `width="stretch"`
+- ML README example output didn't match actual results (dataset is trivially separable, always scores 1.0 accuracy) — corrected the documented example
+- CLI prompt "Choose Data Type" renamed to "Choose Project Type" for clarity
+
 ## v0.8.0 — 2026
 
 ### New Features

@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning) |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -94,8 +94,9 @@ Spawn rejects names with spaces or special characters, and tells you immediately
   4  AI Chatbot
   5  AI Agent
   6  RAG System
+  7  Data Project
 
-Choose Template [1-6]: 1
+Choose Template [1-7]: 1
 ```
 
 **Step 3 — Additional prompts** *(template-dependent)*
@@ -412,6 +413,60 @@ Requires an `OPENAI_API_KEY` (used for both the LLM and embeddings).
 
 ---
 
+**Data Project — Project type and extras**
+
+```
+  1  Data Analysis
+  2  Dashboard
+  3  ETL Pipeline
+  4  Machine Learning
+
+Choose Project Type [1-4]: 1
+
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+---
+
+### `[7]` Data Project
+
+Best for: exploratory data analysis, internal dashboards, data cleaning pipelines, quick ML prototyping.
+
+Four sub-types, selected via **Choose Project Type**:
+
+| Type | Structure | Start command |
+|---|---|---|
+| Data Analysis | `data/`, `notebooks/`, `reports/`, `src/`, `tests/` | `uv run jupyter notebook` |
+| Dashboard | `data/`, `dashboard/`, `src/`, `tests/` | `uv run streamlit run dashboard/app.py` |
+| ETL Pipeline | `data/`, `pipelines/`, `src/`, `tests/`, `.env.example` | `uv run python -m pipelines.run` |
+| Machine Learning | `data/`, `models/`, `experiments/`, `src/`, `tests/` | `uv run python src/train.py` |
+
+**Available extras:** `ruff` `pytest` `github-actions`
+
+**Data Analysis** ships a sample CSV and a starter notebook that loads it, computes summary stats, and saves a chart to `reports/`.
+
+**Dashboard** ships a Streamlit app with a sidebar filter and a Plotly chart over the same sample dataset.
+
+**ETL Pipeline** ships a raw CSV with intentionally messy data (inconsistent casing, missing values) and a cleaning script. `INPUT_PATH` and `OUTPUT_PATH` are configurable via `.env` — no code changes needed to point it at your own file.
+
+**Machine Learning** ships a labeled sample dataset and a training script that trains a `RandomForestClassifier`, saves the model to `models/`, and logs a timestamped JSON with accuracy and run metadata to `experiments/` on every run.
+
+```bash
+# Example — Machine Learning
+cd my-data-project
+uv run python src/train.py
+# Test accuracy: 1.0000
+# Model saved to models/model.joblib
+# Experiment logged to experiments/20260711_113233.json
+```
+
+---
+
 ## Other Commands
 
 ### `spawn doctor`
@@ -454,7 +509,7 @@ spawn doctor ./path/to/project
 
 ```bash
 spawn version
-# → Spawn v0.8.0
+# → Spawn v0.9.0
 ```
 
 ### Publish to GitHub
@@ -493,7 +548,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **AI Chatbot intent** — PydanticAI and OpenAI SDK with provider abstraction (v0.6.0)
 - [x] **AI Agent intent** — tool-calling agent scaffold with PydanticAI and OpenAI Agents SDK (v0.7.0)
 - [x] **RAG System intent** — retrieval-augmented generation with LlamaIndex and ChromaDB (v0.8.0)
-- [ ] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
+- [x] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
 
 ---
 

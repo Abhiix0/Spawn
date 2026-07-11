@@ -1,42 +1,4 @@
-from spawn.templates.python_script import PythonScriptTemplate
-from spawn.templates.data_science import DataScienceTemplate
-from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.backend_api import BackendAPITemplate
-
-
-def test_python_template_has_starter_files():
-    template = PythonScriptTemplate()
-
-    assert len(template.starter_files) > 0
-    paths = [path for path, _ in template.starter_files]
-    assert "main.py" in paths
-
-
-def test_data_science_template_has_starter_files():
-    template = DataScienceTemplate()
-
-    assert len(template.starter_files) > 0
-    paths = [path for path, _ in template.starter_files]
-    assert "main.py" in paths
-
-
-def test_ml_template_has_starter_files():
-    template = MLProjectTemplate()
-
-    assert len(template.starter_files) > 0
-    paths = [path for path, _ in template.starter_files]
-    assert "main.py" in paths
-
-
-def test_starter_file_paths_are_strings():
-    for template in [
-        PythonScriptTemplate(),
-        DataScienceTemplate(),
-        MLProjectTemplate(),
-    ]:
-        for path, content in template.starter_files:
-            assert isinstance(path, str)
-            assert isinstance(content, str)
 
 
 def test_backend_api_template_default():

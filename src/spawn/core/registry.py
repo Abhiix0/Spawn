@@ -2,16 +2,13 @@ import inspect
 from dataclasses import dataclass, field
 
 from spawn.core.models import ProjectConfig
-# Reserved — re-register when intents are ready
-# from spawn.templates.python_script import PythonScriptTemplate
-# from spawn.templates.data_science import DataScienceTemplate
-# from spawn.templates.ml_project import MLProjectTemplate
 from spawn.templates.backend_api import BackendAPITemplate
 from spawn.templates.cli_application import CLITemplate
 from spawn.templates.automation import AutomationTemplate
 from spawn.templates.chatbot import ChatbotTemplate
 from spawn.templates.agent import AgentTemplate
 from spawn.templates.rag import RAGTemplate
+from spawn.templates.data_project import DataProjectTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -25,12 +22,13 @@ class TemplateMetadata:
     available_extras: list[str] = field(default_factory=list)
     available_cli_types: list[str] = field(default_factory=list)
     available_providers: list[str] = field(default_factory=list)
+    available_data_types: list[str] = field(default_factory=list)
 
 
 # Slugs that existed in previous versions but have been superseded.
 # get_template() returns None for these, which surfaces as a clear
 # SpawnError("Unknown template: fastapi") in the generator.
-_REMOVED_SLUGS = {"fastapi", "python", "data-science", "ml"}
+_REMOVED_SLUGS = {"fastapi", "python"}
 
 TEMPLATES: dict[str, TemplateMetadata] = {
     "backend-api": TemplateMetadata(
@@ -82,6 +80,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         template_class=RAGTemplate,
         available_extras=["ruff", "pytest", "github-actions"],
     ),
+    "data": TemplateMetadata(
+        slug="data",
+        display_name="Data Project",
+        description="Data Analysis, Dashboard, ETL Pipeline, or Machine Learning project",
+        template_class=DataProjectTemplate,
+        available_extras=["ruff", "pytest", "github-actions"],
+        available_data_types=["Data Analysis", "Dashboard", "ETL Pipeline", "Machine Learning"],
+    ),
 }
 
 
@@ -124,6 +130,8 @@ def instantiate_template(config: ProjectConfig) -> BaseTemplate | None:
         kwargs["cli_type"] = config.cli_type
     if "provider" in params:
         kwargs["provider"] = config.provider
+    if "data_type" in params:
+        kwargs["data_type"] = config.data_type
 
     return cls(**kwargs)
 
