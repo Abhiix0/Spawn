@@ -12,6 +12,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from spawn.utils.console import console
+from spawn.utils.theme import BORDER_COLOR
 
 # ---------------------------------------------------------------------------
 # Tier sets for recommendations
@@ -514,7 +515,7 @@ class ProjectHealthChecker:
             Panel(
                 content,
                 title="[bold cyan]🏥 Project Health Report[/bold cyan]",
-                border_style="cyan",
+                border_style=BORDER_COLOR,
                 padding=(1, 2),
             )
         )

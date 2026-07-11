@@ -4,6 +4,7 @@ from rich.table import Table
 from rich.text import Text
 
 from spawn.utils.console import console
+from spawn.utils.theme import BORDER_COLOR
 
 
 def show_success(
@@ -41,6 +42,6 @@ def show_success(
         Panel.fit(
             combined,
             title="[bold green]✨ Project Created Successfully[/bold green]",
-            border_style="green",
+            border_style=BORDER_COLOR,
         )
     )
