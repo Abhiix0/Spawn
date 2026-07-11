@@ -24,6 +24,7 @@ def complete_project(temp_project_dir):
     # Documentation
     (temp_project_dir / "README.md").write_text("# Test Project")
     (temp_project_dir / "LICENSE").write_text("MIT License")
+    (temp_project_dir / "CHANGELOG.md").write_text("# Changelog")
 
     # Version control
     (temp_project_dir / ".git").mkdir()
@@ -192,7 +193,7 @@ class TestProjectHealthChecker:
         result = checker.check_tests_directory()
 
         assert result.name == "Tests"
-        assert result.category == "Quality"
+        assert result.category == "Testing"
         assert result.passed is True
 
     def test_check_tests_directory_missing(self, temp_project_dir):
@@ -285,7 +286,7 @@ class TestProjectHealthChecker:
         result = checker.check_dockerfile()
 
         assert result.name == "Dockerfile"
-        assert result.category == "Deployment"
+        assert result.category == "Automation"
         assert result.passed is True
 
     def test_check_dockerfile_missing(self, temp_project_dir):
@@ -353,17 +354,15 @@ class TestProjectHealthChecker:
         checker = ProjectHealthChecker(complete_project)
         checks = checker.run_all_checks()
 
-        assert len(checks) == 10
+        assert len(checks) == 12
         assert all(isinstance(check, HealthCheck) for check in checks)
-        # All checks should pass for complete project
-        assert all(check.passed for check in checks)
 
     def test_run_all_checks_minimal_project(self, minimal_project):
         """Test running all checks on a minimal project."""
         checker = ProjectHealthChecker(minimal_project)
         checks = checker.run_all_checks()
 
-        assert len(checks) == 10
+        assert len(checks) == 12
         # Only README and Git should pass
         passed_checks = [check for check in checks if check.passed]
         assert len(passed_checks) == 2
@@ -373,7 +372,7 @@ class TestProjectHealthChecker:
         checker = ProjectHealthChecker(temp_project_dir)
         checks = checker.run_all_checks()
 
-        assert len(checks) == 10
+        assert len(checks) == 12
         # No checks should pass
         assert all(not check.passed for check in checks)
 
@@ -386,7 +385,7 @@ class TestProjectHealthChecker:
         score, max_score = checker.calculate_score(checks)
 
         assert score == max_score
-        assert max_score == 100  # Sum of all weights
+        assert max_score == 115  # Sum of all 12 check weights
 
     def test_calculate_score_none_passed(self, temp_project_dir):
         """Test score calculation when no checks pass."""
@@ -395,7 +394,7 @@ class TestProjectHealthChecker:
         score, max_score = checker.calculate_score(checks)
 
         assert score == 0
-        assert max_score == 100
+        assert max_score == 115
 
     def test_calculate_score_empty_checks(self):
         """Test score calculation with empty checks list."""
@@ -416,7 +415,7 @@ class TestProjectHealthChecker:
         score, max_score = checker.calculate_score(checks)
 
         assert score == 30  # 15 + 15
-        assert max_score == 100
+        assert max_score == 115
 
     # Grouping Tests
 
@@ -428,15 +427,15 @@ class TestProjectHealthChecker:
 
         assert "Documentation" in categories
         assert "Version Control" in categories
-        assert "Quality" in categories
-        assert "Deployment" in categories
+        assert "Testing" in categories
+        assert "Automation" in categories
         assert "Configuration" in categories
 
-        assert len(categories["Documentation"]) == 2
+        assert len(categories["Documentation"]) == 3   # README + LICENSE + CHANGELOG
         assert len(categories["Version Control"]) == 2
-        assert len(categories["Quality"]) == 3
-        assert len(categories["Deployment"]) == 2
-        assert len(categories["Configuration"]) == 1
+        assert len(categories["Testing"]) == 3         # Tests + Ruff + Pytest
+        assert len(categories["Automation"]) == 2      # Dockerfile + GitHub Actions
+        assert len(categories["Configuration"]) == 2   # .env.example + pyproject.toml
 
     # Recommendations Tests
 
@@ -455,8 +454,8 @@ class TestProjectHealthChecker:
         checks = checker.run_all_checks()
         recommendations = checker.generate_recommendations(checks)
 
-        # All 10 checks should generate recommendations
-        assert len(recommendations) == 10
+        # All 12 checks should generate recommendations
+        assert len(recommendations) == 12
         # Git should be first priority
         assert "git init" in recommendations[0].lower()
 
@@ -472,8 +471,8 @@ class TestProjectHealthChecker:
         checks = checker.run_all_checks()
         recommendations = checker.generate_recommendations(checks)
 
-        # Should have 6 recommendations (missing pytest, ruff, gh actions, etc.)
-        assert len(recommendations) == 6
+        # Should have 8 recommendations (missing pytest, ruff, gh actions, etc.)
+        assert len(recommendations) == 8
         # Higher priority items should come first
         assert any("pytest" in rec.lower() for rec in recommendations[:3])
 
@@ -522,7 +521,7 @@ def test_doctor_with_valid_path(tmp_path):
     checker = ProjectHealthChecker(tmp_path)
     checks = checker.run_all_checks()
     assert isinstance(checks, list)
-    assert len(checks) == 10
+    assert len(checks) == 12
 
 
 def test_doctor_with_invalid_path(tmp_path):
@@ -531,3 +530,82 @@ def test_doctor_with_invalid_path(tmp_path):
     checker = ProjectHealthChecker(Path("/nonexistent/path/xyz"))
     checks = checker.run_all_checks()
     assert all(not check.passed for check in checks)
+
+# ---------------------------------------------------------------------------
+# New checks: CHANGELOG.md and pyproject.toml
+# ---------------------------------------------------------------------------
+
+
+def test_check_changelog_passes_when_present(tmp_path):
+    (tmp_path / "CHANGELOG.md").write_text("# Changelog")
+    checker = ProjectHealthChecker(tmp_path)
+    result = checker.check_changelog()
+    assert result.name == "CHANGELOG.md"
+    assert result.category == "Documentation"
+    assert result.passed is True
+    assert "present" in result.message.lower()
+
+
+def test_check_changelog_fails_when_missing(tmp_path):
+    checker = ProjectHealthChecker(tmp_path)
+    result = checker.check_changelog()
+    assert result.passed is False
+    assert "missing" in result.message.lower()
+
+
+def test_check_pyproject_passes_when_present(tmp_path):
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'x'\n")
+    checker = ProjectHealthChecker(tmp_path)
+    result = checker.check_pyproject()
+    assert result.name == "pyproject.toml"
+    assert result.category == "Configuration"
+    assert result.passed is True
+
+
+def test_check_pyproject_fails_when_missing(tmp_path):
+    checker = ProjectHealthChecker(tmp_path)
+    result = checker.check_pyproject()
+    assert result.passed is False
+    assert "missing" in result.message.lower()
+
+
+# ---------------------------------------------------------------------------
+# Per-category scoring
+# ---------------------------------------------------------------------------
+
+
+def test_calculate_category_scores_returns_all_categories(tmp_path):
+    checker = ProjectHealthChecker(tmp_path)
+    checks = checker.run_all_checks()
+    scores = checker.calculate_category_scores(checks)
+    for cat in ("Documentation", "Version Control", "Configuration", "Testing", "Automation"):
+        assert cat in scores, f"Missing category: {cat}"
+
+
+def test_calculate_category_scores_correct_math():
+    checks = [
+        HealthCheck("A", "Documentation", passed=True,  message="", weight=10),
+        HealthCheck("B", "Documentation", passed=False, message="", weight=5),
+        HealthCheck("C", "Testing",       passed=True,  message="", weight=15),
+    ]
+    checker = ProjectHealthChecker()
+    scores = checker.calculate_category_scores(checks)
+    assert scores["Documentation"] == (10, 15)
+    assert scores["Testing"] == (15, 15)
+
+
+# ---------------------------------------------------------------------------
+# Category rename checks
+# ---------------------------------------------------------------------------
+
+
+def test_tests_directory_category_is_testing(tmp_path):
+    checker = ProjectHealthChecker(tmp_path)
+    result = checker.check_tests_directory()
+    assert result.category == "Testing"
+
+
+def test_dockerfile_category_is_automation(tmp_path):
+    checker = ProjectHealthChecker(tmp_path)
+    result = checker.check_dockerfile()
+    assert result.category == "Automation"

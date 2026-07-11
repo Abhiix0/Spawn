@@ -110,7 +110,7 @@ class ProjectHealthChecker:
         passed = tests_path.exists() and tests_path.is_dir()
         return HealthCheck(
             name="Tests",
-            category="Quality",
+            category="Testing",
             passed=passed,
             message="Test directory configured"
             if passed
@@ -159,7 +159,7 @@ class ProjectHealthChecker:
 
         return HealthCheck(
             name="Ruff",
-            category="Quality",
+            category="Testing",
             passed=passed,
             message=message,
             weight=10,
@@ -212,13 +212,13 @@ class ProjectHealthChecker:
 
         return HealthCheck(
             name="Pytest",
-            category="Quality",
+            category="Testing",
             passed=passed,
             message=message,
             weight=10,
         )
 
-    # Deployment Checks
+    # Automation Checks
 
     def check_dockerfile(self) -> HealthCheck:
         """Check if Dockerfile exists."""
@@ -226,7 +226,7 @@ class ProjectHealthChecker:
         passed = dockerfile_path.exists() and dockerfile_path.is_file()
         return HealthCheck(
             name="Dockerfile",
-            category="Deployment",
+            category="Automation",
             passed=passed,
             message="Docker configuration present"
             if passed
@@ -258,7 +258,7 @@ class ProjectHealthChecker:
 
         return HealthCheck(
             name="GitHub Actions",
-            category="Deployment",
+            category="Automation",
             passed=passed,
             message=message,
             weight=10,
@@ -280,15 +280,36 @@ class ProjectHealthChecker:
             weight=5,
         )
 
-    def get_all_checks(self) -> List[Callable[[], HealthCheck]]:
-        """Get all health check methods.
+    def check_changelog(self) -> HealthCheck:
+        """Check if CHANGELOG.md exists."""
+        changelog_path = self.project_path / "CHANGELOG.md"
+        passed = changelog_path.exists() and changelog_path.is_file()
+        return HealthCheck(
+            name="CHANGELOG.md",
+            category="Documentation",
+            passed=passed,
+            message="Changelog present" if passed else "Missing CHANGELOG.md",
+            weight=5,
+        )
 
-        Returns:
-            List of health check methods to run
-        """
+    def check_pyproject(self) -> HealthCheck:
+        """Check if pyproject.toml exists."""
+        pyproject_path = self.project_path / "pyproject.toml"
+        passed = pyproject_path.exists() and pyproject_path.is_file()
+        return HealthCheck(
+            name="pyproject.toml",
+            category="Configuration",
+            passed=passed,
+            message="Project configuration present" if passed else "Missing pyproject.toml",
+            weight=10,
+        )
+
+    def get_all_checks(self) -> List[Callable[[], HealthCheck]]:
+        """Get all health check methods."""
         return [
             self.check_readme,
             self.check_license,
+            self.check_changelog,
             self.check_git_repository,
             self.check_gitignore,
             self.check_tests_directory,
@@ -297,6 +318,7 @@ class ProjectHealthChecker:
             self.check_dockerfile,
             self.check_github_actions,
             self.check_env_example,
+            self.check_pyproject,
         ]
 
     def run_all_checks(self) -> List[HealthCheck]:
@@ -323,6 +345,18 @@ class ProjectHealthChecker:
         earned_weight = sum(check.weight for check in checks if check.passed)
 
         return earned_weight, total_weight
+
+    def calculate_category_scores(
+        self, checks: List[HealthCheck]
+    ) -> dict[str, tuple[int, int]]:
+        """Return {category: (earned_weight, total_weight)} per category."""
+        categories = self.group_checks_by_category(checks)
+        result = {}
+        for category, cat_checks in categories.items():
+            earned = sum(c.weight for c in cat_checks if c.passed)
+            total = sum(c.weight for c in cat_checks)
+            result[category] = (earned, total)
+        return result
 
     def group_checks_by_category(
         self, checks: List[HealthCheck]
@@ -427,16 +461,20 @@ class ProjectHealthChecker:
         category_order = [
             "Documentation",
             "Version Control",
-            "Quality",
-            "Deployment",
             "Configuration",
+            "Testing",
+            "Automation",
         ]
+
+        category_scores = self.calculate_category_scores(checks)
 
         for category in category_order:
             if category not in categories:
                 continue
 
-            content.append(f"\n{category}\n", style="bold cyan")
+            cat_earned, cat_total = category_scores.get(category, (0, 0))
+            cat_percent = int((cat_earned / cat_total * 100) if cat_total else 0)
+            content.append(f"\n{category} — {cat_percent}%\n", style="bold cyan")
 
             for check in categories[category]:
                 if check.passed:
