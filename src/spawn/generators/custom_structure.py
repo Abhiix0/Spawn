@@ -1,5 +1,6 @@
 """
-Parse pasted folder-structure text into a flat list of (path, is_file) entries.
+Parse pasted folder-structure text into a flat list of (path, is_file) entries,
+and generate the filesystem structure from parsed entries.
 
 Supported input formats:
   tree      — uses ├──, └──, │ connectors (standard Unix tree output)
@@ -10,9 +11,14 @@ Supported input formats:
 from __future__ import annotations
 
 import re
+import shutil
 from dataclasses import dataclass
+from pathlib import Path
 
-from spawn.core.exceptions import StructureParseError
+from spawn.core.exceptions import SpawnError, StructureParseError
+from spawn.utils.console import console
+from spawn.utils.git import initialize_git
+from spawn.utils.uv import initialize_uv
 
 # Tree connector characters
 _TREE_CHARS = {"├", "└", "│"}
@@ -35,18 +41,15 @@ def _is_file_entry(name: str) -> bool:
 
     Rules (in priority order):
     1. Trailing "/" → always folder.
-    2. Starts with "." and has no further dot after the leading dot
-       (e.g. ".env", ".gitignore") → file.
+    2. Starts with "." (dotfile like .env, .gitignore) → file.
     3. Contains a "." after the last "/" segment → file.
     4. Anything else → folder.
     """
     if name.endswith("/"):
         return False
     segment = name.rsplit("/", 1)[-1]
-    # dotfiles like ".env.example", ".gitignore", ".env"
     if segment.startswith("."):
         return True
-    # names containing a dot are files (e.g. "main.py", "README.md")
     if "." in segment:
         return True
     return False
@@ -54,7 +57,6 @@ def _is_file_entry(name: str) -> bool:
 
 def _strip_name(name: str) -> str:
     """Remove trailing slash and inline comments."""
-    # strip inline comments like "# some note"
     name = re.sub(r"\s*#.*$", "", name).strip()
     return name.rstrip("/")
 
@@ -77,28 +79,17 @@ def detect_format(raw: str) -> str:
 
 
 def _tree_depth_and_name(line: str) -> tuple[int, str] | None:
-    """
-    Parse one line of tree output.
-
-    Depth is determined by counting tree-prefix segments before the name.
-    Each "│   " or "    " (4-char block) counts as one level, plus the
-    final connector (├── or └──) counts as one more level.
-
-    Returns (depth, name) or None if the line is blank / unparseable.
-    """
     stripped = line.rstrip()
     if not stripped:
         return None
 
-    # Root line: no tree characters at all
+    # Root line: no tree characters
     if not any(c in stripped for c in _TREE_CHARS):
         name = _strip_name(stripped.lstrip())
         if not name:
             return None
         return (0, name)
 
-    # Count prefix width before the connector
-    # prefix chars: │, space
     match = re.match(r"^([\s│]*)[├└]──\s*(.+)$", stripped)
     if not match:
         return None
@@ -106,8 +97,6 @@ def _tree_depth_and_name(line: str) -> tuple[int, str] | None:
     name = _strip_name(name)
     if not name:
         return None
-    # Each "│   " or "    " block in prefix is 4 chars → one indent level
-    # connector itself adds one more level
     depth = len(prefix) // 4 + 1
     return (depth, name)
 
@@ -118,7 +107,6 @@ def _markdown_depth_and_name(line: str, indent_unit: int) -> tuple[int, str] | N
         stripped = line.strip()
         if not stripped:
             return None
-        # non-bullet root line
         return (0, _strip_name(stripped))
     spaces = len(match.group(1))
     name = _strip_name(line[match.end():].strip())
@@ -131,10 +119,6 @@ def _markdown_depth_and_name(line: str, indent_unit: int) -> tuple[int, str] | N
 def _indented_depth_and_name(
     line: str, indent_unit: int | None
 ) -> tuple[int, str, int | None]:
-    """
-    Returns (depth, name, updated_indent_unit).
-    indent_unit is None until the first indented line establishes it.
-    """
     stripped = line.rstrip()
     if not stripped or not stripped.strip():
         return (-1, "", indent_unit)
@@ -147,7 +131,6 @@ def _indented_depth_and_name(
     if leading == 0:
         return (0, name, indent_unit)
 
-    # Establish indent unit from first indented line
     if indent_unit is None:
         indent_unit = leading
 
@@ -161,7 +144,7 @@ def _indented_depth_and_name(
 def parse_structure(raw: str) -> list[ParsedEntry]:
     """
     Parse raw pasted text into a flat list of ParsedEntry with full
-    relative paths.  See module docstring for format details.
+    relative paths.
 
     Raises StructureParseError for empty input, malformed indentation,
     or duplicate paths.
@@ -193,7 +176,6 @@ def _parse_tree_lines(lines: list[str]) -> list[tuple[int, str]]:
 
 
 def _parse_markdown_lines(lines: list[str]) -> list[tuple[int, str]]:
-    # Detect indent unit: smallest non-zero leading-space count on bullet lines
     indent_unit = 2
     space_counts = []
     for line in lines:
@@ -228,12 +210,6 @@ def _parse_indented_lines(lines: list[str]) -> list[tuple[int, str]]:
 def _build_entries(
     depth_name_pairs: list[tuple[int, str]],
 ) -> list[ParsedEntry]:
-    """
-    Convert (depth, name) pairs to ParsedEntry with full paths.
-
-    Uses a stack where stack[depth] = current folder path at that depth.
-    Raises StructureParseError for depth jumps > 1 and duplicate paths.
-    """
     if not depth_name_pairs:
         raise StructureParseError("No parseable entries found in input.")
 
@@ -244,32 +220,22 @@ def _build_entries(
 
     entries: list[ParsedEntry] = []
     seen: set[str] = set()
-
-    # stack[i] = the folder path that acts as parent for depth i+1
-    # stack[0] = "" means top-level entries have no parent prefix
     stack: list[str] = [""]
-
     prev_depth = -1
 
     for depth, name in depth_name_pairs:
-        # Validate depth jump
         if depth > prev_depth + 1:
             raise StructureParseError(
                 f"Entry '{name}' is indented {depth} level(s) deep but the "
                 f"previous depth was {prev_depth} — missing intermediate parent."
             )
 
-        # Trim stack to current depth
-        # stack has entries for depths 0..prev_depth
-        # After trim, stack[depth] is the parent folder for this entry
-        del stack[depth + 1 :]
+        del stack[depth + 1:]
 
         parent = stack[depth] if depth < len(stack) else stack[-1]
         full_path = f"{parent}/{name}".lstrip("/") if parent else name
 
-        # Detect file vs folder (use original name including trailing slash)
-        original_line_name = name  # already stripped of comments
-        is_file = _is_file_entry(original_line_name)
+        is_file = _is_file_entry(name)
 
         if full_path in seen:
             raise StructureParseError(
@@ -279,7 +245,6 @@ def _build_entries(
 
         entries.append(ParsedEntry(path=full_path, is_file=is_file))
 
-        # If this is a folder, push it as the parent for the next depth level
         if not is_file:
             if depth + 1 >= len(stack):
                 stack.append(full_path)
@@ -289,3 +254,55 @@ def _build_entries(
         prev_depth = depth
 
     return entries
+
+
+# ─── Filesystem generator ─────────────────────────────────────────────────
+
+
+class CustomStructureGenerator:
+    def generate(
+        self,
+        project_name: str,
+        entries: list[ParsedEntry],
+        use_git: bool = False,
+        use_uv: bool = True,
+    ) -> Path:
+        """
+        Create the folder/file structure described by *entries* under a new
+        directory named *project_name* in the current working directory.
+
+        Raises SpawnError if the directory already exists or an OS error
+        occurs.  Rolls back on any failure.
+        """
+        project_path = Path(project_name)
+
+        if project_path.exists():
+            raise SpawnError(f"Directory '{project_name}' already exists.")
+
+        try:
+            project_path.mkdir()
+
+            for entry in entries:
+                full_path = project_path / entry.path
+                if entry.is_file:
+                    full_path.parent.mkdir(parents=True, exist_ok=True)
+                    full_path.touch()
+                else:
+                    full_path.mkdir(parents=True, exist_ok=True)
+
+            if use_git:
+                console.print("[yellow]Initializing Git...[/yellow]")
+                initialize_git(project_path)
+
+            if use_uv:
+                initialize_uv(project_path)
+
+        except OSError as e:
+            shutil.rmtree(project_path, ignore_errors=True)
+            raise SpawnError(str(e)) from e
+
+        except BaseException:
+            shutil.rmtree(project_path, ignore_errors=True)
+            raise
+
+        return project_path

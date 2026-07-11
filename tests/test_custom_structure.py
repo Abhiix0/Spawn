@@ -1,7 +1,11 @@
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
-from spawn.core.exceptions import StructureParseError
+from spawn.core.exceptions import SpawnError, StructureParseError
 from spawn.generators.custom_structure import (
+    CustomStructureGenerator,
     detect_format,
     parse_structure,
 )
@@ -81,7 +85,7 @@ app/
 
 
 def test_parse_tree_full_validation():
-    """Validation check from the spec."""
+    """Parser correctly produces 5 folders (app + 4 children) and 2 top-level files."""
     raw = """\
 app/
 ├── api/
@@ -93,13 +97,8 @@ README.md
     entries = parse_structure(raw)
     folders = [e.path for e in entries if not e.is_file]
     files = [e.path for e in entries if e.is_file]
-    assert len(folders) == 5, folders  # app + api + services + models + tests
-    # The spec validation asserts len(folders) == 4 for items UNDER app
-    # and README.md + .env.example as top-level files.
-    # Recount: app itself is also a folder = 5. But spec asserts == 4.
-    # That means the spec counts only the children, not app itself.
-    # Let's check what parse actually returns and assert both exist.
-    assert "app/api" in folders or "api" in folders
+    assert len(folders) == 5, folders
+    assert "app/api" in folders
     assert "README.md" in files
     assert ".env.example" in files
 
@@ -224,9 +223,8 @@ src/
 
 
 def test_parse_malformed_indent_raises():
-    """A line indented 3 levels with parent at level 1 skipped should raise."""
-    # indent unit is 4 spaces; src/ is depth 0, then immediately jump to depth 3
-    raw = "src/\n    a/\n                deep/\n"  # 4→4→16: unit=4, a/ is depth 1, deep/ is depth 4
+    """A line indented 4 levels with parent at level 1 (jump of 3) should raise."""
+    raw = "src/\n    a/\n                deep/\n"  # unit=4: a/ depth 1, deep/ depth 4 → jump of 3
     with pytest.raises(StructureParseError):
         parse_structure(raw)
 
@@ -244,7 +242,6 @@ app/
     paths = [e.path for e in entries]
     assert "app/api" in paths
     assert "app/main.py" in paths
-    # comment text should not appear in paths
     assert not any("REST" in p or "entry" in p for p in paths)
 
 
@@ -274,3 +271,88 @@ def test_single_root_folder():
     assert len(entries) == 1
     assert entries[0].path == "myproject"
     assert entries[0].is_file is False
+
+
+# ─── CustomStructureGenerator ─────────────────────────────────────────────
+
+_TREE_RAW = """\
+app/
+├── api/
+├── services/
+├── models/
+└── tests/
+README.md
+.env.example
+"""
+
+
+def test_generator_creates_all_folders(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_uv"), \
+         patch("spawn.generators.custom_structure.initialize_git"):
+        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+    root = tmp_path / "my-project"
+    assert (root / "app" / "api").is_dir()
+    assert (root / "app" / "services").is_dir()
+    assert (root / "app" / "models").is_dir()
+    assert (root / "app" / "tests").is_dir()
+
+
+def test_generator_creates_files(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_uv"), \
+         patch("spawn.generators.custom_structure.initialize_git"):
+        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+    root = tmp_path / "my-project"
+    assert (root / "README.md").is_file()
+    assert (root / ".env.example").is_file()
+
+
+def test_generator_raises_if_dir_exists(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "my-project").mkdir()
+    entries = parse_structure(_TREE_RAW)
+    with pytest.raises(SpawnError, match="already exists"):
+        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+
+
+def test_generator_skips_git_when_false(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_git") as mock_git, \
+         patch("spawn.generators.custom_structure.initialize_uv"):
+        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+    mock_git.assert_not_called()
+
+
+def test_generator_calls_git_when_true(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_git") as mock_git, \
+         patch("spawn.generators.custom_structure.initialize_uv"):
+        CustomStructureGenerator().generate("my-project", entries, use_git=True, use_uv=False)
+    mock_git.assert_called_once()
+
+
+def test_generator_rolls_back_on_failure(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    call_count = 0
+    original_mkdir = Path.mkdir
+
+    def patched_mkdir(self, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise OSError("simulated disk error")
+        return original_mkdir(self, *args, **kwargs)
+
+    with patch.object(Path, "mkdir", patched_mkdir):
+        with pytest.raises((SpawnError, OSError)):
+            CustomStructureGenerator().generate(
+                "my-project", entries, use_git=False, use_uv=False
+            )
+
+    assert not (tmp_path / "my-project").exists(), "rollback failed — directory still exists"
