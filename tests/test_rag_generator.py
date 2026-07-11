@@ -174,7 +174,7 @@ def test_rag_meta_json(tmp_path, monkeypatch):
     assert meta["intent"] == "rag"
     assert meta["framework"] is None
     assert meta["provider"] is None
-    assert meta["spawn_version"] == "0.8.0"
+    assert meta["spawn_version"] == "0.9.0"
 
 
 # ─── Dependencies ────────────────────────────────────────────────────────

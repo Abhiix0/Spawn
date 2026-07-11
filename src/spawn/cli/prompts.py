@@ -122,7 +122,7 @@ def get_project_config() -> ProjectConfig:
         valid_dt_range = len(data_types)
         dt_choice = typer.prompt(
             typer.style(
-                f"Choose Data Type [1-{valid_dt_range}]",
+                f"Choose Project Type [1-{valid_dt_range}]",
                 fg=typer.colors.CYAN,
             ),
             default="1",
@@ -135,7 +135,7 @@ def get_project_config() -> ProjectConfig:
             )
             dt_choice = typer.prompt(
                 typer.style(
-                    f"Choose Data Type [1-{valid_dt_range}]",
+                    f"Choose Project Type [1-{valid_dt_range}]",
                     fg=typer.colors.CYAN,
                 ),
                 default="1",
