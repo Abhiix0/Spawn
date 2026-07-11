@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning) |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -493,7 +493,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **AI Chatbot intent** — PydanticAI and OpenAI SDK with provider abstraction (v0.6.0)
 - [x] **AI Agent intent** — tool-calling agent scaffold with PydanticAI and OpenAI Agents SDK (v0.7.0)
 - [x] **RAG System intent** — retrieval-augmented generation with LlamaIndex and ChromaDB (v0.8.0)
-- [ ] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
+- [x] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
 
 ---
 
