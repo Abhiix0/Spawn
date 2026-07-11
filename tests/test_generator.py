@@ -615,3 +615,48 @@ def test_chatbot_openai_sdk_extras_in_dependencies():
     assert "python-dotenv" in deps
     assert "pytest" in deps
     assert "pydantic-ai" not in deps
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: expanded meta.json schema
+# ---------------------------------------------------------------------------
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_meta_json_has_new_keys(mock_uv, mock_install, tmp_path, monkeypatch):
+    """meta.json must contain the 5 new keys added in Phase 4."""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config())
+
+    data = json.loads(
+        (tmp_path / "demo" / ".spawn" / "meta.json").read_text(encoding="utf-8")
+    )
+    for key in ("created_at", "generator", "git", "uv", "source"):
+        assert key in data, f"Missing key: {key}"
+    assert data["generator"] == "blueprint"
+    assert data["git"] is False
+    assert data["uv"] is True
+    assert data["source"] is None
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_meta_json_backward_compatible(mock_uv, mock_install, tmp_path, monkeypatch):
+    """The 4 original meta.json keys must still be present and correct."""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config())
+
+    data = json.loads(
+        (tmp_path / "demo" / ".spawn" / "meta.json").read_text(encoding="utf-8")
+    )
+    assert data["intent"] == "cli"
+    assert data["framework"] is None
+    assert data["provider"] is None
+    assert "spawn_version" in data

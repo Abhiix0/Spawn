@@ -11,3 +11,5 @@ class ProjectConfig:
     cli_type: str | None = None
     data_type: str | None = None
     provider: str | None = None
+    use_uv: bool = True
+    custom_entries: list | None = None   # list[ParsedEntry] when template == "custom"
