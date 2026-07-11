@@ -37,7 +37,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning) |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning), Custom Structure |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
@@ -95,8 +95,9 @@ Spawn rejects names with spaces or special characters, and tells you immediately
   5  AI Agent
   6  RAG System
   7  Data Project
+  8  Custom Structure
 
-Choose Template [1-7]: 1
+Choose Template [1-8]: 1
 ```
 
 **Step 3 — Additional prompts** *(template-dependent)*
@@ -433,6 +434,36 @@ Extras []: 1,2
 
 ---
 
+**Custom Structure — Paste your layout**
+
+```
+Paste your project structure.
+Supported formats: Tree (├──/└──), Markdown list (- item), Indented hierarchy
+Finish with Ctrl+D (Ctrl+Z then Enter on Windows)
+
+app/
+├── api/
+├── services/
+└── tests/
+README.md
+^Z
+
+Detected
+Folders : 4
+Files   : 1
+
+Initialize Git? [Y/n]: Y
+Initialize uv? [Y/n]: Y
+Proceed? [Y/n]: Y
+```
+
+Custom Structure skips the framework/provider/extras prompts entirely.
+Spawn parses the pasted text, shows a preview of detected folders and
+files, then creates the structure using the same Git/uv flow as every
+other template.
+
+---
+
 ### `[7]` Data Project
 
 Best for: exploratory data analysis, internal dashboards, data cleaning pipelines, quick ML prototyping.
@@ -467,6 +498,37 @@ uv run python src/train.py
 
 ---
 
+### `[8]` Custom Structure
+
+Best for: when you already know exactly what folders and files you want
+and none of the predefined templates fit.
+
+Paste any of three text formats — Unix `tree` output, a Markdown list,
+or plain indented hierarchy — and Spawn parses it, shows a preview of
+detected folders and files, then creates the structure with Git and uv
+already wired up.
+
+```bash
+# Example input (tree format)
+app/
+├── api/
+├── services/
+└── tests/
+README.md
+.env.example
+```
+
+```
+Detected
+Folders : 4
+Files   : 2
+```
+
+No framework, provider, or extras prompts — Custom Structure goes
+straight from name → paste → confirm → generate.
+
+---
+
 ## Other Commands
 
 ### `spawn doctor`
@@ -481,27 +543,37 @@ spawn doctor ./path/to/project
 ```
 ╭─────────────── 🏥 Project Health Report ───────────────╮
 │                                                          │
-│  Documentation                                           │
+│  🟡 Good                                                 │
+│  Some improvements recommended.                          │
+│                                                          │
+│  Project Score: 62%  (81/130)                            │
+│                                                          │
+│  Documentation — 67%                                     │
 │  ✓ README.md — Documentation file present               │
 │  ⚠ LICENSE — Missing LICENSE file                       │
+│  ⚠ CHANGELOG.md — Missing CHANGELOG.md                  │
 │                                                          │
-│  Version Control                                         │
+│  Version Control — 100%                                  │
 │  ✓ Git Repository — Git initialized                     │
 │  ✓ .gitignore — Git ignore configured                   │
 │                                                          │
-│  Quality                                                 │
+│  Configuration — 0%                                      │
+│  ⚠ .env.example — Missing .env.example                  │
+│  ⚠ pyproject.toml — Missing pyproject.toml              │
+│                                                          │
+│  Testing — 100%                                          │
 │  ✓ Tests — Test directory configured                    │
-│  ✓ Ruff — Ruff configured in pyproject.toml             │
 │  ✓ Pytest — Pytest configured in pyproject.toml         │
 │                                                          │
-│  Deployment                                              │
+│  Automation — 50%                                        │
 │  ⚠ Dockerfile — Missing Dockerfile                      │
 │  ✓ GitHub Actions — GitHub Actions configured           │
 │                                                          │
-│  Configuration                                           │
-│  ✓ .env.example — Environment template present          │
+│  Code Quality — 100%                                     │
+│  ✓ Ruff — Ruff configured in pyproject.toml             │
+│  ✓ Type Checking — Type checking configured (mypy.ini)  │
+│  ✓ Pre-commit — Pre-commit configured                   │
 │                                                          │
-│  Project Score: 80/100 (80%)                            │
 ╰──────────────────────────────────────────────────────────╯
 ```
 
@@ -509,7 +581,7 @@ spawn doctor ./path/to/project
 
 ```bash
 spawn version
-# → Spawn v0.9.0
+# → Spawn v1.0.0
 ```
 
 ### Publish to GitHub
@@ -549,6 +621,8 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 - [x] **AI Agent intent** — tool-calling agent scaffold with PydanticAI and OpenAI Agents SDK (v0.7.0)
 - [x] **RAG System intent** — retrieval-augmented generation with LlamaIndex and ChromaDB (v0.8.0)
 - [x] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
+- [x] **Custom Structure workflow** — paste any folder layout, Spawn creates it (v1.0.0)
+- [x] **Doctor 2.0** — per-category health percentages, CHANGELOG.md and pyproject.toml checks (v1.0.0)
 
 ---
 

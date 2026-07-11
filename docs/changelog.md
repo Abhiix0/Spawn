@@ -3,6 +3,33 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.0 — 2026
+
+### New Features
+
+- **Custom Structure workflow** — bootstrap a project from your own pasted folder
+  structure (Tree, Markdown list, or Indented format) instead of choosing a predefined
+  blueprint; Spawn parses, previews detected folders/files, and reuses the existing
+  Git/uv flow
+- **Rich `.spawn/meta.json` metadata** — every generated project now records
+  `created_at`, `generator`, `git`, `uv`, and `source` in addition to the existing
+  `intent`/`framework`/`provider`/`spawn_version` fields; fully backward compatible
+- **Doctor 2.0** — per-category health percentages (Documentation, Version Control,
+  Configuration, Testing, Automation, Code Quality), three new checks (CHANGELOG.md,
+  pyproject.toml, Type Checking, Pre-commit), tiered recommendations (Critical /
+  Recommended / Optional), health rating label (Excellent / Good / Fair / Needs
+  Attention), and a "Next Best Step" panel
+
+### Internal
+
+- `src/spawn/generators/custom_structure.py` — new module: `parse_structure()`,
+  `ParsedEntry`, `CustomStructureGenerator`
+- `ProjectConfig` gains `use_uv: bool = True` and `custom_entries: list | None = None`
+- `StructureParseError` added to `core/exceptions.py`
+- Doctor checks recategorized: `Quality` → `Testing` / `Code Quality`,
+  `Deployment` → `Automation` (category names only; check logic unchanged)
+- Version bumped to `1.0.0`
+
 ## v0.9.0 — 2026
 
 ### Added
