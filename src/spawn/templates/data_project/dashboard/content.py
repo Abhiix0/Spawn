@@ -25,7 +25,7 @@ filtered = df[df["category"].isin(selected_categories)]
 
 # ── Raw data ──────────────────────────────────────────────────────────────
 st.subheader("Raw Data")
-st.dataframe(filtered, use_container_width=True)
+st.dataframe(filtered, width="stretch")
 
 # ── Chart ─────────────────────────────────────────────────────────────────
 st.subheader("Total Value by Category")
@@ -38,7 +38,7 @@ fig = px.bar(
     title="Total Value by Category",
     labels={{"category": "Category", "value": "Total Value"}},
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 """
 
 DASHBOARD_TEST_CONTENT = """\
