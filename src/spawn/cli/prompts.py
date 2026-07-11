@@ -300,10 +300,10 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     console.print(f"Files   : {len(files)}")
     console.print()
 
-    typer.confirm(
+    use_git = typer.confirm(
         typer.style("Initialize Git?", fg=typer.colors.CYAN), default=True
     )
-    typer.confirm(
+    use_uv = typer.confirm(
         typer.style("Initialize uv?", fg=typer.colors.CYAN), default=True
     )
     proceed = typer.confirm(
@@ -313,4 +313,10 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     if not proceed:
         raise SpawnError("Cancelled.")
 
-    raise SpawnError("Custom Structure model wiring lands in Phase 4")
+    return ProjectConfig(
+        name=project_name,
+        template="custom",
+        use_git=use_git,
+        use_uv=use_uv,
+        custom_entries=entries,
+    )

@@ -1,3 +1,4 @@
+import datetime
 import json
 import shutil
 from pathlib import Path
@@ -78,6 +79,13 @@ class ProjectGenerator:
                         "framework": config.framework,
                         "provider": config.provider,
                         "spawn_version": __version__,
+                        "created_at": datetime.datetime.now(
+                            datetime.timezone.utc
+                        ).isoformat(),
+                        "generator": "blueprint",
+                        "git": config.use_git,
+                        "uv": True,
+                        "source": None,
                     },
                     indent=2,
                 ),
