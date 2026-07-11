@@ -1,7 +1,6 @@
+from rich.console import Group
 from rich.panel import Panel
 from rich.text import Text
-from rich.console import Group
-from rich.align import Align
 
 from spawn.utils.console import console
 
@@ -25,17 +24,18 @@ def show_banner() -> None:
         t.stylize(f"bold {color}")
         logo_lines.append(t)
 
-    logo_group = Group(*logo_lines)
+    subtitle = Text("  ✿  scaffold your next project", style="dim #94B8D9")
+    logo_group = Group(*logo_lines, subtitle)
 
     console.print()
     console.print(
-        Align.center(
-            Panel(
-                logo_group,
-                border_style="#2D5E8E",
-                padding=(1, 4),
-                expand=False,
-            )
+        Panel(
+            logo_group,
+            border_style="#2D5E8E",
+            padding=(1, 4),
+            expand=False,
+            title="[#94B8D9]◆[/#94B8D9]",
+            title_align="center",
         )
     )
     console.print()
