@@ -14,6 +14,33 @@ Spawn is a local CLI tool that transforms one command into a complete Python pro
 
 ---
 
+## Contents
+
+- [The Problem Spawn Solves](#the-problem-spawn-solves)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Templates](#project-templates)
+  - [1. Backend API](#1-backend-api)
+  - [2. CLI Application](#2-cli-application)
+  - [3. Automation Tool](#3-automation-tool)
+  - [4. AI Chatbot](#4-ai-chatbot)
+  - [5. AI Agent](#5-ai-agent)
+  - [6. RAG System](#6-rag-system)
+  - [7. Data Project](#7-data-project)
+- [Bring Your Own Structure](#bring-your-own-structure)
+- [Other Commands](#other-commands)
+  - [spawn doctor](#spawn-doctor)
+  - [spawn version](#spawn-version)
+  - [Publish to GitHub](#publish-to-github)
+- [Running the Tests](#running-the-tests)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
 ## The Problem Spawn Solves
 
 Every new Python project starts with the same manual ritual:
@@ -37,12 +64,13 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning), Custom Structure |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning) |
+| **Bring your own structure** | Paste any folder layout — Tree, Markdown list, or Indented — and Spawn builds exactly that, no blueprint required |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
-| **spawn doctor** | Scans your project for health indicators and scores it out of 100 |
+| **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
 
 ---
 
@@ -100,45 +128,7 @@ Spawn rejects names with spaces or special characters, and tells you immediately
 Choose Template [1-8]: 1
 ```
 
-**Step 3 — Additional prompts** *(template-dependent)*
-
-```
-  1  fastapi
-  2  flask
-  3  django
-
-Choose Framework [1-3]: 1
-
-  1  ruff
-  2  pytest
-  3  docker
-  4  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
-```
-
-**CLI Application — CLI type and framework**
-
-```
-  1  utility
-  2  interactive
-
-Choose CLI Type [1-2]: 1
-
-  1  typer
-  2  click
-  3  argparse
-
-Choose Framework [1-3]: 1
-
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
-```
+**Step 3 — Additional prompts** *(template-dependent — framework, provider, project type, and/or extras, depending on what you picked. See [Project Templates](#project-templates) below for each one's exact flow.)*
 
 **Step 4 — Git**
 
@@ -168,21 +158,11 @@ That's it. Spawn generates the project, installs dependencies, and shows you exa
 
 ## Project Templates
 
-### `[1]` Backend API
+Every template below follows the same shape: **best for**, **structure**, **prompts you'll see**, **available extras**, and **how to run it**.
+
+### 1. Backend API
 
 Best for: REST APIs, microservices, backend web apps.
-
-Generates a production-structured project with a health endpoint, config module, and test file ready to run. Choose your framework and opt into extras — everything is installed automatically via `uv add`.
-
-| Framework | Start command |
-|---|---|
-| FastAPI | `uv run uvicorn app.main:app --reload` |
-| Flask | `uv run python run.py` |
-| Django | `uv run python manage.py runserver` |
-
-**Available extras:** `ruff` `pytest` `docker` `github-actions`
-
-**FastAPI structure:**
 
 ```
 my-api/
@@ -200,8 +180,35 @@ my-api/
 └── .gitignore
 ```
 
+**Prompts:**
+
+```
+  1  fastapi
+  2  flask
+  3  django
+
+Choose Framework [1-3]: 1
+
+  1  ruff
+  2  pytest
+  3  docker
+  4  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+**Available extras:** `ruff` `pytest` `docker` `github-actions`
+
+**Run it:**
+
+| Framework | Start command |
+|---|---|
+| FastAPI | `uv run uvicorn app.main:app --reload` |
+| Flask | `uv run python run.py` |
+| Django | `uv run python manage.py runserver` |
+
 ```bash
-# After generation
 cd my-api
 uv run uvicorn app.main:app --reload
 # GET http://localhost:8000/ → {"status": "running"}
@@ -209,16 +216,16 @@ uv run uvicorn app.main:app --reload
 
 ---
 
-### `[2]` CLI Application
+### 2. CLI Application
 
 Best for: developer tools, automation commands, project generators, setup wizards.
 
-**Utility CLI:**
-
 ```
 my-cli/
 ├── src/
 │   ├── commands/
+│   ├── prompts/     # Interactive type only
+│   ├── ui/           # Interactive type only
 │   ├── utils/
 │   └── main.py
 ├── tests/
@@ -226,34 +233,41 @@ my-cli/
 └── .gitignore
 ```
 
+**Prompts:**
+
+```
+  1  utility
+  2  interactive
+
+Choose CLI Type [1-2]: 1
+
+  1  typer
+  2  click
+  3  argparse
+
+Choose Framework [1-3]: 1
+
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+**Available extras:** `ruff` `pytest` `github-actions`
+
+**Run it:**
+
 ```bash
 cd my-cli
-uv run python -m src.main hello
-```
-
-**Interactive CLI:**
-
-```
-my-cli/
-├── src/
-│   ├── commands/
-│   ├── prompts/
-│   ├── ui/
-│   ├── utils/
-│   └── main.py
-├── tests/
-├── README.md
-└── .gitignore
-```
-
-```bash
-cd my-cli
-uv run python -m src.main greet
+uv run python -m src.main hello       # Utility
+uv run python -m src.main greet       # Interactive
 ```
 
 ---
 
-### `[3]` Automation Tool
+### 3. Automation Tool
 
 Best for: scheduled jobs, data pipelines, reporting systems, integration automation.
 
@@ -271,6 +285,21 @@ my-automation/
 └── README.md
 ```
 
+**Prompts:**
+
+```
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+**Available extras:** `ruff` `pytest` `github-actions`
+
+**Run it:**
+
 ```bash
 cd my-automation
 uv run python -m src.main
@@ -278,7 +307,7 @@ uv run python -m src.main
 
 ---
 
-### `[4]` AI Chatbot
+### 4. AI Chatbot
 
 Best for: customer support bots, study assistants, conversational AI tools.
 
@@ -296,13 +325,7 @@ my-chatbot/
 └── README.md
 ```
 
-```bash
-cd my-chatbot
-# Add API key to .env
-uv run python -m src.main
-```
-
-**AI Chatbot — Framework and provider**
+**Prompts:**
 
 ```
   1  pydantic-ai
@@ -319,11 +342,29 @@ Choose Framework [1-3]: 1
   6  groq
 
 Choose Provider [1-6]: 1
+
+  1  ruff
+  2  pytest
+  3  rich
+  4  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+**Available extras:** `ruff` `pytest` `rich` `github-actions`
+
+**Run it:**
+
+```bash
+cd my-chatbot
+# Add your provider's API key to .env
+uv run python -m src.main
 ```
 
 ---
 
-### `[5]` AI Agent
+### 5. AI Agent
 
 Best for: task automation, research assistants, tool-calling workflows.
 
@@ -340,13 +381,7 @@ my-agent/
 └── README.md
 ```
 
-```bash
-cd my-agent
-# Add API key to .env
-uv run python -m src.main
-```
-
-**AI Agent — Framework and provider**
+**Prompts:**
 
 ```
   1  pydantic-ai
@@ -362,15 +397,32 @@ Choose Framework [1-2]: 1
   6  groq
 
 Choose Provider [1-6]: 1
+
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
 ```
 
-Note: if you pick `openai-agents`, only `openai` and `openrouter` appear as provider choices — the list is filtered per framework.
+> If you pick `openai-agents`, only `openai` and `openrouter` appear as provider choices — the list is filtered per framework.
 
-Every generated AI Agent project ships with one working tool (a calculator) so you can see tool-calling work immediately, with no external services or extra API keys required beyond your chosen provider.
+**Available extras:** `ruff` `pytest` `github-actions`
+
+**Run it:**
+
+```bash
+cd my-agent
+# Add your provider's API key to .env
+uv run python -m src.main
+```
+
+Every generated AI Agent project ships with one working tool (a calculator), so you can see tool-calling work immediately — no external services or extra setup beyond your chosen provider's API key.
 
 ---
 
-### `[6]` RAG System
+### 6. RAG System
 
 Best for: documentation Q&A, knowledge base search, document retrieval.
 
@@ -390,14 +442,7 @@ my-rag/
 └── README.md
 ```
 
-```bash
-cd my-rag
-# Add OPENAI_API_KEY to .env
-uv run python -m src.main
-# Documents are ingested automatically on first run
-```
-
-**RAG System — Extras only, no framework/provider prompt**
+**Prompts:**
 
 ```
   1  ruff
@@ -408,13 +453,40 @@ uv run python -m src.main
 Extras []: 1,2
 ```
 
-RAG System uses a fixed stack (LlamaIndex + ChromaDB + OpenAI) — there's no framework or provider choice. On first run, it automatically ingests documents from `data/` into a local ChromaDB index, then lets you ask questions against them.
+RAG System uses a fixed stack — **LlamaIndex + ChromaDB + OpenAI** — so there's no framework or provider prompt, unlike Chatbot and Agent. On first run, it automatically ingests documents from `data/` into a local ChromaDB index, then lets you ask questions against them. Requires an `OPENAI_API_KEY` (used for both the LLM and embeddings).
 
-Requires an `OPENAI_API_KEY` (used for both the LLM and embeddings).
+**Available extras:** `ruff` `pytest` `github-actions`
+
+**Run it:**
+
+```bash
+cd my-rag
+# Add OPENAI_API_KEY to .env
+uv run python -m src.main
+# Documents are ingested automatically on first run
+```
 
 ---
 
-**Data Project — Project type and extras**
+### 7. Data Project
+
+Best for: exploratory data analysis, internal dashboards, data cleaning pipelines, quick ML prototyping.
+
+```
+my-data-project/
+├── data/
+├── notebooks/    # Data Analysis
+├── reports/      # Data Analysis
+├── dashboard/    # Dashboard
+├── pipelines/    # ETL Pipeline
+├── models/       # Machine Learning
+├── experiments/  # Machine Learning
+├── src/
+├── tests/
+└── .env.example  # ETL Pipeline
+```
+
+**Prompts:**
 
 ```
   1  Data Analysis
@@ -432,60 +504,16 @@ Choose Project Type [1-4]: 1
 Extras []: 1,2
 ```
 
----
-
-**Custom Structure — Paste your layout**
-
-```
-Paste your project structure.
-Supported formats: Tree (├──/└──), Markdown list (- item), Indented hierarchy
-Finish with Ctrl+D (Ctrl+Z then Enter on Windows)
-
-app/
-├── api/
-├── services/
-└── tests/
-README.md
-^Z
-
-Detected
-Folders : 4
-Files   : 1
-
-Initialize Git? [Y/n]: Y
-Initialize uv? [Y/n]: Y
-Proceed? [Y/n]: Y
-```
-
-Custom Structure skips the framework/provider/extras prompts entirely.
-Spawn parses the pasted text, shows a preview of detected folders and
-files, then creates the structure using the same Git/uv flow as every
-other template.
-
----
-
-### `[7]` Data Project
-
-Best for: exploratory data analysis, internal dashboards, data cleaning pipelines, quick ML prototyping.
-
-Four sub-types, selected via **Choose Project Type**:
-
-| Type | Structure | Start command |
-|---|---|---|
-| Data Analysis | `data/`, `notebooks/`, `reports/`, `src/`, `tests/` | `uv run jupyter notebook` |
-| Dashboard | `data/`, `dashboard/`, `src/`, `tests/` | `uv run streamlit run dashboard/app.py` |
-| ETL Pipeline | `data/`, `pipelines/`, `src/`, `tests/`, `.env.example` | `uv run python -m pipelines.run` |
-| Machine Learning | `data/`, `models/`, `experiments/`, `src/`, `tests/` | `uv run python src/train.py` |
-
 **Available extras:** `ruff` `pytest` `github-actions`
 
-**Data Analysis** ships a sample CSV and a starter notebook that loads it, computes summary stats, and saves a chart to `reports/`.
+**Run it:**
 
-**Dashboard** ships a Streamlit app with a sidebar filter and a Plotly chart over the same sample dataset.
-
-**ETL Pipeline** ships a raw CSV with intentionally messy data (inconsistent casing, missing values) and a cleaning script. `INPUT_PATH` and `OUTPUT_PATH` are configurable via `.env` — no code changes needed to point it at your own file.
-
-**Machine Learning** ships a labeled sample dataset and a training script that trains a `RandomForestClassifier`, saves the model to `models/`, and logs a timestamped JSON with accuracy and run metadata to `experiments/` on every run.
+| Type | Ships with | Start command |
+|---|---|---|
+| Data Analysis | Sample CSV + starter notebook (summary stats, saved chart) | `uv run jupyter notebook` |
+| Dashboard | Streamlit app with sidebar filter + Plotly chart | `uv run streamlit run dashboard/app.py` |
+| ETL Pipeline | Intentionally messy sample CSV + cleaning script (`INPUT_PATH`/`OUTPUT_PATH` via `.env`) | `uv run python -m pipelines.run` |
+| Machine Learning | Labeled sample dataset + training script (`RandomForestClassifier`, logs to `experiments/`) | `uv run python src/train.py` |
 
 ```bash
 # Example — Machine Learning
@@ -498,34 +526,38 @@ uv run python src/train.py
 
 ---
 
-### `[8]` Custom Structure
+## Bring Your Own Structure
 
-Best for: when you already know exactly what folders and files you want
-and none of the predefined templates fit.
+None of the seven templates above fit? **Custom Structure** shows up as the last option in the same `spawn create` picker (`8`) — it's not a separate command, just a different path through the same flow.
 
-Paste any of three text formats — Unix `tree` output, a Markdown list,
-or plain indented hierarchy — and Spawn parses it, shows a preview of
-detected folders and files, then creates the structure with Git and uv
-already wired up.
+Paste any of three text formats — Unix `tree` output, a Markdown list, or plain indented hierarchy — and Spawn parses it, previews the detected folders and files, then creates the structure with the same Git and uv setup as every other template. No framework, provider, or extras prompts — just name → paste → confirm → generate.
 
-```bash
-# Example input (tree format)
+```
+spawn create
+# → Custom Structure
+```
+
+```
+Paste your project structure.
+Supported formats: Tree (├──/└──), Markdown list (- item), Indented hierarchy
+Finish with Ctrl+D (Ctrl+Z then Enter on Windows)
+
 app/
 ├── api/
 ├── services/
 └── tests/
 README.md
 .env.example
-```
+^Z
 
-```
 Detected
 Folders : 4
 Files   : 2
-```
 
-No framework, provider, or extras prompts — Custom Structure goes
-straight from name → paste → confirm → generate.
+Initialize Git? [Y/n]: Y
+Initialize uv? [Y/n]: Y
+Proceed? [Y/n]: Y
+```
 
 ---
 
@@ -533,7 +565,7 @@ straight from name → paste → confirm → generate.
 
 ### `spawn doctor`
 
-Scans your project directory for health indicators and scores it out of 100.
+Scores your project's health out of 100 — per-category breakdowns, tiered recommendations, and a single prioritized next step.
 
 ```bash
 spawn doctor
@@ -541,41 +573,45 @@ spawn doctor ./path/to/project
 ```
 
 ```
-╭─────────────── 🏥 Project Health Report ───────────────╮
-│                                                          │
-│  🟡 Good                                                 │
-│  Some improvements recommended.                          │
-│                                                          │
-│  Project Score: 62%  (81/130)                            │
-│                                                          │
-│  Documentation — 67%                                     │
-│  ✓ README.md — Documentation file present               │
-│  ⚠ LICENSE — Missing LICENSE file                       │
-│  ⚠ CHANGELOG.md — Missing CHANGELOG.md                  │
-│                                                          │
-│  Version Control — 100%                                  │
-│  ✓ Git Repository — Git initialized                     │
-│  ✓ .gitignore — Git ignore configured                   │
-│                                                          │
-│  Configuration — 0%                                      │
-│  ⚠ .env.example — Missing .env.example                  │
-│  ⚠ pyproject.toml — Missing pyproject.toml              │
-│                                                          │
-│  Testing — 100%                                          │
-│  ✓ Tests — Test directory configured                    │
-│  ✓ Pytest — Pytest configured in pyproject.toml         │
-│                                                          │
-│  Automation — 50%                                        │
-│  ⚠ Dockerfile — Missing Dockerfile                      │
-│  ✓ GitHub Actions — GitHub Actions configured           │
-│                                                          │
-│  Code Quality — 100%                                     │
-│  ✓ Ruff — Ruff configured in pyproject.toml             │
-│  ✓ Type Checking — Type checking configured (mypy.ini)  │
-│  ✓ Pre-commit — Pre-commit configured                   │
-│                                                          │
-╰──────────────────────────────────────────────────────────╯
+╭─────────────── 🏥 Project Health Report ─────────────────╮
+│                                                           │
+│  🟡 Good                                                  │
+│  Some improvements recommended.                           │
+│                                                           │
+│  Project Score: 82%                                       │
+│                                                           │
+│  Documentation — 67                                       │
+│  Version Control — 100                                    │
+│  Configuration — 75                                       │
+│  Testing — 80                                             │
+│  Automation — 50                                          │
+│  Code Quality — 100                                       │
+│                                                           │
+╰───────────────────────────────────────────────────────────╯
+
+╭──────────────────── Recommendations ───────────────────────╮
+│                                                            │
+│  Critical                                                  │
+│    • Initialize a git repository with 'git init'.          │
+│                                                            │
+│  Recommended                                               │
+│    • Add a CHANGELOG.md to document project history.       │
+│    • Configure GitHub Actions for CI/CD.                   │
+│                                                            │
+│  Optional                                                  │
+│    • Add a Dockerfile for containerized deployment.        │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+
+╭──────────────────── 🎯 Next Best Step ─────────────────────╮
+│                                                             │
+│  Initialize a git repository with 'git init'.               │
+│  Estimated effort: 30 seconds                               │
+│                                                             │
+╰─────────────────────────────────────────────────────────────╯
 ```
+
+Checks span six categories — Documentation, Version Control, Configuration, Testing, Automation, and Code Quality (Ruff, type checking, pre-commit) — all filesystem-based, nothing is executed or sent over the network.
 
 ### `spawn version`
 
@@ -611,18 +647,19 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 ## Roadmap
 
-- [x] **GitHub publishing** — connect and push to an existing GitHub repo (v0.2.0)
-- [x] **Backend API intent** — FastAPI, Flask, Django with production structure (v0.3.0)
-- [x] **Extras system** — ruff, pytest, Docker, GitHub Actions installed automatically (v0.3.0)
-- [x] **Dependency installation** — `uv add` runs automatically after generation (v0.3.0)
-- [x] **CLI Application intent** — Typer, Click, Argparse with Utility/Interactive sub-types (v0.4.0)
-- [x] **Automation Tool intent** — workflow-based automation with logging, tasks, and integrations (v0.5.0)
-- [x] **AI Chatbot intent** — PydanticAI and OpenAI SDK with provider abstraction (v0.6.0)
-- [x] **AI Agent intent** — tool-calling agent scaffold with PydanticAI and OpenAI Agents SDK (v0.7.0)
-- [x] **RAG System intent** — retrieval-augmented generation with LlamaIndex and ChromaDB (v0.8.0)
-- [x] **Data Project intent** — analysis, dashboard, ETL, ML sub-options (v0.9.0)
-- [x] **Custom Structure workflow** — paste any folder layout, Spawn creates it (v1.0.0)
-- [x] **Doctor 2.0** — per-category health percentages, CHANGELOG.md and pyproject.toml checks (v1.0.0)
+**Recently shipped**
+
+- Custom Structure workflow — paste any folder layout, Spawn creates it (v1.0.0)
+- Doctor 2.0 — per-category health percentages, tiered recommendations, Next Best Step (v1.0.0)
+- Data Project intent — analysis, dashboard, ETL, ML sub-options (v0.9.0)
+- RAG System intent — LlamaIndex + ChromaDB (v0.8.0)
+- AI Agent intent — tool-calling with PydanticAI / OpenAI Agents SDK (v0.7.0)
+
+**What's next**
+
+Nothing formally scheduled yet — Spawn intentionally paused new intents at v1.0 to focus on stability. Ideas under consideration live in [Issues](https://github.com/Abhiix0/spawn/issues); open one if there's something you'd want to see.
+
+For the full version history, see [CHANGELOG.md](docs/changelog.md).
 
 ---
 
