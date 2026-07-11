@@ -169,7 +169,7 @@ def make_readme() -> str:
         "```\n\n"
         "3. Run the pipeline:\n\n"
         "```bash\n"
-        "uv run python pipelines/run.py\n"
+        "uv run python -m pipelines.run\n"
         "```\n\n"
         "## Configuration\n\n"
         "`INPUT_PATH` and `OUTPUT_PATH` are read from `.env` (via python-dotenv).\n"

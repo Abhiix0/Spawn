@@ -121,7 +121,7 @@ def test_etl_readme():
     readme = t.get_readme_content({"project_name": "my-etl"})
     assert readme is not None
     assert "my-etl" in readme
-    assert "pipelines/run.py" in readme
+    assert "pipelines.run" in readme
     assert "INPUT_PATH" in readme
     assert "OUTPUT_PATH" in readme
 
@@ -129,7 +129,16 @@ def test_etl_readme():
 def test_etl_next_steps():
     t = ETLPipelineTemplate()
     combined = " ".join(t.next_steps)
-    assert "run.py" in combined
+    assert "pipelines.run" in combined
+    assert "python pipelines/run.py" not in combined
+    assert "python -m pipelines.run" in combined
+
+
+def test_etl_readme_uses_module_invocation():
+    t = ETLPipelineTemplate()
+    readme = t.get_readme_content({"project_name": "my-etl"})
+    assert "python -m pipelines.run" in readme
+    assert "python pipelines/run.py" not in readme
 
 
 # ─── Generator integration ────────────────────────────────────────────────
@@ -200,7 +209,7 @@ def test_generator_readme(tmp_path, monkeypatch):
         ProjectGenerator().generate(_cfg(name="my-pipeline"))
     readme = (tmp_path / "my-pipeline" / "README.md").read_text(encoding="utf-8")
     assert "my-pipeline" in readme
-    assert "pipelines/run.py" in readme
+    assert "pipelines.run" in readme
 
 
 def test_generator_meta_json(tmp_path, monkeypatch):

@@ -31,7 +31,7 @@ DEPENDENCIES = ["pandas", "python-dotenv"]
 NEXT_STEPS = [
     "cd {project_name}",
     "Rename .env.example to .env if you want custom paths",
-    "uv run python pipelines/run.py",
+    "uv run python -m pipelines.run",
 ]
 
 
