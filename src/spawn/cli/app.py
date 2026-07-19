@@ -32,9 +32,7 @@ def _write_custom_metadata(project_path, config) -> None:
                 "generator": "custom",
                 "git": config.use_git,
                 "uv": config.use_uv,
-                # detect_format() result not yet threaded through ProjectConfig;
-                # "tree" is a known placeholder — tracked as follow-up for Phase 5
-                "source": "tree",
+                "source": config.custom_source_format or "tree",
             },
             indent=2,
         ),

@@ -298,7 +298,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     import sys
 
     from spawn.core.exceptions import StructureParseError
-    from spawn.generators.custom_structure import parse_structure
+    from spawn.generators.custom_structure import parse_structure, detect_format
 
     console.print()
     console.print(
@@ -309,6 +309,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     )
 
     raw = sys.stdin.read()
+    detected_format = detect_format(raw)
 
     try:
         entries = parse_structure(raw)
@@ -374,4 +375,5 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         custom_dependencies=custom_dependencies,
         custom_dev_setup=custom_dev_setup,
         custom_gitignore_extra=custom_gitignore_extra,
+        custom_source_format=detected_format,
     )
