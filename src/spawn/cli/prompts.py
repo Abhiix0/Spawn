@@ -346,6 +346,18 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
                 d.strip() for d in deps_raw.split(",") if d.strip()
             ]
     custom_dev_setup = _prompt_optional_setup() if use_uv else []
+    console.print()
+    extra_ignores_raw = typer.prompt(
+        typer.style(
+            "Additional ignore patterns (optional, comma separated)",
+            fg=typer.colors.CYAN,
+        ),
+        default="",
+        show_default=False,
+    )
+    custom_gitignore_extra = [
+        p.strip() for p in extra_ignores_raw.split(",") if p.strip()
+    ]
     proceed = typer.confirm(
         typer.style("Proceed?", fg=typer.colors.CYAN), default=True
     )
@@ -361,4 +373,5 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         custom_entries=entries,
         custom_dependencies=custom_dependencies,
         custom_dev_setup=custom_dev_setup,
+        custom_gitignore_extra=custom_gitignore_extra,
     )

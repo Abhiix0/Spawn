@@ -259,6 +259,28 @@ def _build_entries(
 # ─── README helpers ───────────────────────────────────────────────────────
 
 
+# ─── .gitignore helper ────────────────────────────────────────────────────
+
+
+def _build_gitignore_content(extra_patterns: list[str]) -> str:
+    """Return .gitignore content: Python defaults + deduplicated extra patterns."""
+    from spawn.templates.shared_content import GITIGNORE_CONTENT
+
+    existing_lines = {
+        ln.strip() for ln in GITIGNORE_CONTENT.splitlines() if ln.strip()
+    }
+    new_lines = [p for p in extra_patterns if p not in existing_lines]
+    if not new_lines:
+        return GITIGNORE_CONTENT
+    return (
+        GITIGNORE_CONTENT.rstrip()
+        + "\n\n# Custom\n"
+        + "\n".join(new_lines)
+        + "\n"
+    )
+
+
+
 def _render_tree(entries: list[ParsedEntry]) -> str:
     """Render parsed entries as a normalised indented tree string."""
     lines = []
@@ -305,6 +327,7 @@ class CustomStructureGenerator:
         use_uv: bool = True,
         dependencies: list[str] | None = None,
         dev_setup: list[str] | None = None,
+        gitignore_extra: list[str] | None = None,
     ) -> Path:
         """
         Create the folder/file structure described by *entries* under a new
@@ -340,6 +363,20 @@ class CustomStructureGenerator:
                 readme_path = project_path / readme_entry.path
                 readme_path.write_text(
                     _build_readme_content(project_name, entries, use_uv),
+                    encoding="utf-8",
+                )
+
+            gitignore_entry = next(
+                (
+                    e for e in entries
+                    if e.path == ".gitignore" or e.path.endswith("/.gitignore")
+                ),
+                None,
+            )
+            if gitignore_entry is not None:
+                gitignore_path = project_path / gitignore_entry.path
+                gitignore_path.write_text(
+                    _build_gitignore_content(gitignore_extra or []),
                     encoding="utf-8",
                 )
 

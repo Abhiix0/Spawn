@@ -317,7 +317,7 @@ def test_custom_structure_dependency_prompt_shown_when_uv_true(mock_prompt, mock
 
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    mock_prompt.side_effect = ["my-proj", custom_index, "requests, rich", ""]  # deps, skip optional setup
+    mock_prompt.side_effect = ["my-proj", custom_index, "requests, rich", "", ""]  # deps, skip optional setup, skip extra ignores
 
 
 @patch("spawn.cli.prompts.typer.confirm")
@@ -331,8 +331,8 @@ def test_custom_structure_dependency_prompt_skipped_when_uv_false(mock_prompt, m
 
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    # Only name + template-choice prompts; NO deps prompt
-    mock_prompt.side_effect = ["my-proj", custom_index]
+    # Only name + template-choice + extra-ignores prompts; NO deps or optional-setup prompts
+    mock_prompt.side_effect = ["my-proj", custom_index, ""]  # skip extra ignores
 
     from spawn.cli.prompts import get_project_config
     config = get_project_config()
@@ -351,7 +351,7 @@ def test_custom_structure_parses_comma_separated_deps(mock_prompt, mock_confirm,
 
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    mock_prompt.side_effect = ["my-proj", custom_index, "fastapi, pydantic ,  sqlalchemy", ""]  # deps, skip optional setup
+    mock_prompt.side_effect = ["my-proj", custom_index, "fastapi, pydantic ,  sqlalchemy", "", ""]  # deps, skip optional setup, skip extra ignores
 
     from spawn.cli.prompts import get_project_config
     config = get_project_config()
@@ -369,7 +369,7 @@ def test_custom_structure_empty_deps_input_yields_empty_list(mock_prompt, mock_c
 
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    mock_prompt.side_effect = ["my-proj", custom_index, "", ""]  # empty deps, skip optional setup
+    mock_prompt.side_effect = ["my-proj", custom_index, "", "", ""]  # empty deps, skip optional setup, skip extra ignores
 
     from spawn.cli.prompts import get_project_config
     config = get_project_config()

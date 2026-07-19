@@ -45,6 +45,9 @@ htmlcov/
 # Mypy
 .mypy_cache/
 
+# Ruff
+.ruff_cache/
+
 # Spawn metadata
 .spawn/
 

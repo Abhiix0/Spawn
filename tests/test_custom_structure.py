@@ -625,3 +625,82 @@ def test_other_files_remain_empty(tmp_path, monkeypatch):
     assert (project_path / "README.md").read_text(encoding="utf-8").strip()
     assert (project_path / ".env.example").stat().st_size == 0
     assert (project_path / "LICENSE").stat().st_size == 0
+
+
+# ─── .gitignore generation ────────────────────────────────────────────────
+
+_GITIGNORE_RAW = """\
+src/
+    main.py
+.gitignore
+README.md
+"""
+
+_PATCH_UV_G   = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT_G  = "spawn.generators.custom_structure.initialize_git"
+_PATCH_INST_G = "spawn.generators.custom_structure.install_packages"
+
+
+def _gen_with_gitignore(tmp_path, raw, project_name="gi-proj", gitignore_extra=None):
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_G), patch(_PATCH_GIT_G), patch(_PATCH_INST_G):
+        project_path = CustomStructureGenerator().generate(
+            project_name,
+            entries,
+            use_git=False,
+            use_uv=False,
+            gitignore_extra=gitignore_extra or [],
+        )
+    return project_path
+
+
+def test_gitignore_populated_when_present(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _gen_with_gitignore(tmp_path, _GITIGNORE_RAW)
+    gi = project_path / ".gitignore"
+    assert gi.is_file()
+    content = gi.read_text(encoding="utf-8")
+    assert content.strip(), ".gitignore should not be empty"
+    assert "__pycache__/" in content
+
+
+def test_gitignore_includes_python_defaults(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _gen_with_gitignore(tmp_path, _GITIGNORE_RAW)
+    content = (project_path / ".gitignore").read_text(encoding="utf-8")
+    for pattern in (".venv/", ".env", "__pycache__/", ".pytest_cache/", ".mypy_cache/", ".ruff_cache/"):
+        assert pattern in content, f"Expected '{pattern}' in .gitignore"
+
+
+def test_gitignore_appends_user_patterns(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _gen_with_gitignore(
+        tmp_path, _GITIGNORE_RAW, gitignore_extra=["data/", "*.csv"]
+    )
+    content = (project_path / ".gitignore").read_text(encoding="utf-8")
+    assert "data/" in content
+    assert "*.csv" in content
+
+
+def test_gitignore_deduplicates_existing_patterns(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # "__pycache__/" is already in GITIGNORE_CONTENT — must not appear twice
+    project_path = _gen_with_gitignore(
+        tmp_path, _GITIGNORE_RAW, gitignore_extra=["__pycache__/", "data/"]
+    )
+    content = (project_path / ".gitignore").read_text(encoding="utf-8")
+    assert content.count("__pycache__/") == 1, "__pycache__/ should appear exactly once"
+    assert "data/" in content
+
+
+def test_no_gitignore_in_structure_no_error(tmp_path, monkeypatch):
+    """A structure without .gitignore generates normally, no crash."""
+    monkeypatch.chdir(tmp_path)
+    raw = "src/\n    main.py\nREADME.md\n"
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_G), patch(_PATCH_GIT_G), patch(_PATCH_INST_G):
+        project_path = CustomStructureGenerator().generate(
+            "no-gi-proj", entries, use_git=False, use_uv=False
+        )
+    assert (project_path / "src" / "main.py").is_file()
+    assert not (project_path / ".gitignore").exists()
