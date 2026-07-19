@@ -56,6 +56,7 @@ def create() -> None:
                 entries=config.custom_entries or [],
                 use_git=config.use_git,
                 use_uv=config.use_uv,
+                dependencies=config.custom_dependencies,
             )
             _write_custom_metadata(project_path, config)
             next_steps = [

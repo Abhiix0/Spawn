@@ -18,7 +18,7 @@ from pathlib import Path
 from spawn.core.exceptions import SpawnError, StructureParseError
 from spawn.utils.console import console
 from spawn.utils.git import initialize_git
-from spawn.utils.uv import initialize_uv
+from spawn.utils.uv import initialize_uv, install_packages
 
 # Tree connector characters
 _TREE_CHARS = {"├", "└", "│"}
@@ -266,6 +266,7 @@ class CustomStructureGenerator:
         entries: list[ParsedEntry],
         use_git: bool = False,
         use_uv: bool = True,
+        dependencies: list[str] | None = None,
     ) -> Path:
         """
         Create the folder/file structure described by *entries* under a new
@@ -296,6 +297,10 @@ class CustomStructureGenerator:
 
             if use_uv:
                 initialize_uv(project_path)
+
+            if use_uv and dependencies:
+                console.print("[yellow]Installing dependencies...[/yellow]")
+                install_packages(project_path, dependencies)
 
         except OSError as e:
             shutil.rmtree(project_path, ignore_errors=True)

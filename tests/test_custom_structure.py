@@ -356,3 +356,72 @@ def test_generator_rolls_back_on_failure(tmp_path, monkeypatch):
             )
 
     assert not (tmp_path / "my-project").exists(), "rollback failed — directory still exists"
+
+
+# ─── Dependency installation ───────────────────────────────────────────────
+
+
+def test_generate_installs_dependencies_when_uv_and_deps_present(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_uv"), \
+         patch("spawn.generators.custom_structure.initialize_git"), \
+         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+        CustomStructureGenerator().generate(
+            "my-project",
+            entries,
+            use_git=False,
+            use_uv=True,
+            dependencies=["requests", "rich"],
+        )
+    mock_install.assert_called_once_with(Path("my-project"), ["requests", "rich"])
+
+
+def test_generate_skips_install_when_use_uv_false(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_uv"), \
+         patch("spawn.generators.custom_structure.initialize_git"), \
+         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+        CustomStructureGenerator().generate(
+            "my-project",
+            entries,
+            use_git=False,
+            use_uv=False,
+            dependencies=["requests", "rich"],
+        )
+    mock_install.assert_not_called()
+
+
+def test_generate_skips_install_when_no_dependencies(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_uv"), \
+         patch("spawn.generators.custom_structure.initialize_git"), \
+         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+        # empty list
+        CustomStructureGenerator().generate(
+            "my-project-a",
+            entries,
+            use_git=False,
+            use_uv=True,
+            dependencies=[],
+        )
+    mock_install.assert_not_called()
+
+
+def test_generate_skips_install_when_dependencies_none(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch("spawn.generators.custom_structure.initialize_uv"), \
+         patch("spawn.generators.custom_structure.initialize_git"), \
+         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+        # None (default)
+        CustomStructureGenerator().generate(
+            "my-project-b",
+            entries,
+            use_git=False,
+            use_uv=True,
+            dependencies=None,
+        )
+    mock_install.assert_not_called()

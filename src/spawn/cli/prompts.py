@@ -306,6 +306,20 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     use_uv = typer.confirm(
         typer.style("Initialize uv?", fg=typer.colors.CYAN), default=True
     )
+    custom_dependencies: list[str] = []
+    if use_uv:
+        deps_raw = typer.prompt(
+            typer.style(
+                "Dependencies (comma separated, optional)",
+                fg=typer.colors.CYAN,
+            ),
+            default="",
+            show_default=False,
+        )
+        if deps_raw.strip():
+            custom_dependencies = [
+                d.strip() for d in deps_raw.split(",") if d.strip()
+            ]
     proceed = typer.confirm(
         typer.style("Proceed?", fg=typer.colors.CYAN), default=True
     )
@@ -319,4 +333,5 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         use_git=use_git,
         use_uv=use_uv,
         custom_entries=entries,
+        custom_dependencies=custom_dependencies,
     )
