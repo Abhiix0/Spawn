@@ -521,3 +521,107 @@ def test_dockerfile_no_dependency_install(tmp_path, monkeypatch):
             dev_setup=["dockerfile"],
         )
     mock_install.assert_not_called()
+
+
+# ─── README generation ────────────────────────────────────────────────────
+
+_README_RAW = """\
+app/
+├── api/
+├── services/
+└── main.py
+README.md
+.env.example
+"""
+
+_PATCH_UV_R   = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT_R  = "spawn.generators.custom_structure.initialize_git"
+_PATCH_INST_R = "spawn.generators.custom_structure.install_packages"
+
+
+def _gen_with_readme(tmp_path, raw, project_name="my-proj", use_uv=True):
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_R), patch(_PATCH_GIT_R), patch(_PATCH_INST_R):
+        return CustomStructureGenerator().generate(
+            project_name,
+            entries,
+            use_git=False,
+            use_uv=use_uv,
+        ), entries
+
+
+def test_readme_populated_when_present(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path, _ = _gen_with_readme(tmp_path, _README_RAW)
+    readme = project_path / "README.md"
+    assert readme.is_file()
+    content = readme.read_text(encoding="utf-8")
+    assert content.strip(), "README.md should not be empty"
+    assert "my-proj" in content
+
+
+def test_readme_contains_structure_tree(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path, entries = _gen_with_readme(tmp_path, _README_RAW)
+    content = (project_path / "README.md").read_text(encoding="utf-8")
+    # names from the parsed entries should appear in the tree section
+    assert "app/" in content
+    assert "api/" in content
+    assert "main.py" in content
+
+
+def test_readme_setup_section_reflects_use_uv_true(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path, _ = _gen_with_readme(tmp_path, _README_RAW, use_uv=True)
+    content = (project_path / "README.md").read_text(encoding="utf-8")
+    assert "uv sync" in content
+
+
+def test_readme_setup_section_reflects_use_uv_false(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path, _ = _gen_with_readme(tmp_path, _README_RAW, use_uv=False)
+    content = (project_path / "README.md").read_text(encoding="utf-8")
+    assert "uv sync" not in content
+
+
+def test_no_readme_in_structure_no_error(tmp_path, monkeypatch):
+    """A structure without README.md must generate without errors."""
+    monkeypatch.chdir(tmp_path)
+    raw = "src/\n    main.py\n.env.example\n"
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_R), patch(_PATCH_GIT_R), patch(_PATCH_INST_R):
+        project_path = CustomStructureGenerator().generate(
+            "no-readme-proj", entries, use_git=False, use_uv=False
+        )
+    assert (project_path / "src" / "main.py").is_file()
+    assert not (project_path / "README.md").exists()
+
+
+def test_nested_readme_populated(tmp_path, monkeypatch):
+    """docs/README.md inside the pasted structure also gets generated content."""
+    monkeypatch.chdir(tmp_path)
+    raw = "docs/\n    README.md\nsrc/\n    main.py\n"
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_R), patch(_PATCH_GIT_R), patch(_PATCH_INST_R):
+        project_path = CustomStructureGenerator().generate(
+            "nested-proj", entries, use_git=False, use_uv=True
+        )
+    nested_readme = project_path / "docs" / "README.md"
+    assert nested_readme.is_file()
+    content = nested_readme.read_text(encoding="utf-8")
+    assert content.strip(), "nested README.md should not be empty"
+    assert "nested-proj" in content
+
+
+def test_other_files_remain_empty(tmp_path, monkeypatch):
+    """.env.example and LICENSE entries stay zero-byte; only README.md gets content."""
+    monkeypatch.chdir(tmp_path)
+    raw = "README.md\n.env.example\nLICENSE\n"
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_R), patch(_PATCH_GIT_R), patch(_PATCH_INST_R):
+        project_path = CustomStructureGenerator().generate(
+            "mixed-proj", entries, use_git=False, use_uv=False
+        )
+    assert (project_path / "README.md").read_text(encoding="utf-8").strip()
+    assert (project_path / ".env.example").stat().st_size == 0
+    assert (project_path / "LICENSE").stat().st_size == 0
