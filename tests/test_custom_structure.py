@@ -425,3 +425,99 @@ def test_generate_skips_install_when_dependencies_none(tmp_path, monkeypatch):
             dependencies=None,
         )
     mock_install.assert_not_called()
+
+
+# ─── _apply_dev_setup / dev_setup wiring ──────────────────────────────────
+
+_PATCH_UV   = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT  = "spawn.generators.custom_structure.initialize_git"
+_PATCH_INST = "spawn.generators.custom_structure.install_packages"
+
+
+def _generate_with_dev_setup(tmp_path, dev_setup, *, use_uv=True):
+    """Helper: generate project with mocked uv/git/install, return project_path."""
+    entries = parse_structure(_TREE_RAW)
+    with patch(_PATCH_UV), patch(_PATCH_GIT), patch(_PATCH_INST):
+        return CustomStructureGenerator().generate(
+            "dev-project",
+            entries,
+            use_git=False,
+            use_uv=use_uv,
+            dev_setup=dev_setup,
+        )
+
+
+def test_ruff_selected_creates_ruff_toml(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _generate_with_dev_setup(tmp_path, ["ruff"])
+    assert (project_path / "ruff.toml").is_file()
+    content = (project_path / "ruff.toml").read_text(encoding="utf-8")
+    assert "line-length" in content
+    assert "py312" in content
+
+
+def test_pytest_selected_creates_tests_dir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _generate_with_dev_setup(tmp_path, ["pytest"])
+    assert (project_path / "tests").is_dir()
+    assert (project_path / "tests" / "__init__.py").is_file()
+
+
+def test_precommit_selected_creates_config(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _generate_with_dev_setup(tmp_path, ["precommit"])
+    cfg = project_path / ".pre-commit-config.yaml"
+    assert cfg.is_file()
+    assert "ruff-pre-commit" in cfg.read_text(encoding="utf-8")
+
+
+def test_dockerfile_selected_creates_dockerfile(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _generate_with_dev_setup(tmp_path, ["dockerfile"])
+    df = project_path / "Dockerfile"
+    assert df.is_file()
+    assert "python:3.12-slim" in df.read_text(encoding="utf-8")
+
+
+def test_dev_setup_skipped_when_use_uv_false(tmp_path, monkeypatch):
+    """Even with dev_setup=['ruff'], nothing is created when use_uv=False."""
+    monkeypatch.chdir(tmp_path)
+    project_path = _generate_with_dev_setup(tmp_path, ["ruff"], use_uv=False)
+    assert not (project_path / "ruff.toml").exists()
+    assert not (project_path / "tests").exists()
+
+
+def test_install_packages_called_with_dev_flag(tmp_path, monkeypatch):
+    """ruff + pytest + precommit selections must call install_packages with dev=True."""
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch(_PATCH_UV), patch(_PATCH_GIT), \
+         patch(_PATCH_INST) as mock_install:
+        CustomStructureGenerator().generate(
+            "dev-project",
+            entries,
+            use_git=False,
+            use_uv=True,
+            dev_setup=["ruff", "pytest", "precommit"],
+        )
+    mock_install.assert_called_once_with(
+        Path("dev-project"),
+        ["ruff", "pytest", "pre-commit"],
+        dev=True,
+    )
+
+
+def test_dockerfile_no_dependency_install(tmp_path, monkeypatch):
+    """Dockerfile-only selection must NOT trigger install_packages at all."""
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch(_PATCH_UV), patch(_PATCH_GIT), \
+         patch(_PATCH_INST) as mock_install:
+        CustomStructureGenerator().generate(
+            "dev-project",
+            entries,
+            use_git=False,
+            use_uv=True,
+            dev_setup=["dockerfile"],
+        )
+    mock_install.assert_not_called()

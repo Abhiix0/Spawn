@@ -267,6 +267,7 @@ class CustomStructureGenerator:
         use_git: bool = False,
         use_uv: bool = True,
         dependencies: list[str] | None = None,
+        dev_setup: list[str] | None = None,
     ) -> Path:
         """
         Create the folder/file structure described by *entries* under a new
@@ -302,6 +303,9 @@ class CustomStructureGenerator:
                 console.print("[yellow]Installing dependencies...[/yellow]")
                 install_packages(project_path, dependencies)
 
+            if use_uv and dev_setup:
+                self._apply_dev_setup(project_path, dev_setup)
+
         except OSError as e:
             shutil.rmtree(project_path, ignore_errors=True)
             raise SpawnError(str(e)) from e
@@ -311,3 +315,48 @@ class CustomStructureGenerator:
             raise
 
         return project_path
+
+    def _apply_dev_setup(self, project_path: Path, dev_setup: list[str]) -> None:
+        """Install dev tools and generate their config files."""
+        dev_deps: list[str] = []
+        if "ruff" in dev_setup:
+            dev_deps.append("ruff")
+        if "pytest" in dev_setup:
+            dev_deps.append("pytest")
+        if "precommit" in dev_setup:
+            dev_deps.append("pre-commit")
+
+        if dev_deps:
+            console.print("[yellow]Installing dev tools...[/yellow]")
+            install_packages(project_path, dev_deps, dev=True)
+
+        if "ruff" in dev_setup:
+            (project_path / "ruff.toml").write_text(
+                'line-length = 88\ntarget-version = "py312"\n',
+                encoding="utf-8",
+            )
+
+        if "pytest" in dev_setup:
+            tests_dir = project_path / "tests"
+            tests_dir.mkdir(exist_ok=True)
+            (tests_dir / "__init__.py").touch()
+
+        if "precommit" in dev_setup:
+            (project_path / ".pre-commit-config.yaml").write_text(
+                "repos:\n"
+                "  - repo: https://github.com/astral-sh/ruff-pre-commit\n"
+                "    rev: v0.15.16\n"
+                "    hooks:\n"
+                "      - id: ruff\n",
+                encoding="utf-8",
+            )
+
+        if "dockerfile" in dev_setup:
+            (project_path / "Dockerfile").write_text(
+                "FROM python:3.12-slim\n"
+                "WORKDIR /app\n"
+                "COPY . .\n"
+                "RUN pip install uv && uv sync\n"
+                'CMD ["python", "-m", "src.main"]\n',
+                encoding="utf-8",
+            )

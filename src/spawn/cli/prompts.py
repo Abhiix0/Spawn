@@ -22,6 +22,31 @@ def _print_list(items: list[str]) -> None:
     console.print()
 
 
+def _prompt_optional_setup() -> list[str]:
+    """Numbered multi-select for optional dev tooling (Custom Structure flow)."""
+    options = [
+        ("1", "ruff",       "Ruff"),
+        ("2", "pytest",     "Pytest"),
+        ("3", "precommit",  "Pre-commit"),
+        ("4", "dockerfile", "Dockerfile"),
+    ]
+    console.print()
+    console.print("[bold]Optional Setup[/bold]")
+    for num, _, label in options:
+        console.print(f"  {num}  {label}")
+    console.print()
+    raw = typer.prompt(
+        typer.style(
+            "Enter numbers separated by commas, or press Enter to skip",
+            fg=typer.colors.CYAN,
+        ),
+        default="",
+        show_default=False,
+    )
+    chosen_nums = {n.strip() for n in raw.split(",") if n.strip()}
+    return [key for num, key, _label in options if num in chosen_nums]
+
+
 def get_project_config() -> ProjectConfig:
     # --- Project name ---
     while True:
@@ -320,6 +345,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
             custom_dependencies = [
                 d.strip() for d in deps_raw.split(",") if d.strip()
             ]
+    custom_dev_setup = _prompt_optional_setup() if use_uv else []
     proceed = typer.confirm(
         typer.style("Proceed?", fg=typer.colors.CYAN), default=True
     )
@@ -334,4 +360,5 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         use_uv=use_uv,
         custom_entries=entries,
         custom_dependencies=custom_dependencies,
+        custom_dev_setup=custom_dev_setup,
     )

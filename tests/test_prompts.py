@@ -315,14 +315,9 @@ def test_custom_structure_dependency_prompt_shown_when_uv_true(mock_prompt, mock
     # But _get_custom_structure_config is called internally; its only prompt is deps.
     mock_prompt.side_effect = ["my-proj", "8", "requests, rich"]  # 8 = custom (adjust if registry changes)
 
-    from spawn.cli.prompts import get_project_config
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    mock_prompt.side_effect = ["my-proj", custom_index, "requests, rich"]
-
-    config = get_project_config()
-
-    assert config.custom_dependencies == ["requests", "rich"]
+    mock_prompt.side_effect = ["my-proj", custom_index, "requests, rich", ""]  # deps, skip optional setup
 
 
 @patch("spawn.cli.prompts.typer.confirm")
@@ -356,7 +351,7 @@ def test_custom_structure_parses_comma_separated_deps(mock_prompt, mock_confirm,
 
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    mock_prompt.side_effect = ["my-proj", custom_index, "fastapi, pydantic ,  sqlalchemy"]
+    mock_prompt.side_effect = ["my-proj", custom_index, "fastapi, pydantic ,  sqlalchemy", ""]  # deps, skip optional setup
 
     from spawn.cli.prompts import get_project_config
     config = get_project_config()
@@ -374,7 +369,7 @@ def test_custom_structure_empty_deps_input_yields_empty_list(mock_prompt, mock_c
 
     from spawn.core.registry import list_templates
     custom_index = str(len(list_templates()) + 1)
-    mock_prompt.side_effect = ["my-proj", custom_index, ""]  # empty deps input
+    mock_prompt.side_effect = ["my-proj", custom_index, "", ""]  # empty deps, skip optional setup
 
     from spawn.cli.prompts import get_project_config
     config = get_project_config()

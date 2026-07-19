@@ -57,6 +57,7 @@ def create() -> None:
                 use_git=config.use_git,
                 use_uv=config.use_uv,
                 dependencies=config.custom_dependencies,
+                dev_setup=config.custom_dev_setup,
             )
             _write_custom_metadata(project_path, config)
             next_steps = [
