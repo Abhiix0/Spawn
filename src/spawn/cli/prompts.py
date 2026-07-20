@@ -291,9 +291,12 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     """
     Interactive prompt for the Custom Structure path.
 
-    Reads a pasted structure, previews detected folders/files, confirms
-    Git/uv preferences, then raises SpawnError until Phase 4 wires in
-    the required ProjectConfig fields.
+    Reads a pasted structure (tree, markdown, or indented format),
+    previews detected folder/file counts, and collects Git/uv
+    preferences, optional dependencies, optional dev tooling
+    (ruff/pytest/pre-commit/dockerfile), and optional extra .gitignore
+    patterns. Returns a fully populated ProjectConfig for the "custom"
+    template.
     """
     import sys
 

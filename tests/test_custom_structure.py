@@ -614,7 +614,7 @@ def test_nested_readme_populated(tmp_path, monkeypatch):
 
 
 def test_other_files_remain_empty(tmp_path, monkeypatch):
-    """.env.example and LICENSE entries stay zero-byte; only README.md gets content."""
+    """.env.example stays zero-byte; LICENSE is a FILE (not a folder) with size 0."""
     monkeypatch.chdir(tmp_path)
     raw = "README.md\n.env.example\nLICENSE\n"
     entries = parse_structure(raw)
@@ -624,6 +624,8 @@ def test_other_files_remain_empty(tmp_path, monkeypatch):
         )
     assert (project_path / "README.md").read_text(encoding="utf-8").strip()
     assert (project_path / ".env.example").stat().st_size == 0
+    # LICENSE must be a FILE (Fix 2), not a directory, and still empty
+    assert (project_path / "LICENSE").is_file()
     assert (project_path / "LICENSE").stat().st_size == 0
 
 
@@ -704,3 +706,118 @@ def test_no_gitignore_in_structure_no_error(tmp_path, monkeypatch):
         )
     assert (project_path / "src" / "main.py").is_file()
     assert not (project_path / ".gitignore").exists()
+
+
+# ─── Fix 1: pyproject.toml / .git collision prevention ───────────────────
+
+_PYPROJECT_RAW = """\
+app/
+├── api/
+└── tests/
+pyproject.toml
+README.md
+"""
+
+_GIT_RAW = """\
+src/
+    main.py
+.git
+"""
+
+_PATCH_UV_F  = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT_F = "spawn.generators.custom_structure.initialize_git"
+_PATCH_INS_F = "spawn.generators.custom_structure.install_packages"
+
+
+def test_pyproject_toml_not_touched_before_uv_init(tmp_path, monkeypatch):
+    """With use_uv=True, pyproject.toml must NOT be touched before uv init runs."""
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_PYPROJECT_RAW)
+    with patch(_PATCH_UV_F) as mock_uv, patch(_PATCH_GIT_F), patch(_PATCH_INS_F):
+        project_path = CustomStructureGenerator().generate(
+            "uv-proj", entries, use_git=False, use_uv=True
+        )
+    # initialize_uv was called (uv owns pyproject.toml creation)
+    mock_uv.assert_called_once()
+    # No exception was raised — the project directory was created
+    assert project_path.is_dir()
+
+
+def test_pyproject_toml_created_when_uv_disabled(tmp_path, monkeypatch):
+    """With use_uv=False, pyproject.toml IS created as an empty file (skip is conditional)."""
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_PYPROJECT_RAW)
+    with patch(_PATCH_UV_F), patch(_PATCH_GIT_F), patch(_PATCH_INS_F):
+        project_path = CustomStructureGenerator().generate(
+            "no-uv-proj", entries, use_git=False, use_uv=False
+        )
+    pyproject = project_path / "pyproject.toml"
+    assert pyproject.is_file(), "pyproject.toml should exist when use_uv=False"
+    assert pyproject.stat().st_size == 0
+
+
+def test_git_dir_not_touched_before_git_init(tmp_path, monkeypatch):
+    """.git folder entry in pasted structure must not be pre-created before git init."""
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_GIT_RAW)
+    with patch(_PATCH_UV_F), patch(_PATCH_GIT_F) as mock_git, patch(_PATCH_INS_F):
+        project_path = CustomStructureGenerator().generate(
+            "git-proj", entries, use_git=True, use_uv=False
+        )
+    # git init was called and no collision error occurred
+    mock_git.assert_called_once()
+    assert project_path.is_dir()
+
+
+# ─── Fix 2: known extension-less filenames classified as files ────────────
+
+
+def _gen_single(tmp_path, filename, project_name="kf-proj"):
+    """Parse and generate a single-entry structure, return project_path."""
+    raw = f"{filename}\n"
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_F), patch(_PATCH_GIT_F), patch(_PATCH_INS_F):
+        return CustomStructureGenerator().generate(
+            project_name, entries, use_git=False, use_uv=False
+        )
+
+
+def test_license_classified_as_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _gen_single(tmp_path, "LICENSE")
+    assert (project_path / "LICENSE").is_file(), "LICENSE should be a file, not a directory"
+
+
+def test_dockerfile_pasted_classified_as_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _gen_single(tmp_path, "Dockerfile", project_name="df-proj")
+    assert (project_path / "Dockerfile").is_file()
+
+
+def test_makefile_classified_as_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _gen_single(tmp_path, "Makefile", project_name="mk-proj")
+    assert (project_path / "Makefile").is_file()
+
+
+def test_known_filename_case_insensitive(tmp_path, monkeypatch):
+    """'license' (lowercase) and 'DOCKERFILE' (uppercase) both classify as files."""
+    monkeypatch.chdir(tmp_path)
+    project_path_lower = _gen_single(tmp_path, "license", project_name="lower-proj")
+    assert (project_path_lower / "license").is_file()
+
+    project_path_upper = _gen_single(tmp_path, "DOCKERFILE", project_name="upper-proj")
+    assert (project_path_upper / "DOCKERFILE").is_file()
+
+
+def test_regular_extensionless_word_stays_folder(tmp_path, monkeypatch):
+    """'docs' and 'api' (not in the allowlist) still classify as folders."""
+    monkeypatch.chdir(tmp_path)
+    raw = "docs\napi\n"
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_F), patch(_PATCH_GIT_F), patch(_PATCH_INS_F):
+        project_path = CustomStructureGenerator().generate(
+            "folder-proj", entries, use_git=False, use_uv=False
+        )
+    assert (project_path / "docs").is_dir(), "'docs' should be a directory"
+    assert (project_path / "api").is_dir(), "'api' should be a directory"

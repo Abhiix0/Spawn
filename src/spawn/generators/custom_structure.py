@@ -35,6 +35,20 @@ class ParsedEntry:
 # ─── Helpers ──────────────────────────────────────────────────────────────
 
 
+_KNOWN_EXTENSIONLESS_FILES = {
+    "license",
+    "licence",
+    "dockerfile",
+    "makefile",
+    "procfile",
+    "changelog",
+    "authors",
+    "contributing",
+    "codeowners",
+    "readme",  # bare "README" with no extension, distinct from README.md
+}
+
+
 def _is_file_entry(name: str) -> bool:
     """
     Decide whether a name represents a file or a folder.
@@ -43,7 +57,8 @@ def _is_file_entry(name: str) -> bool:
     1. Trailing "/" → always folder.
     2. Starts with "." (dotfile like .env, .gitignore) → file.
     3. Contains a "." after the last "/" segment → file.
-    4. Anything else → folder.
+    4. Name is a known extension-less filename (LICENSE, Dockerfile, etc.) → file.
+    5. Anything else → folder.
     """
     if name.endswith("/"):
         return False
@@ -51,6 +66,8 @@ def _is_file_entry(name: str) -> bool:
     if segment.startswith("."):
         return True
     if "." in segment:
+        return True
+    if segment.lower() in _KNOWN_EXTENSIONLESS_FILES:
         return True
     return False
 
@@ -345,6 +362,10 @@ class CustomStructureGenerator:
             project_path.mkdir()
 
             for entry in entries:
+                if entry.path == "pyproject.toml" and use_uv:
+                    continue  # uv init --bare will create this
+                if entry.path == ".git" or entry.path.startswith(".git/"):
+                    continue  # git init will create/manage this
                 full_path = project_path / entry.path
                 if entry.is_file:
                     full_path.parent.mkdir(parents=True, exist_ok=True)
