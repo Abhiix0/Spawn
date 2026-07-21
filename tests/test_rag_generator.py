@@ -2,6 +2,7 @@ import json
 from contextlib import contextmanager
 from unittest.mock import patch
 
+from spawn import __version__
 from spawn.core.models import ProjectConfig
 from spawn.generators.project_generator import ProjectGenerator
 from spawn.templates.rag import RAGTemplate
@@ -174,7 +175,7 @@ def test_rag_meta_json(tmp_path, monkeypatch):
     assert meta["intent"] == "rag"
     assert meta["framework"] is None
     assert meta["provider"] is None
-    assert meta["spawn_version"] == "1.0.0"
+    assert meta["spawn_version"] == __version__
 
 
 # ─── Dependencies ────────────────────────────────────────────────────────
