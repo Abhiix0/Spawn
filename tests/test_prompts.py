@@ -285,3 +285,93 @@ def test_existing_directory_shows_error_message(tmp_path, monkeypatch):
 
     error_calls = [str(call) for call in mock_secho.call_args_list]
     assert any("already exists" in c for c in error_calls)
+
+
+# ---------------------------------------------------------------------------
+# Custom Structure — dependency prompt
+# ---------------------------------------------------------------------------
+
+
+def _custom_stdin(text: str):
+    """Return a StringIO that mimics sys.stdin.read() returning *text*."""
+    import io
+    return io.StringIO(text)
+
+
+_SIMPLE_STRUCTURE = "src/\n    main.py\n"
+
+
+@patch("spawn.cli.prompts.typer.confirm")
+@patch("spawn.cli.prompts.typer.prompt")
+def test_custom_structure_dependency_prompt_shown_when_uv_true(mock_prompt, mock_confirm, monkeypatch):
+    """When use_uv=True the Dependencies prompt fires and its value is captured."""
+    import io
+    monkeypatch.setattr("sys.stdin", io.StringIO(_SIMPLE_STRUCTURE))
+    # confirm sequence: Git? → uv? → Proceed?
+    mock_confirm.side_effect = [True, True, True]
+    # prompt sequence: project-name (from get_project_config) → template choice
+    # → then _get_custom_structure_config only calls prompt for deps
+    # We drive via get_project_config: name, template-choice (custom = last index)
+    # But _get_custom_structure_config is called internally; its only prompt is deps.
+    mock_prompt.side_effect = ["my-proj", "8", "requests, rich"]  # 8 = custom (adjust if registry changes)
+
+    from spawn.core.registry import list_templates
+    custom_index = str(len(list_templates()) + 1)
+    mock_prompt.side_effect = ["my-proj", custom_index, "requests, rich", "", ""]  # deps, skip optional setup, skip extra ignores
+
+
+@patch("spawn.cli.prompts.typer.confirm")
+@patch("spawn.cli.prompts.typer.prompt")
+def test_custom_structure_dependency_prompt_skipped_when_uv_false(mock_prompt, mock_confirm, monkeypatch):
+    """When use_uv=False the Dependencies prompt must never be invoked."""
+    import io
+    monkeypatch.setattr("sys.stdin", io.StringIO(_SIMPLE_STRUCTURE))
+    # confirm sequence: Git? → uv? (False) → Proceed?
+    mock_confirm.side_effect = [True, False, True]
+
+    from spawn.core.registry import list_templates
+    custom_index = str(len(list_templates()) + 1)
+    # Only name + template-choice + extra-ignores prompts; NO deps or optional-setup prompts
+    mock_prompt.side_effect = ["my-proj", custom_index, ""]  # skip extra ignores
+
+    from spawn.cli.prompts import get_project_config
+    config = get_project_config()
+
+    assert config.custom_dependencies == []
+    # Ensure no extra prompt calls were consumed (StopIteration would have fired)
+
+
+@patch("spawn.cli.prompts.typer.confirm")
+@patch("spawn.cli.prompts.typer.prompt")
+def test_custom_structure_parses_comma_separated_deps(mock_prompt, mock_confirm, monkeypatch):
+    """'fastapi, pydantic ,  sqlalchemy' parses to three trimmed package names."""
+    import io
+    monkeypatch.setattr("sys.stdin", io.StringIO(_SIMPLE_STRUCTURE))
+    mock_confirm.side_effect = [True, True, True]  # Git, uv, Proceed
+
+    from spawn.core.registry import list_templates
+    custom_index = str(len(list_templates()) + 1)
+    mock_prompt.side_effect = ["my-proj", custom_index, "fastapi, pydantic ,  sqlalchemy", "", ""]  # deps, skip optional setup, skip extra ignores
+
+    from spawn.cli.prompts import get_project_config
+    config = get_project_config()
+
+    assert config.custom_dependencies == ["fastapi", "pydantic", "sqlalchemy"]
+
+
+@patch("spawn.cli.prompts.typer.confirm")
+@patch("spawn.cli.prompts.typer.prompt")
+def test_custom_structure_empty_deps_input_yields_empty_list(mock_prompt, mock_confirm, monkeypatch):
+    """Pressing Enter (empty string) at the Dependencies prompt yields []."""
+    import io
+    monkeypatch.setattr("sys.stdin", io.StringIO(_SIMPLE_STRUCTURE))
+    mock_confirm.side_effect = [True, True, True]  # Git, uv, Proceed
+
+    from spawn.core.registry import list_templates
+    custom_index = str(len(list_templates()) + 1)
+    mock_prompt.side_effect = ["my-proj", custom_index, "", "", ""]  # empty deps, skip optional setup, skip extra ignores
+
+    from spawn.cli.prompts import get_project_config
+    config = get_project_config()
+
+    assert config.custom_dependencies == []

@@ -530,7 +530,7 @@ uv run python src/train.py
 
 None of the seven templates above fit? **Custom Structure** shows up as the last option in the same `spawn create` picker (`8`) — it's not a separate command, just a different path through the same flow.
 
-Paste any of three text formats — Unix `tree` output, a Markdown list, or plain indented hierarchy — and Spawn parses it, previews the detected folders and files, then creates the structure with the same Git and uv setup as every other template. No framework, provider, or extras prompts — just name → paste → confirm → generate.
+Paste any of three text formats — Unix `tree` output, a Markdown list, or plain indented hierarchy — and Spawn parses it, previews the detected folders and files, then creates the structure with the same Git and uv setup as every other template.
 
 ```
 spawn create
@@ -547,7 +547,7 @@ app/
 ├── services/
 └── tests/
 README.md
-.env.example
+.gitignore
 ^Z
 
 Detected
@@ -556,8 +556,29 @@ Files   : 2
 
 Initialize Git? [Y/n]: Y
 Initialize uv? [Y/n]: Y
+Dependencies (comma separated, optional): fastapi, uvicorn
+
+  Optional Setup
+  1  Ruff
+  2  Pytest
+  3  Pre-commit
+  4  Dockerfile
+
+Enter numbers separated by commas, or press Enter to skip: 1,2
+
+Additional ignore patterns (optional, comma separated): data/, *.csv
+
 Proceed? [Y/n]: Y
 ```
+
+**What Spawn does automatically when it sees these files:**
+
+- `README.md` — generated with your project name, a structure tree, and setup instructions (not left empty)
+- `.gitignore` — populated with Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, etc.) plus any patterns you added, deduplicated
+
+**The Dependencies prompt** (shown only when uv is enabled) installs packages immediately via `uv add`.
+
+**The Optional Setup menu** installs dev tools via `uv add --dev` and generates their config files: `ruff.toml`, `tests/__init__.py`, `.pre-commit-config.yaml`, and/or `Dockerfile`.
 
 ---
 
@@ -617,7 +638,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.0
+# → Spawn v1.0.1
 ```
 
 ### Publish to GitHub

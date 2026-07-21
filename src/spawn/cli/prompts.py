@@ -22,6 +22,31 @@ def _print_list(items: list[str]) -> None:
     console.print()
 
 
+def _prompt_optional_setup() -> list[str]:
+    """Numbered multi-select for optional dev tooling (Custom Structure flow)."""
+    options = [
+        ("1", "ruff",       "Ruff"),
+        ("2", "pytest",     "Pytest"),
+        ("3", "precommit",  "Pre-commit"),
+        ("4", "dockerfile", "Dockerfile"),
+    ]
+    console.print()
+    console.print("[bold]Optional Setup[/bold]")
+    for num, _, label in options:
+        console.print(f"  {num}  {label}")
+    console.print()
+    raw = typer.prompt(
+        typer.style(
+            "Enter numbers separated by commas, or press Enter to skip",
+            fg=typer.colors.CYAN,
+        ),
+        default="",
+        show_default=False,
+    )
+    chosen_nums = {n.strip() for n in raw.split(",") if n.strip()}
+    return [key for num, key, _label in options if num in chosen_nums]
+
+
 def get_project_config() -> ProjectConfig:
     # --- Project name ---
     while True:
@@ -266,14 +291,17 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     """
     Interactive prompt for the Custom Structure path.
 
-    Reads a pasted structure, previews detected folders/files, confirms
-    Git/uv preferences, then raises SpawnError until Phase 4 wires in
-    the required ProjectConfig fields.
+    Reads a pasted structure (tree, markdown, or indented format),
+    previews detected folder/file counts, and collects Git/uv
+    preferences, optional dependencies, optional dev tooling
+    (ruff/pytest/pre-commit/dockerfile), and optional extra .gitignore
+    patterns. Returns a fully populated ProjectConfig for the "custom"
+    template.
     """
     import sys
 
     from spawn.core.exceptions import StructureParseError
-    from spawn.generators.custom_structure import parse_structure
+    from spawn.generators.custom_structure import parse_structure, detect_format
 
     console.print()
     console.print(
@@ -284,6 +312,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     )
 
     raw = sys.stdin.read()
+    detected_format = detect_format(raw)
 
     try:
         entries = parse_structure(raw)
@@ -306,6 +335,33 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     use_uv = typer.confirm(
         typer.style("Initialize uv?", fg=typer.colors.CYAN), default=True
     )
+    custom_dependencies: list[str] = []
+    if use_uv:
+        deps_raw = typer.prompt(
+            typer.style(
+                "Dependencies (comma separated, optional)",
+                fg=typer.colors.CYAN,
+            ),
+            default="",
+            show_default=False,
+        )
+        if deps_raw.strip():
+            custom_dependencies = [
+                d.strip() for d in deps_raw.split(",") if d.strip()
+            ]
+    custom_dev_setup = _prompt_optional_setup() if use_uv else []
+    console.print()
+    extra_ignores_raw = typer.prompt(
+        typer.style(
+            "Additional ignore patterns (optional, comma separated)",
+            fg=typer.colors.CYAN,
+        ),
+        default="",
+        show_default=False,
+    )
+    custom_gitignore_extra = [
+        p.strip() for p in extra_ignores_raw.split(",") if p.strip()
+    ]
     proceed = typer.confirm(
         typer.style("Proceed?", fg=typer.colors.CYAN), default=True
     )
@@ -319,4 +375,8 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         use_git=use_git,
         use_uv=use_uv,
         custom_entries=entries,
+        custom_dependencies=custom_dependencies,
+        custom_dev_setup=custom_dev_setup,
+        custom_gitignore_extra=custom_gitignore_extra,
+        custom_source_format=detected_format,
     )

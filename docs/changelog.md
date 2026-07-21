@@ -3,6 +3,39 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.1 — 2026
+
+### Added
+
+- **Custom Structure: dependency installation** — an optional "Dependencies (comma
+  separated)" prompt when uv is enabled; packages install via `uv add` immediately
+  after generation
+- **Custom Structure: Optional Setup menu** — toggle Ruff, Pytest, Pre-commit, and/or
+  Dockerfile; each installs its dependency (via `uv add --dev`) and generates its
+  config file automatically
+- **Custom Structure: README auto-population** — a pasted `README.md` is generated
+  with real content (project name, structure tree, setup instructions) instead of
+  being created empty
+- **Custom Structure: smart .gitignore** — a pasted `.gitignore` is populated with
+  Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`,
+  `.ruff_cache/`, etc.), plus an optional prompt for additional patterns,
+  deduplicated against the defaults
+
+### Fixed
+
+- **Custom Structure metadata `source` field** — now reflects the actually detected
+  input format (`tree`/`markdown`/`indented`) instead of a hardcoded `"tree"`
+  placeholder
+
+### Internal
+
+- `install_packages()` gains an optional `dev: bool = False` parameter for
+  `uv add --dev`; existing callers unaffected
+- `ProjectConfig` gains `custom_dependencies`, `custom_dev_setup`,
+  `custom_gitignore_extra`, `custom_source_format`
+- `GITIGNORE_CONTENT` in `shared_content.py` extended with `.ruff_cache/`
+- Version bumped to `1.0.1`
+
 ## v1.0.0 — 2026
 
 ### New Features

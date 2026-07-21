@@ -32,9 +32,7 @@ def _write_custom_metadata(project_path, config) -> None:
                 "generator": "custom",
                 "git": config.use_git,
                 "uv": config.use_uv,
-                # detect_format() result not yet threaded through ProjectConfig;
-                # "tree" is a known placeholder — tracked as follow-up for Phase 5
-                "source": "tree",
+                "source": config.custom_source_format or "tree",
             },
             indent=2,
         ),
@@ -56,6 +54,9 @@ def create() -> None:
                 entries=config.custom_entries or [],
                 use_git=config.use_git,
                 use_uv=config.use_uv,
+                dependencies=config.custom_dependencies,
+                dev_setup=config.custom_dev_setup,
+                gitignore_extra=config.custom_gitignore_extra,
             )
             _write_custom_metadata(project_path, config)
             next_steps = [
