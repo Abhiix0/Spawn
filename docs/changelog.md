@@ -3,6 +3,21 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.2 — 2026
+
+### Added
+
+- **Non-interactive mode** — `spawn create` now accepts `--name`, `--template`,
+  `--framework`, `--provider`, `--cli-type`, `--data-type`, `--extras`,
+  `--git`/`--no-git`, and `--uv`/`--no-uv` flags, or a `--config <file.json>`
+  JSON config file, to scaffold a project with zero prompts. Covers all 7
+  registry templates (Custom Structure is not yet supported non-interactively).
+- **`--dry-run`** — validates a non-interactive config and prints it without
+  creating anything.
+- **`--yes` / `-y`** — skips the GitHub-publish prompt. Non-interactive mode
+  also always skips this prompt automatically, so agent-driven invocations
+  never hang waiting for stdin.
+
 ## v1.0.1 — 2026
 
 ### Added

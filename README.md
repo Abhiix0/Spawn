@@ -580,6 +580,37 @@ Proceed? [Y/n]: Y
 
 **The Optional Setup menu** installs dev tools via `uv add --dev` and generates their config files: `ruff.toml`, `tests/__init__.py`, `.pre-commit-config.yaml`, and/or `Dockerfile`.
 
+### Non-Interactive Mode
+
+Skip all prompts by passing flags directly or pointing to a JSON config file.
+
+**Using flags:**
+
+```bash
+spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --git
+```
+
+**Using a config file:**
+
+```json
+{
+  "name": "my-api",
+  "template": "backend-api",
+  "framework": "fastapi",
+  "extras": ["ruff", "pytest"],
+  "git": true,
+  "uv": true
+}
+```
+
+```bash
+spawn create --config spawn.json
+```
+
+`--config` takes precedence over individual flags. Add `--dry-run` to either form to validate the config and print it without creating any files.
+
+> Custom Structure is interactive-only in this version.
+
 ---
 
 ## Other Commands
@@ -638,7 +669,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.1
+# → Spawn v1.0.2
 ```
 
 ### Publish to GitHub
