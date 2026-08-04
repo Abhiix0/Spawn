@@ -9,6 +9,7 @@ from spawn.templates.chatbot import ChatbotTemplate
 from spawn.templates.agent import AgentTemplate
 from spawn.templates.rag import RAGTemplate
 from spawn.templates.data_project import DataProjectTemplate
+from spawn.templates.mcp_server import MCPServerTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -87,6 +88,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         template_class=DataProjectTemplate,
         available_extras=["ruff", "pytest", "github-actions"],
         available_data_types=["Data Analysis", "Dashboard", "ETL Pipeline", "Machine Learning"],
+    ),
+    "mcp": TemplateMetadata(
+        slug="mcp",
+        display_name="MCP Server",
+        description="Model Context Protocol server with the official Python SDK",
+        template_class=MCPServerTemplate,
+        available_extras=["ruff", "pytest", "github-actions"],
     ),
 }
 

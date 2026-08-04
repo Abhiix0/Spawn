@@ -29,6 +29,7 @@ Spawn is a local CLI tool that transforms one command into a complete Python pro
   - [5. AI Agent](#5-ai-agent)
   - [6. RAG System](#6-rag-system)
   - [7. Data Project](#7-data-project)
+  - [8. MCP Server](#8-mcp-server)
 - [Bring Your Own Structure](#bring-your-own-structure)
 - [Other Commands](#other-commands)
   - [spawn doctor](#spawn-doctor)
@@ -64,7 +65,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 | Feature | What it does |
 |---|---|
-| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning) |
+| **Intent-based templates** | Backend API (FastAPI / Flask / Django), CLI Application (Typer / Click / Argparse), Automation Tool, AI Chatbot, AI Agent, RAG System, Data Project (Analysis / Dashboard / ETL / Machine Learning), MCP Server |
 | **Bring your own structure** | Paste any folder layout — Tree, Markdown list, or Indented — and Spawn builds exactly that, no blueprint required |
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
@@ -124,9 +125,10 @@ Spawn rejects names with spaces or special characters, and tells you immediately
   5  AI Agent
   6  RAG System
   7  Data Project
-  8  Custom Structure
+  8  MCP Server
+  9  Custom Structure
 
-Choose Template [1-8]: 1
+Choose Template [1-9]: 1
 ```
 
 **Step 3 — Additional prompts** *(template-dependent — framework, provider, project type, and/or extras, depending on what you picked. See [Project Templates](#project-templates) below for each one's exact flow.)*
@@ -527,9 +529,51 @@ uv run python src/train.py
 
 ---
 
+### 8. MCP Server
+
+Best for: exposing tools and data to Claude Desktop, Claude Code, or any MCP-compatible client.
+
+```
+my-mcp-server/
+├── src/
+│   ├── server.py   # FastMCP instance, one example tool + resource
+│   └── __init__.py
+├── tests/
+│   └── test_server.py
+├── .env.example
+└── README.md
+```
+
+**Prompts:**
+
+```
+  1  ruff
+  2  pytest
+  3  github-actions
+
+  Enter numbers separated by commas, or press Enter to skip
+Extras []: 1,2
+```
+
+MCP Server uses a fixed stack — the official `mcp` Python SDK's `FastMCP` — so there's no framework or provider prompt, the same as RAG System.
+
+**Available extras:** `ruff` `pytest` `github-actions`
+
+**Run it:**
+
+```bash
+cd my-mcp-server
+uv run python -m src.server
+# Waits on stdio for an MCP client to connect
+```
+
+Then add it to your MCP client's config — see the generated project's own README.md for the exact JSON snippet.
+
+---
+
 ## Bring Your Own Structure
 
-None of the seven templates above fit? **Custom Structure** shows up as the last option in the same `spawn create` picker (`8`) — it's not a separate command, just a different path through the same flow.
+None of the eight templates above fit? **Custom Structure** shows up as the last option in the same `spawn create` picker (`9`) — it's not a separate command, just a different path through the same flow.
 
 Paste any of three text formats — Unix `tree` output, a Markdown list, or plain indented hierarchy — and Spawn parses it, previews the detected folders and files, then creates the structure with the same Git and uv setup as every other template.
 
@@ -670,7 +714,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.2
+# → Spawn v1.0.3
 ```
 
 ### Publish to GitHub
@@ -702,6 +746,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- MCP Server intent — official `mcp` SDK, one working tool + resource, stdio transport (v1.0.3)
 - Non-interactive mode — `--name`/`--template`/flags or `--config` JSON, zero prompts (v1.0.2)
 - Custom Structure workflow — paste any folder layout, Spawn creates it (v1.0.0)
 - Doctor 2.0 — per-category health percentages, tiered recommendations, Next Best Step (v1.0.0)

@@ -3,6 +3,16 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.3 — 2026
+
+### Added
+
+- **MCP Server intent** — `spawn create` can now scaffold a Model
+  Context Protocol server using the official `mcp` Python SDK
+  (`FastMCP`), with one working example tool and one example
+  resource over `stdio` transport, plus a README explaining how to
+  connect it to Claude Desktop or another MCP client.
+
 ## v1.0.2 — 2026
 
 ### Added

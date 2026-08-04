@@ -91,7 +91,7 @@ def test_name_with_space_retried(mock_prompt, mock_confirm):
     "spawn.cli.prompts.typer.prompt",
     side_effect=[
         "demo",   # valid name
-        "9",      # invalid template choice
+        "10",     # invalid template choice
         "0",      # invalid template choice
         "2",      # valid: cli
         "1",      # framework: typer
