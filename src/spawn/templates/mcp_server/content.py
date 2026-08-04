@@ -3,9 +3,9 @@ INIT_CONTENT = ""
 SERVER_CONTENT = """\
 \"\"\"MCP server entrypoint for {project_name}.\"\"\"
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 
-mcp = FastMCP("{project_name}")
+mcp = MCPServer("{project_name}")
 
 
 def _add(a: int, b: int) -> int:
