@@ -69,6 +69,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **Extras system** | Opt-in ruff, pytest, Docker, GitHub Actions — installed and wired automatically |
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
+| **Non-interactive mode** | Scaffold with `--name`/`--template`/etc. flags or a `--config` JSON file — zero prompts, safe for scripts and agents |
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
 | **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
 
@@ -701,6 +702,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- Non-interactive mode — `--name`/`--template`/flags or `--config` JSON, zero prompts (v1.0.2)
 - Custom Structure workflow — paste any folder layout, Spawn creates it (v1.0.0)
 - Doctor 2.0 — per-category health percentages, tiered recommendations, Next Best Step (v1.0.0)
 - Data Project intent — analysis, dashboard, ETL, ML sub-options (v0.9.0)
@@ -709,7 +711,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **What's next**
 
-Nothing formally scheduled yet — Spawn intentionally paused new intents at v1.0 to focus on stability. Ideas under consideration live in [Issues](https://github.com/Abhiix0/spawn/issues); open one if there's something you'd want to see.
+A new intent for MCP Server projects, and automatic `AGENTS.md`/`CLAUDE.md` generation for every scaffolded project. Ideas under consideration live in [Issues](https://github.com/Abhiix0/spawn/issues); open one if there's something you'd want to see.
 
 For the full version history, see [CHANGELOG.md](docs/changelog.md).
 
