@@ -24,7 +24,8 @@ def test_list_templates_returns_all():
     assert "cli" in slugs
     assert "automation" in slugs
     assert "chatbot" in slugs
-    assert len(slugs) == 7
+    assert "mcp" in slugs
+    assert len(slugs) == 8
 
 
 def test_get_metadata_returns_none_for_unknown():
