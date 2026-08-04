@@ -54,7 +54,7 @@ def test_server_content_has_fastmcp():
     t = MCPServerTemplate()
     files = dict(t.starter_files)
     server = files["src/server.py"]
-    assert "FastMCP" in server
+    assert "MCPServer" in server
 
 
 def test_server_content_has_tool_decorator():
