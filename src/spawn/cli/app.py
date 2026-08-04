@@ -1,10 +1,12 @@
 import datetime
 import json
+from pathlib import Path
 
 import typer
 from rich.prompt import Confirm, Prompt
 
 from spawn import __version__
+from spawn.cli.noninteractive import build_config_from_args, build_config_from_file
 from spawn.cli.prompts import get_project_config
 from spawn.generators.project_generator import ProjectGenerator
 from spawn.github.publisher import GitHubPublisher
@@ -41,10 +43,52 @@ def _write_custom_metadata(project_path, config) -> None:
 
 
 @app.command()
-def create() -> None:
-    show_banner()
+def create(
+    name: str = typer.Option(None, "--name", help="Project name (enables non-interactive mode)"),
+    template: str = typer.Option(None, "--template", help="Template slug: backend-api, cli, automation, chatbot, agent, rag, data"),
+    framework: str = typer.Option(None, "--framework", help="Framework choice for templates that support it"),
+    provider: str = typer.Option(None, "--provider", help="AI provider choice for chatbot/agent templates"),
+    cli_type: str = typer.Option(None, "--cli-type", help="CLI type for the cli template: utility or interactive"),
+    data_type: str = typer.Option(None, "--data-type", help="Project type for the data template"),
+    extras: str = typer.Option(None, "--extras", help="Comma-separated list of extras, e.g. ruff,pytest"),
+    git: bool = typer.Option(True, "--git/--no-git", help="Initialize a Git repository"),
+    uv: bool = typer.Option(True, "--uv/--no-uv", help="Initialize a uv environment and install dependencies"),
+    config_file: str = typer.Option(None, "--config", help="Path to a JSON config file (overrides other flags)"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the GitHub publish prompt"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Validate and print the resolved config without creating a project"),
+) -> None:
+    non_interactive = config_file is not None or name is not None
 
-    config = get_project_config()
+    if non_interactive:
+        try:
+            if config_file is not None:
+                config = build_config_from_file(Path(config_file))
+            else:
+                if template is None:
+                    raise SpawnError("--template is required when using --name without --config.")
+                extras_list = [e.strip() for e in extras.split(",") if e.strip()] if extras else []
+                config = build_config_from_args(
+                    name=name,
+                    template=template,
+                    framework=framework,
+                    provider=provider,
+                    cli_type=cli_type,
+                    data_type=data_type,
+                    extras=extras_list,
+                    use_git=git,
+                    use_uv=uv,
+                )
+        except SpawnError as e:
+            console.print(f"[red]❌ {e}[/red]")
+            raise typer.Exit(1)
+
+        if dry_run:
+            console.print("[green]✓ Config valid[/green]")
+            console.print(config)
+            return
+    else:
+        show_banner()
+        config = get_project_config()
 
     try:
         if config.template == "custom":
@@ -88,6 +132,9 @@ def create() -> None:
         console.print(
             "\n[yellow]ℹ GitHub publishing requires Git. Skipping.[/yellow]"
         )
+        return
+
+    if non_interactive or yes:
         return
 
     publish_to_github = Confirm.ask(
