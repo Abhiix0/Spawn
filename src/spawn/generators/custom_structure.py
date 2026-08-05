@@ -332,6 +332,21 @@ def _build_readme_content(
     )
 
 
+def _build_agents_md_content(project_name: str, entries: list[ParsedEntry]) -> str:
+    """Return generated AGENTS.md content for a custom-structure project."""
+    tree_lines = _render_tree(entries)
+    return (
+        f"# Agent Context: {project_name}\n\n"
+        "This file orients coding agents working in this repository.\n\n"
+        "## Project Structure\n\n"
+        "```\n"
+        f"{tree_lines}\n"
+        "```\n\n"
+        "## Setup\n\n"
+        "See README.md for setup instructions.\n"
+    )
+
+
 # ─── Filesystem generator ─────────────────────────────────────────────────
 
 
@@ -345,6 +360,7 @@ class CustomStructureGenerator:
         dependencies: list[str] | None = None,
         dev_setup: list[str] | None = None,
         gitignore_extra: list[str] | None = None,
+        generate_claude_md: bool = False,
     ) -> Path:
         """
         Create the folder/file structure described by *entries* under a new
@@ -384,6 +400,27 @@ class CustomStructureGenerator:
                 readme_path = project_path / readme_entry.path
                 readme_path.write_text(
                     _build_readme_content(project_name, entries, use_uv),
+                    encoding="utf-8",
+                )
+
+            agents_md_entry = next(
+                (
+                    e for e in entries
+                    if e.path == "AGENTS.md" or e.path.endswith("/AGENTS.md")
+                ),
+                None,
+            )
+            if agents_md_entry is not None:
+                agents_md_path = project_path / agents_md_entry.path
+                agents_md_path.write_text(
+                    _build_agents_md_content(project_name, entries),
+                    encoding="utf-8",
+                )
+
+            if generate_claude_md and agents_md_entry is not None:
+                claude_md_path = project_path / agents_md_entry.path.replace("AGENTS.md", "CLAUDE.md")
+                claude_md_path.write_text(
+                    _build_agents_md_content(project_name, entries),
                     encoding="utf-8",
                 )
 
