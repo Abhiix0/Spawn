@@ -7,6 +7,7 @@ from spawn import __version__
 from spawn.templates.shared_content import (
     README_CONTENT,
     GITIGNORE_CONTENT,
+    AGENTS_MD_CONTENT,
 )
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import instantiate_template
@@ -44,6 +45,17 @@ class ProjectGenerator:
 
             readme_path = project_path / "README.md"
             readme_path.write_text(readme_content, encoding="utf-8")
+
+            agents_md_content = template.get_agents_md_content(context)
+            if agents_md_content is None:
+                agents_md_content = AGENTS_MD_CONTENT.format(project_name=config.name)
+
+            agents_md_path = project_path / "AGENTS.md"
+            agents_md_path.write_text(agents_md_content, encoding="utf-8")
+
+            if config.generate_claude_md:
+                claude_md_path = project_path / "CLAUDE.md"
+                claude_md_path.write_text(agents_md_content, encoding="utf-8")
 
             gitignore_path = project_path / ".gitignore"
 
