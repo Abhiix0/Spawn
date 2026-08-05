@@ -1,6 +1,7 @@
 import typer
 from pathlib import Path
 from rich.text import Text
+from rich.prompt import Confirm
 
 from spawn.utils.console import console
 from spawn.core.models import ProjectConfig
@@ -275,11 +276,13 @@ def get_project_config() -> ProjectConfig:
         typer.style("Initialize Git?", fg=typer.colors.CYAN),
         default=True,
     )
+    generate_claude_md = Confirm.ask("Also generate CLAUDE.md for Claude Code?", default=False)
 
     return ProjectConfig(
         name=project_name,
         template=template,
         use_git=use_git,
+        generate_claude_md=generate_claude_md,
         framework=selected_framework,
         extras=selected_extras,
         cli_type=selected_cli_type,
@@ -332,6 +335,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     use_git = typer.confirm(
         typer.style("Initialize Git?", fg=typer.colors.CYAN), default=True
     )
+    generate_claude_md = Confirm.ask("Also generate CLAUDE.md for Claude Code?", default=False)
     use_uv = typer.confirm(
         typer.style("Initialize uv?", fg=typer.colors.CYAN), default=True
     )
@@ -373,6 +377,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         name=project_name,
         template="custom",
         use_git=use_git,
+        generate_claude_md=generate_claude_md,
         use_uv=use_uv,
         custom_entries=entries,
         custom_dependencies=custom_dependencies,
