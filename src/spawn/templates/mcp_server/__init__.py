@@ -10,6 +10,7 @@ from spawn.templates.mcp_server.content import (
     GITHUB_ACTIONS_CI_RUFF_STEP,
     GITHUB_ACTIONS_CI_PYTEST_STEP,
     make_readme,
+    make_agents_md,
 )
 
 MCP_SERVER_FOLDERS = [
@@ -45,6 +46,9 @@ class MCPServerTemplate(BaseTemplate):
 
     def get_readme_content(self, context: dict) -> str | None:
         return make_readme().format_map(context)
+
+    def get_agents_md_content(self, context: dict) -> str | None:
+        return make_agents_md().format_map(context)
 
     def get_dependencies(self) -> list[str]:
         base = ["mcp"]

@@ -16,6 +16,7 @@ from spawn.templates.rag.content import (
     GITHUB_ACTIONS_CI_RUFF_STEP,
     GITHUB_ACTIONS_CI_PYTEST_STEP,
     make_readme,
+    make_agents_md,
 )
 
 RAG_FOLDERS = [
@@ -66,6 +67,9 @@ class RAGTemplate(BaseTemplate):
 
     def get_readme_content(self, context: dict) -> str | None:
         return make_readme().format_map(context)
+
+    def get_agents_md_content(self, context: dict) -> str | None:
+        return make_agents_md().format_map(context)
 
     def get_dependencies(self) -> list[str]:
         base = [

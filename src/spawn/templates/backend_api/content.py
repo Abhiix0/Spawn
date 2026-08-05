@@ -99,6 +99,18 @@ uv run pytest
 ```
 """
 
+BACKEND_API_AGENTS_MD_CONTENT = """\
+# {project_name}
+
+Backend API built with FastAPI.
+
+## Run Command
+
+```bash
+uv run uvicorn app.main:app --reload
+```
+"""
+
 INIT_CONTENT = ""
 
 
@@ -215,6 +227,18 @@ uv run pytest
 │   └── test_health.py
 ├── .env.example
 └── README.md
+```
+"""
+
+FLASK_AGENTS_MD_CONTENT = """\
+# {project_name}
+
+Backend API built with Flask.
+
+## Run Command
+
+```bash
+uv run python run.py
 ```
 """
 
@@ -373,6 +397,18 @@ uv run python manage.py test
 │       ├── urls.py
 │       └── tests.py
 └── README.md
+```
+"""
+
+DJANGO_AGENTS_MD_CONTENT = """\
+# {project_name}
+
+Backend API built with Django.
+
+## Run Command
+
+```bash
+uv run python manage.py runserver
 ```
 """
 

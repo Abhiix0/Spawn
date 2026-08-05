@@ -9,6 +9,7 @@ from spawn.templates.backend_api.content import (
     TEST_HEALTH_CONTENT,
     ENV_EXAMPLE_CONTENT,
     BACKEND_API_README_CONTENT,
+    BACKEND_API_AGENTS_MD_CONTENT,
     INIT_CONTENT,
     # Flask
     FLASK_APP_INIT_CONTENT,
@@ -18,6 +19,7 @@ from spawn.templates.backend_api.content import (
     FLASK_TEST_HEALTH_CONTENT,
     FLASK_ENV_EXAMPLE_CONTENT,
     FLASK_README_CONTENT,
+    FLASK_AGENTS_MD_CONTENT,
     # Django
     DJANGO_MANAGE_CONTENT,
     DJANGO_SETTINGS_CONTENT,
@@ -28,6 +30,7 @@ from spawn.templates.backend_api.content import (
     DJANGO_HEALTH_URLS_CONTENT,
     DJANGO_HEALTH_TESTS_CONTENT,
     DJANGO_README_CONTENT,
+    DJANGO_AGENTS_MD_CONTENT,
     # Docker
     DOCKERFILE_FASTAPI_CONTENT,
     DOCKERFILE_FLASK_CONTENT,
@@ -168,6 +171,13 @@ class BackendAPITemplate(BaseTemplate):
         if self.framework == "django":
             return DJANGO_README_CONTENT.format_map(context)
         return BACKEND_API_README_CONTENT.format_map(context)
+
+    def get_agents_md_content(self, context: dict) -> str | None:
+        if self.framework == "flask":
+            return FLASK_AGENTS_MD_CONTENT.format_map(context)
+        if self.framework == "django":
+            return DJANGO_AGENTS_MD_CONTENT.format_map(context)
+        return BACKEND_API_AGENTS_MD_CONTENT.format_map(context)
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "flask":
