@@ -53,6 +53,7 @@ def create(
     extras: str = typer.Option(None, "--extras", help="Comma-separated list of extras, e.g. ruff,pytest"),
     git: bool = typer.Option(True, "--git/--no-git", help="Initialize a Git repository"),
     uv: bool = typer.Option(True, "--uv/--no-uv", help="Initialize a uv environment and install dependencies"),
+    claude_md: bool = typer.Option(False, "--claude-md/--no-claude-md", help="Also generate CLAUDE.md alongside AGENTS.md"),
     config_file: str = typer.Option(None, "--config", help="Path to a JSON config file (overrides other flags)"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the GitHub publish prompt"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate and print the resolved config without creating a project"),
@@ -62,7 +63,7 @@ def create(
     if non_interactive:
         try:
             if config_file is not None:
-                config = build_config_from_file(Path(config_file))
+                config = build_config_from_file(Path(config_file), use_claude_md=claude_md)
             else:
                 if template is None:
                     raise SpawnError("--template is required when using --name without --config.")
@@ -77,6 +78,7 @@ def create(
                     extras=extras_list,
                     use_git=git,
                     use_uv=uv,
+                    use_claude_md=claude_md,
                 )
         except SpawnError as e:
             console.print(f"[red]❌ {e}[/red]")
@@ -101,6 +103,7 @@ def create(
                 dependencies=config.custom_dependencies,
                 dev_setup=config.custom_dev_setup,
                 gitignore_extra=config.custom_gitignore_extra,
+                generate_claude_md=config.generate_claude_md,
             )
             _write_custom_metadata(project_path, config)
             next_steps = [

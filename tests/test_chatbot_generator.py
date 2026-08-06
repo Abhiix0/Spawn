@@ -292,3 +292,21 @@ def test_chatbot_memory_history_has_pai_functions(tmp_path, monkeypatch):
     assert "get_pai_history" in mem
     assert "append_pai_messages" in mem
     assert "_pai_history" in mem
+
+
+# ─── AGENTS.md ───────────────────────────────────────────────────────────
+
+
+def test_chatbot_creates_agents_md(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    assert (tmp_path / "my-bot" / "AGENTS.md").is_file()
+
+
+def test_chatbot_agents_md_contains_project_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg(name="test-chatbot-x"))
+    content = (tmp_path / "test-chatbot-x" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "test-chatbot-x" in content

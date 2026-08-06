@@ -30,6 +30,7 @@ def build_config_from_args(
     extras: list[str] | None = None,
     use_git: bool = True,
     use_uv: bool = True,
+    use_claude_md: bool = False,
 ) -> ProjectConfig:
     """
     Build and return a validated ProjectConfig from explicit arguments.
@@ -141,10 +142,11 @@ def build_config_from_args(
         data_type=data_type,
         provider=provider,
         use_uv=use_uv,
+        generate_claude_md=use_claude_md,
     )
 
 
-def build_config_from_file(path: Path) -> ProjectConfig:
+def build_config_from_file(path: Path, use_claude_md: bool = False) -> ProjectConfig:
     """
     Build and return a validated ProjectConfig from a JSON config file.
 
@@ -186,6 +188,7 @@ def build_config_from_file(path: Path) -> ProjectConfig:
 
     git: bool = data.get("git", True)
     uv: bool = data.get("uv", True)
+    claude_md: bool = data.get("claude_md", use_claude_md)
 
     return build_config_from_args(
         name=name,
@@ -197,4 +200,5 @@ def build_config_from_file(path: Path) -> ProjectConfig:
         extras=extras,
         use_git=git,
         use_uv=uv,
+        use_claude_md=claude_md,
     )

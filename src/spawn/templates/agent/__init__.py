@@ -24,6 +24,7 @@ from spawn.templates.agent.content import (
     ENV_OPENAI_AGENTS_OPENAI,
     ENV_OPENAI_AGENTS_OPENROUTER,
     make_readme,
+    make_agents_md,
 )
 
 AGENT_FOLDERS = [
@@ -126,6 +127,10 @@ class AgentTemplate(BaseTemplate):
 
     def get_readme_content(self, context: dict) -> str | None:
         raw = make_readme(self.framework, self.provider)
+        return raw.format_map(context)
+
+    def get_agents_md_content(self, context: dict) -> str | None:
+        raw = make_agents_md(self.framework, self.provider)
         return raw.format_map(context)
 
     def get_dependencies(self) -> list[str]:

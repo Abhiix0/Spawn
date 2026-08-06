@@ -635,3 +635,16 @@ def test_groq_deps_correct(framework):
     assert "python-dotenv" in deps
     # groq is bundled in pydantic-ai metapackage, no separate dep needed
     assert "groq" not in deps
+
+
+# ─── AGENTS.md special-case: litellm + ollama ────────────────────────────
+
+
+def test_litellm_ollama_agents_md_has_ollama_api_base():
+    """litellm+ollama must reference OLLAMA_API_BASE, not OLLAMA_BASE_URL."""
+    from spawn.templates.chatbot import ChatbotTemplate
+    t = ChatbotTemplate(framework="litellm", provider="ollama")
+    result = t.get_agents_md_content({"project_name": "my-bot"})
+    assert result is not None
+    assert "OLLAMA_API_BASE" in result
+    assert "OLLAMA_BASE_URL" not in result

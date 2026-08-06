@@ -142,7 +142,7 @@ wheels = [
 
 [[package]]
 name = "spawn"
-version = "1.0.3"
+version = "1.0.4"
 source = { editable = "." }
 dependencies = [
     { name = "rich" },

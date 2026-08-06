@@ -218,3 +218,16 @@ def test_next_steps_has_rename_instruction():
 def test_next_steps_has_run_command():
     t = AgentTemplate()
     assert any("src.main" in s for s in t.next_steps)
+
+
+# ─── AGENTS.md special-case: openai-agents + openrouter ──────────────────
+
+
+def test_openai_agents_openrouter_agents_md_has_openai_key():
+    """openai-agents+openrouter must reference OPENAI_API_KEY, not OPENROUTER_API_KEY."""
+    from spawn.templates.agent import AgentTemplate
+    t = AgentTemplate(framework="openai-agents", provider="openrouter")
+    result = t.get_agents_md_content({"project_name": "my-agent"})
+    assert result is not None
+    assert "OPENAI_API_KEY" in result
+    assert "OPENROUTER_API_KEY" not in result

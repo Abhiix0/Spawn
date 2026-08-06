@@ -46,6 +46,7 @@ from spawn.templates.chatbot.content import (
     ENV_PYDANTIC_GROQ,
     ENV_LITELLM_GROQ,
     make_readme,
+    make_agents_md,
 )
 
 CHATBOT_FOLDERS = [
@@ -180,6 +181,10 @@ class ChatbotTemplate(BaseTemplate):
 
     def get_readme_content(self, context: dict) -> str | None:
         raw = make_readme(self.framework, self.provider)
+        return raw.format_map(context)
+
+    def get_agents_md_content(self, context: dict) -> str | None:
+        raw = make_agents_md(self.framework, self.provider)
         return raw.format_map(context)
 
     def get_dependencies(self) -> list[str]:

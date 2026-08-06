@@ -71,6 +71,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **Dependency installation** | `uv add` runs automatically with the right packages for your choices |
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
 | **Non-interactive mode** | Scaffold with `--name`/`--template`/etc. flags or a `--config` JSON file — zero prompts, safe for scripts and agents |
+| **Agent context files** | Every project ships an `AGENTS.md`; add `--claude-md` for an identical `CLAUDE.md` alongside it |
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
 | **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
 
@@ -714,7 +715,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.3
+# → Spawn v1.0.4
 ```
 
 ### Publish to GitHub
@@ -746,6 +747,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- AGENTS.md / CLAUDE.md generation — every project ships agent context automatically, `--claude-md` opt-in for Claude Code (v1.0.4)
 - MCP Server intent — official `mcp` SDK, one working tool + resource, stdio transport (v1.0.3)
 - Non-interactive mode — `--name`/`--template`/flags or `--config` JSON, zero prompts (v1.0.2)
 - Custom Structure workflow — paste any folder layout, Spawn creates it (v1.0.0)
@@ -756,7 +758,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **What's next**
 
-A new intent for MCP Server projects, and automatic `AGENTS.md`/`CLAUDE.md` generation for every scaffolded project. Ideas under consideration live in [Issues](https://github.com/Abhiix0/spawn/issues); open one if there's something you'd want to see.
+Nothing formally scheduled yet. Ideas under consideration live in [Issues](https://github.com/Abhiix0/spawn/issues); open one if there's something you'd want to see.
 
 For the full version history, see [CHANGELOG.md](docs/changelog.md).
 

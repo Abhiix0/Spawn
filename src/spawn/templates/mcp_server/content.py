@@ -144,3 +144,18 @@ read.
 uv run pytest
 ```
 """
+
+
+def make_agents_md() -> str:
+    return """\
+# {project_name}
+
+An MCP (Model Context Protocol) server built using the `mcp` SDK's `MCPServer` class.
+
+## Adding Tools and Resources
+
+Open `src/server.py`.
+
+- Add a new tool: Decorate a function with `@mcp.tool()` to expose callable tools to MCP clients.
+- Add a new resource: Decorate a function with `@mcp.resource("uri")` to expose readable resources to MCP clients.
+"""

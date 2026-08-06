@@ -190,3 +190,35 @@ def test_cli_main_contains_project_name(mock_uv, mock_install, tmp_path, monkeyp
         ProjectGenerator().generate(config)
     content = (tmp_path / "my-tool" / "src" / "main.py").read_text(encoding="utf-8")
     assert "my-tool" in content
+
+
+# ─── AGENTS.md ───────────────────────────────────────────────────────────
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_cli_creates_agents_md(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from spawn.templates.cli_application import CLITemplate
+    config = ProjectConfig(
+        name="my-cli", template="cli", use_git=False,
+        framework="typer", cli_type="utility", extras=[],
+    )
+    with patch.object(CLITemplate, "post_install"):
+        ProjectGenerator().generate(config)
+    assert (tmp_path / "my-cli" / "AGENTS.md").is_file()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_cli_agents_md_contains_project_name(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from spawn.templates.cli_application import CLITemplate
+    config = ProjectConfig(
+        name="my-special-cli", template="cli", use_git=False,
+        framework="typer", cli_type="utility", extras=[],
+    )
+    with patch.object(CLITemplate, "post_install"):
+        ProjectGenerator().generate(config)
+    content = (tmp_path / "my-special-cli" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "my-special-cli" in content

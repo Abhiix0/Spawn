@@ -12,6 +12,11 @@ from spawn.core.models import ProjectConfig
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture(autouse=True)
+def _mock_confirm_ask(monkeypatch):
+    monkeypatch.setattr("spawn.cli.prompts.Confirm.ask", lambda *args, **kwargs: False)
+
+
 def _make_prompt_side_effects(*values):
     """Return a list to use as side_effect for sequential typer.prompt calls."""
     return list(values)
@@ -39,6 +44,14 @@ def test_git_false_reflected_in_config(mock_prompt, mock_confirm):
     config = get_project_config()
     assert config.use_git is False
     assert config.template == "backend-api"
+
+
+def test_generate_claude_md_true_reflected_in_config(monkeypatch):
+    monkeypatch.setattr("spawn.cli.prompts.Confirm.ask", lambda *args, **kwargs: True)
+    with patch("spawn.cli.prompts.typer.confirm", return_value=True), \
+         patch("spawn.cli.prompts.typer.prompt", side_effect=["my-project", "2", "1", "1", ""]):
+        config = get_project_config()
+        assert config.generate_claude_md is True
 
 
 # ---------------------------------------------------------------------------

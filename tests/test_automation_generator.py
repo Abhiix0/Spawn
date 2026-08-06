@@ -222,3 +222,21 @@ def test_automation_extras_reach_install_packages(tmp_path, monkeypatch):
     args = mock_install.call_args[0][1]
     assert "ruff" in args
     assert "pytest" in args
+
+
+# ─── AGENTS.md ───────────────────────────────────────────────────────────
+
+
+def test_automation_creates_agents_md(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    assert (tmp_path / "demo" / "AGENTS.md").is_file()
+
+
+def test_automation_agents_md_contains_project_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg(name="my-automation"))
+    content = (tmp_path / "my-automation" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "my-automation" in content

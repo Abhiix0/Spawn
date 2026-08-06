@@ -26,6 +26,16 @@ class BaseTemplate:
         """
         return None
 
+    def get_agents_md_content(self, context: dict) -> str | None:
+        """
+        Return custom AGENTS.md content for this template, or None to use
+        the shared default. Subclasses override this to provide
+        template-specific agent context — framework, provider, or
+        environment-variable details an agent working on this project
+        would need.
+        """
+        return None
+
     def generate(self, project_path: Path, context: dict) -> None:
         """
         Create the template's folder structure and starter files.

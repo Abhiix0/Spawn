@@ -213,3 +213,21 @@ def test_agent_openai_agents_install_packages_called(tmp_path, monkeypatch):
     args = mock_install.call_args[0][1]
     assert "openai-agents" in args
     assert "pydantic-ai" not in args
+
+
+# ─── AGENTS.md ───────────────────────────────────────────────────────────
+
+
+def test_agent_creates_agents_md(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    assert (tmp_path / "my-agent" / "AGENTS.md").is_file()
+
+
+def test_agent_agents_md_contains_project_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg(name="test-agent-x"))
+    content = (tmp_path / "test-agent-x" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "test-agent-x" in content

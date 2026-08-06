@@ -414,6 +414,20 @@ def make_readme() -> str:
         "```\n"
     )
 
+
+def make_agents_md() -> str:
+    return (
+        "# {project_name}\n\n"
+        "A RAG system generated with Spawn using LlamaIndex and ChromaDB.\n\n"
+        "## Required Environment Variable\n\n"
+        "Set `OPENAI_API_KEY` in your `.env` file to run this system:\n\n"
+        "```env\n"
+        "OPENAI_API_KEY=your-key\n"
+        "```\n\n"
+        "## Ingestion\n\n"
+        "Documents placed in `data/` are automatically ingested into `chroma_db/` on first run.\n"
+    )
+
 # ─── GitHub Actions ───────────────────────────────────────────────────────
 
 GITHUB_ACTIONS_CI_BASE = """\
