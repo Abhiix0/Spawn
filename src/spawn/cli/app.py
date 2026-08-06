@@ -78,7 +78,6 @@ def create(
                     extras=extras_list,
                     use_git=git,
                     use_uv=uv,
-                    use_claude_md=claude_md,
                 )
         except SpawnError as e:
             console.print(f"[red]❌ {e}[/red]")
@@ -88,6 +87,8 @@ def create(
             console.print("[green]✓ Config valid[/green]")
             console.print(config)
             return
+
+        config.generate_claude_md = claude_md
     else:
         show_banner()
         config = get_project_config()

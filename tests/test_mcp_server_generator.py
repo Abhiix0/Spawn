@@ -114,3 +114,21 @@ def test_mcp_install_packages_called_with_correct_deps(tmp_path, monkeypatch):
         ProjectGenerator().generate(_cfg())
     args = mock_install.call_args[0][1]
     assert "mcp" in args
+
+
+# ─── AGENTS.md ───────────────────────────────────────────────────────────
+
+
+def test_mcp_creates_agents_md(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    assert (tmp_path / "my-mcp" / "AGENTS.md").is_file()
+
+
+def test_mcp_agents_md_contains_project_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg(name="test-mcp-x"))
+    content = (tmp_path / "test-mcp-x" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "test-mcp-x" in content

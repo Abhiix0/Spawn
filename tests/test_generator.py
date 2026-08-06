@@ -660,3 +660,51 @@ def test_meta_json_backward_compatible(mock_uv, mock_install, tmp_path, monkeypa
     assert data["framework"] is None
     assert data["provider"] is None
     assert "spawn_version" in data
+
+
+# ---------------------------------------------------------------------------
+# AGENTS.md / CLAUDE.md
+# ---------------------------------------------------------------------------
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_project_generator_creates_agents_md(mock_uv, mock_install, tmp_path, monkeypatch):
+    """Every generated project must have AGENTS.md."""
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config())
+    assert (tmp_path / "demo" / "AGENTS.md").is_file()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_agents_md_contains_project_name(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config(name="my-proj"))
+    content = (tmp_path / "my-proj" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "my-proj" in content
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_claude_md_absent_by_default(mock_uv, mock_install, tmp_path, monkeypatch):
+    """Without generate_claude_md=True, CLAUDE.md must not be created."""
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config())
+    assert not (tmp_path / "demo" / "CLAUDE.md").exists()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_claude_md_created_when_flag_set(mock_uv, mock_install, tmp_path, monkeypatch):
+    """With generate_claude_md=True, CLAUDE.md must be created and identical to AGENTS.md."""
+    monkeypatch.chdir(tmp_path)
+    config = _cli_config(generate_claude_md=True)
+    with _patch_post_install():
+        ProjectGenerator().generate(config)
+    agents = (tmp_path / "demo" / "AGENTS.md").read_text(encoding="utf-8")
+    claude = (tmp_path / "demo" / "CLAUDE.md").read_text(encoding="utf-8")
+    assert claude == agents

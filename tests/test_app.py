@@ -345,3 +345,61 @@ def test_noninteractive_without_yes_also_skips_confirm_ask(
 
     assert result.exit_code == 0
     assert mock_confirm.call_count == 0
+
+
+# ---------------------------------------------------------------------------
+# spawn create — --claude-md flag
+# ---------------------------------------------------------------------------
+
+
+@patch("spawn.cli.app.get_project_config")
+@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.cli.app.show_success")
+@patch("spawn.cli.app.instantiate_template")
+def test_claude_md_flag_sets_generate_claude_md_on_config(
+    mock_instantiate, mock_show_success, mock_generator_cls, mock_get_config
+):
+    """--claude-md must result in generate_claude_md=True on the config passed to generate()."""
+    captured = {}
+
+    def capture_generate(config):
+        captured["config"] = config
+        return Path("demo")
+
+    mock_generator_cls.return_value.generate.side_effect = capture_generate
+    mock_instantiate.return_value = None
+
+    result = runner.invoke(
+        app,
+        ["create", "--name", "demo", "--template", "automation", "--claude-md"],
+    )
+
+    assert result.exit_code == 0
+    assert "config" in captured
+    assert captured["config"].generate_claude_md is True
+
+
+@patch("spawn.cli.app.get_project_config")
+@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.cli.app.show_success")
+@patch("spawn.cli.app.instantiate_template")
+def test_no_claude_md_flag_defaults_false(
+    mock_instantiate, mock_show_success, mock_generator_cls, mock_get_config
+):
+    """Without --claude-md the config must have generate_claude_md=False (default)."""
+    captured = {}
+
+    def capture_generate(config):
+        captured["config"] = config
+        return Path("demo")
+
+    mock_generator_cls.return_value.generate.side_effect = capture_generate
+    mock_instantiate.return_value = None
+
+    result = runner.invoke(
+        app,
+        ["create", "--name", "demo", "--template", "automation"],
+    )
+
+    assert result.exit_code == 0
+    assert captured["config"].generate_claude_md is False

@@ -210,3 +210,21 @@ def test_rag_gitignore_has_chroma_wildcard_rule(tmp_path, monkeypatch):
     gitignore = (tmp_path / "my-rag" / ".gitignore").read_text(encoding="utf-8")
     assert "chroma_db/*" in gitignore
     assert "!chroma_db/.gitkeep" in gitignore
+
+
+# ─── AGENTS.md ───────────────────────────────────────────────────────────
+
+
+def test_rag_creates_agents_md(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg())
+    assert (tmp_path / "my-rag" / "AGENTS.md").is_file()
+
+
+def test_rag_agents_md_contains_project_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _mock_uv_and_install():
+        ProjectGenerator().generate(_cfg(name="test-rag-x"))
+    content = (tmp_path / "test-rag-x" / "AGENTS.md").read_text(encoding="utf-8")
+    assert "test-rag-x" in content
