@@ -614,15 +614,18 @@ def make_readme(framework: str, provider: str) -> str:
 
 
 def make_agents_md(framework: str, provider: str) -> str:
-    provider_key_map = {
-        "openai":      "OPENAI_API_KEY",
-        "anthropic":   "ANTHROPIC_API_KEY",
-        "gemini":      "GOOGLE_API_KEY",
-        "openrouter":  "OPENROUTER_API_KEY",
-        "ollama":      "OLLAMA_BASE_URL",
-        "groq":        "GROQ_API_KEY",
-    }
-    key_name = provider_key_map.get(provider, "OPENAI_API_KEY")
+    if framework == "litellm" and provider == "ollama":
+        key_name = "OLLAMA_API_BASE"
+    else:
+        provider_key_map = {
+            "openai":      "OPENAI_API_KEY",
+            "anthropic":   "ANTHROPIC_API_KEY",
+            "gemini":      "GOOGLE_API_KEY",
+            "openrouter":  "OPENROUTER_API_KEY",
+            "ollama":      "OLLAMA_BASE_URL",
+            "groq":        "GROQ_API_KEY",
+        }
+        key_name = provider_key_map.get(provider, "OPENAI_API_KEY")
     return (
         "# {project_name}\n\n"
         f"AI chatbot using {framework.title()} with {provider.title()} provider.\n\n"

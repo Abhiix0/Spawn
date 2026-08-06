@@ -63,7 +63,7 @@ def create(
     if non_interactive:
         try:
             if config_file is not None:
-                config = build_config_from_file(Path(config_file))
+                config = build_config_from_file(Path(config_file), use_claude_md=claude_md)
             else:
                 if template is None:
                     raise SpawnError("--template is required when using --name without --config.")
@@ -78,6 +78,7 @@ def create(
                     extras=extras_list,
                     use_git=git,
                     use_uv=uv,
+                    use_claude_md=claude_md,
                 )
         except SpawnError as e:
             console.print(f"[red]❌ {e}[/red]")
@@ -87,8 +88,6 @@ def create(
             console.print("[green]✓ Config valid[/green]")
             console.print(config)
             return
-
-        config.generate_claude_md = claude_md
     else:
         show_banner()
         config = get_project_config()
@@ -104,6 +103,7 @@ def create(
                 dependencies=config.custom_dependencies,
                 dev_setup=config.custom_dev_setup,
                 gitignore_extra=config.custom_gitignore_extra,
+                generate_claude_md=config.generate_claude_md,
             )
             _write_custom_metadata(project_path, config)
             next_steps = [
