@@ -23,6 +23,7 @@ def complete_project(temp_project_dir):
     """Create a complete project structure for testing."""
     # Documentation
     (temp_project_dir / "README.md").write_text("# Test Project")
+    (temp_project_dir / "AGENTS.md").write_text("# Agent Context")
     (temp_project_dir / "LICENSE").write_text("MIT License")
     (temp_project_dir / "CHANGELOG.md").write_text("# Changelog")
 
@@ -300,21 +301,21 @@ class TestProjectHealthChecker:
     def test_run_all_checks_complete_project(self, complete_project):
         checker = ProjectHealthChecker(complete_project)
         checks = checker.run_all_checks()
-        assert len(checks) == 14
+        assert len(checks) == 15
         assert all(isinstance(c, HealthCheck) for c in checks)
         assert all(c.passed for c in checks), [c for c in checks if not c.passed]
 
     def test_run_all_checks_minimal_project(self, minimal_project):
         checker = ProjectHealthChecker(minimal_project)
         checks = checker.run_all_checks()
-        assert len(checks) == 14
+        assert len(checks) == 15
         passed = [c for c in checks if c.passed]
         assert len(passed) == 2  # README + Git
 
     def test_run_all_checks_empty_project(self, temp_project_dir):
         checker = ProjectHealthChecker(temp_project_dir)
         checks = checker.run_all_checks()
-        assert len(checks) == 14
+        assert len(checks) == 15
         assert all(not c.passed for c in checks)
 
     # Scoring Tests
@@ -324,14 +325,14 @@ class TestProjectHealthChecker:
         checks = checker.run_all_checks()
         score, max_score = checker.calculate_score(checks)
         assert score == max_score
-        assert max_score == 130
+        assert max_score == 135
 
     def test_calculate_score_none_passed(self, temp_project_dir):
         checker = ProjectHealthChecker(temp_project_dir)
         checks = checker.run_all_checks()
         score, max_score = checker.calculate_score(checks)
         assert score == 0
-        assert max_score == 130
+        assert max_score == 135
 
     def test_calculate_score_empty_checks(self):
         checker = ProjectHealthChecker()
@@ -346,7 +347,7 @@ class TestProjectHealthChecker:
         checks = checker.run_all_checks()
         score, max_score = checker.calculate_score(checks)
         assert score == 30
-        assert max_score == 130
+        assert max_score == 135
 
     # Grouping Tests
 
@@ -362,7 +363,7 @@ class TestProjectHealthChecker:
         assert "Configuration" in cats
         assert "Code Quality" in cats
 
-        assert len(cats["Documentation"]) == 3    # README + LICENSE + CHANGELOG
+        assert len(cats["Documentation"]) == 4    # README + AGENTS.md + LICENSE + CHANGELOG
         assert len(cats["Version Control"]) == 2  # git + .gitignore
         assert len(cats["Testing"]) == 2          # Tests + Pytest
         assert len(cats["Automation"]) == 2       # Dockerfile + GitHub Actions
@@ -381,7 +382,7 @@ class TestProjectHealthChecker:
         checker = ProjectHealthChecker(temp_project_dir)
         checks = checker.run_all_checks()
         recs = checker.generate_recommendations(checks)
-        assert len(recs) == 14
+        assert len(recs) == 15
         assert "git init" in recs[0].lower()
 
     def test_generate_recommendations_prioritization(self, temp_project_dir):
@@ -392,7 +393,7 @@ class TestProjectHealthChecker:
         checker = ProjectHealthChecker(temp_project_dir)
         checks = checker.run_all_checks()
         recs = checker.generate_recommendations(checks)
-        assert len(recs) == 10  # 14 - 4 passing
+        assert len(recs) == 11  # 15 - 4 passing
         assert any("pytest" in r.lower() for r in recs[:3])
 
     def test_format_report_runs_without_error(self, complete_project, capsys):
@@ -422,7 +423,7 @@ def test_doctor_with_valid_path(tmp_path):
     checker = ProjectHealthChecker(tmp_path)
     checks = checker.run_all_checks()
     assert isinstance(checks, list)
-    assert len(checks) == 14
+    assert len(checks) == 15
 
 
 def test_doctor_with_invalid_path(tmp_path):

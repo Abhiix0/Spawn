@@ -22,6 +22,7 @@ _CRITICAL: set[str] = {"Git Repository", "Tests"}
 
 _RECOMMENDED: set[str] = {
     "README.md",
+    "AGENTS.md",
     ".gitignore",
     "LICENSE",
     "Ruff",
@@ -43,6 +44,7 @@ _REC_TEXT: dict[str, str] = {
     "Git Repository":   "Initialize a git repository with 'git init'.",
     "Tests":            "Create a tests/ directory and add test files.",
     "README.md":        "Add a README.md file to document your project.",
+    "AGENTS.md":        "Add an AGENTS.md file so coding agents understand this project's conventions.",
     ".gitignore":       "Add a .gitignore file to exclude generated files from version control.",
     "LICENSE":          "Add a LICENSE file to specify usage terms for your project.",
     "Ruff":             "Configure Ruff in pyproject.toml for automated code quality checks.",
@@ -60,6 +62,7 @@ _REC_TEXT: dict[str, str] = {
 _EFFORT: dict[str, str] = {
     "Git Repository":   "30 seconds",
     "README.md":        "2 minutes",
+    "AGENTS.md":        "1 minute",
     "LICENSE":          "1 minute",
     "CHANGELOG.md":     "2 minutes",
     ".gitignore":       "1 minute",
@@ -105,6 +108,17 @@ class ProjectHealthChecker:
             passed=ok,
             message="Documentation file present" if ok else "Missing README.md",
             weight=10,
+        )
+
+    def check_agents_md(self) -> HealthCheck:
+        p = self.project_path / "AGENTS.md"
+        ok = p.exists() and p.is_file()
+        return HealthCheck(
+            name="AGENTS.md",
+            category="Documentation",
+            passed=ok,
+            message="Agent context file present" if ok else "Missing AGENTS.md",
+            weight=5,
         )
 
     def check_license(self) -> HealthCheck:
@@ -344,6 +358,7 @@ class ProjectHealthChecker:
     def get_all_checks(self) -> List[Callable[[], HealthCheck]]:
         return [
             self.check_readme,
+            self.check_agents_md,
             self.check_license,
             self.check_changelog,
             self.check_git_repository,
