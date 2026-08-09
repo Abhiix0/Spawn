@@ -189,7 +189,11 @@ def doctor(
 
 
 def main():
-    app()
+    try:
+        app()
+    except (KeyboardInterrupt, EOFError):
+        console.print("\n[yellow]Cancelled.[/yellow]")
+        raise typer.Exit(130)
 
 
 if __name__ == "__main__":
