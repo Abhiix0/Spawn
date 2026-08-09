@@ -20,6 +20,20 @@ from spawn.core.registry import instantiate_template
 app = typer.Typer()
 
 
+@app.callback(invoke_without_command=True)
+def main_callback(ctx: typer.Context) -> None:
+    if ctx.invoked_subcommand is not None:
+        return
+
+    show_banner()
+    console.print(f"[dim]v{__version__}[/dim]\n")
+    console.print("[bold]Commands[/bold]")
+    console.print("  [cyan]create[/cyan]    Scaffold a new project")
+    console.print("  [cyan]doctor[/cyan]    Check the health of a project directory")
+    console.print("  [cyan]version[/cyan]   Show the installed version")
+    console.print("\n[dim]Run [cyan]spawn COMMAND --help[/cyan] for details on a command.[/dim]\n")
+
+
 def _write_custom_metadata(project_path, config) -> None:
     meta_dir = project_path / ".spawn"
     meta_dir.mkdir(exist_ok=True)
