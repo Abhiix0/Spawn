@@ -72,106 +72,110 @@ def create(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the GitHub publish prompt"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate and print the resolved config without creating a project"),
 ) -> None:
-    non_interactive = config_file is not None or name is not None
-
-    if non_interactive:
-        try:
-            if config_file is not None:
-                config = build_config_from_file(Path(config_file), use_claude_md=claude_md)
-            else:
-                if template is None:
-                    raise SpawnError("--template is required when using --name without --config.")
-                extras_list = [e.strip() for e in extras.split(",") if e.strip()] if extras else []
-                config = build_config_from_args(
-                    name=name,
-                    template=template,
-                    framework=framework,
-                    provider=provider,
-                    cli_type=cli_type,
-                    data_type=data_type,
-                    extras=extras_list,
-                    use_git=git,
-                    use_uv=uv,
-                    use_claude_md=claude_md,
-                )
-        except SpawnError as e:
-            console.print(f"[red]❌ {e}[/red]")
-            raise typer.Exit(1)
-
-        if dry_run:
-            console.print("[green]✓ Config valid[/green]")
-            console.print(config)
-            return
-    else:
-        show_banner()
-        config = get_project_config()
-
     try:
-        if config.template == "custom":
-            from spawn.generators.custom_structure import CustomStructureGenerator
-            project_path = CustomStructureGenerator().generate(
-                project_name=config.name,
-                entries=config.custom_entries or [],
-                use_git=config.use_git,
-                use_uv=config.use_uv,
-                dependencies=config.custom_dependencies,
-                dev_setup=config.custom_dev_setup,
-                gitignore_extra=config.custom_gitignore_extra,
-                generate_claude_md=config.generate_claude_md,
-            )
-            _write_custom_metadata(project_path, config)
-            next_steps = [
-                f"cd {config.name}",
-                "Start building your project",
-            ]
-            show_success(
-                project_name=config.name,
-                template_name="Custom Structure",
-                use_git=config.use_git,
-                next_steps=next_steps,
-            )
+        non_interactive = config_file is not None or name is not None
+
+        if non_interactive:
+            try:
+                if config_file is not None:
+                    config = build_config_from_file(Path(config_file), use_claude_md=claude_md)
+                else:
+                    if template is None:
+                        raise SpawnError("--template is required when using --name without --config.")
+                    extras_list = [e.strip() for e in extras.split(",") if e.strip()] if extras else []
+                    config = build_config_from_args(
+                        name=name,
+                        template=template,
+                        framework=framework,
+                        provider=provider,
+                        cli_type=cli_type,
+                        data_type=data_type,
+                        extras=extras_list,
+                        use_git=git,
+                        use_uv=uv,
+                        use_claude_md=claude_md,
+                    )
+            except SpawnError as e:
+                console.print(f"[red]❌ {e}[/red]")
+                raise typer.Exit(1)
+
+            if dry_run:
+                console.print("[green]✓ Config valid[/green]")
+                console.print(config)
+                return
         else:
-            project_path = ProjectGenerator().generate(config)
-            template_obj = instantiate_template(config)
-            if template_obj is not None:
+            show_banner()
+            config = get_project_config()
+
+        try:
+            if config.template == "custom":
+                from spawn.generators.custom_structure import CustomStructureGenerator
+                project_path = CustomStructureGenerator().generate(
+                    project_name=config.name,
+                    entries=config.custom_entries or [],
+                    use_git=config.use_git,
+                    use_uv=config.use_uv,
+                    dependencies=config.custom_dependencies,
+                    dev_setup=config.custom_dev_setup,
+                    gitignore_extra=config.custom_gitignore_extra,
+                    generate_claude_md=config.generate_claude_md,
+                )
+                _write_custom_metadata(project_path, config)
+                next_steps = [
+                    f"cd {config.name}",
+                    "Start building your project",
+                ]
                 show_success(
                     project_name=config.name,
-                    template_name=template_obj.name,
+                    template_name="Custom Structure",
                     use_git=config.use_git,
-                    next_steps=template_obj.next_steps,
+                    next_steps=next_steps,
                 )
+            else:
+                project_path = ProjectGenerator().generate(config)
+                template_obj = instantiate_template(config)
+                if template_obj is not None:
+                    show_success(
+                        project_name=config.name,
+                        template_name=template_obj.name,
+                        use_git=config.use_git,
+                        next_steps=template_obj.next_steps,
+                    )
 
-    except SpawnError as e:
-        console.print(f"[red]❌ {e}[/red]")
-        return
+        except SpawnError as e:
+            console.print(f"[red]❌ {e}[/red]")
+            return
 
-    if not config.use_git:
-        console.print(
-            "\n[yellow]ℹ GitHub publishing requires Git. Skipping.[/yellow]"
+        if not config.use_git:
+            console.print(
+                "\n[yellow]ℹ GitHub publishing requires Git. Skipping.[/yellow]"
+            )
+            return
+
+        if non_interactive or yes:
+            return
+
+        publish_to_github = Confirm.ask(
+            "\nPublish to GitHub?",
+            default=False,
         )
-        return
 
-    if non_interactive or yes:
-        return
+        if not publish_to_github:
+            return
 
-    publish_to_github = Confirm.ask(
-        "\nPublish to GitHub?",
-        default=False,
-    )
+        repo_url = Prompt.ask("Repository URL")
 
-    if not publish_to_github:
-        return
+        publisher = GitHubPublisher()
 
-    repo_url = Prompt.ask("Repository URL")
+        try:
+            publisher.publish(project_path, repo_url)
+            console.print("[green]🚀 Published successfully![/green]")
 
-    publisher = GitHubPublisher()
-
-    try:
-        publisher.publish(project_path, repo_url)
-        console.print("[green]🚀 Published successfully![/green]")
-
-    except GitHubPublishError as e:
-        console.print(f"[red]❌ {e}[/red]")
+        except GitHubPublishError as e:
+            console.print(f"[red]❌ {e}[/red]")
+    except (KeyboardInterrupt, EOFError):
+        console.print("\n[yellow]Cancelled.[/yellow]")
+        raise typer.Exit(130)
 
 
 @app.command()

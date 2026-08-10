@@ -30,7 +30,7 @@ def _select(message: str, choices: list[str], default: str | None = None) -> str
     existing top-level abort handling in cli/app.py catches it uniformly."""
     answer = questionary.select(
         message, choices=choices, default=default, style=_QSTYLE
-    ).ask()
+    ).ask(kbi_msg="")
     if answer is None:
         raise KeyboardInterrupt
     return answer
@@ -40,7 +40,7 @@ def _multiselect(message: str, choices: list[str]) -> list[str]:
     """Arrow-key + spacebar multi-select. Empty selection is valid (skip)."""
     answer = questionary.checkbox(
         message, choices=choices, style=_QSTYLE
-    ).ask()
+    ).ask(kbi_msg="")
     if answer is None:
         raise KeyboardInterrupt
     return answer
