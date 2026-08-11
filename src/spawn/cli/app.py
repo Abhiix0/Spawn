@@ -173,7 +173,7 @@ def create(
 
         except GitHubPublishError as e:
             console.print(f"[red]❌ {e}[/red]")
-    except (KeyboardInterrupt, EOFError):
+    except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]Cancelled.[/yellow]")
         raise typer.Exit(130)
 
@@ -209,7 +209,7 @@ def doctor(
 def main():
     try:
         app()
-    except (KeyboardInterrupt, EOFError):
+    except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]Cancelled.[/yellow]")
         raise typer.Exit(130)
 
