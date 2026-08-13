@@ -72,6 +72,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **Git + uv** | Optionally runs `git init`, `uv init`, and `uv venv` |
 | **Non-interactive mode** | Scaffold with `--name`/`--template`/etc. flags or a `--config` JSON file — zero prompts, safe for scripts and agents |
 | **Agent context files** | Every project ships an `AGENTS.md`; add `--claude-md` for an identical `CLAUDE.md` alongside it |
+| **Arrow-key menus** | Every prompt in `spawn create` is arrow-key/spacebar driven, not typed numbers |
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
 | **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
 
@@ -119,17 +120,20 @@ Spawn rejects names with spaces or special characters, and tells you immediately
 **Step 2 — Pick a template**
 
 ```
-  1  Backend API
-  2  CLI Application
-  3  Automation Tool
-  4  AI Chatbot
-  5  AI Agent
-  6  RAG System
-  7  Data Project
-  8  MCP Server
-  9  Custom Structure
+Use the arrow keys to move, Enter to select — the same pattern every prompt in Spawn follows.
 
-Choose Template [1-9]: 1
+```
+? Choose a template (Use arrow keys)
+ » Backend API
+   CLI Application
+   Automation Tool
+   AI Chatbot
+   AI Agent
+   RAG System
+   Data Project
+   MCP Server
+   Custom Structure
+```
 ```
 
 **Step 3 — Additional prompts** *(template-dependent — framework, provider, project type, and/or extras, depending on what you picked. See [Project Templates](#project-templates) below for each one's exact flow.)*
@@ -187,19 +191,16 @@ my-api/
 **Prompts:**
 
 ```
-  1  fastapi
-  2  flask
-  3  django
+? Choose a framework (Use arrow keys)
+ » fastapi
+   flask
+   django
 
-Choose Framework [1-3]: 1
-
-  1  ruff
-  2  pytest
-  3  docker
-  4  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ docker
+ ○ github-actions
 ```
 
 **Available extras:** `ruff` `pytest` `docker` `github-actions`
@@ -240,23 +241,19 @@ my-cli/
 **Prompts:**
 
 ```
-  1  utility
-  2  interactive
+? Choose CLI Type (Use arrow keys)
+ » utility
+   interactive
 
-Choose CLI Type [1-2]: 1
+? Choose a framework (Use arrow keys)
+ » typer
+   click
+   argparse
 
-  1  typer
-  2  click
-  3  argparse
-
-Choose Framework [1-3]: 1
-
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ github-actions
 ```
 
 **Available extras:** `ruff` `pytest` `github-actions`
@@ -292,12 +289,10 @@ my-automation/
 **Prompts:**
 
 ```
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ github-actions
 ```
 
 **Available extras:** `ruff` `pytest` `github-actions`
@@ -332,28 +327,24 @@ my-chatbot/
 **Prompts:**
 
 ```
-  1  pydantic-ai
-  2  openai-sdk
-  3  litellm
+? Choose a framework (Use arrow keys)
+ » pydantic-ai
+   openai-sdk
+   litellm
 
-Choose Framework [1-3]: 1
+? Choose a provider (Use arrow keys)
+ » openai
+   anthropic
+   gemini
+   openrouter
+   ollama
+   groq
 
-  1  openai
-  2  anthropic
-  3  gemini
-  4  openrouter
-  5  ollama
-  6  groq
-
-Choose Provider [1-6]: 1
-
-  1  ruff
-  2  pytest
-  3  rich
-  4  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ rich
+ ○ github-actions
 ```
 
 **Available extras:** `ruff` `pytest` `rich` `github-actions`
@@ -388,26 +379,22 @@ my-agent/
 **Prompts:**
 
 ```
-  1  pydantic-ai
-  2  openai-agents
+? Choose a framework (Use arrow keys)
+ » pydantic-ai
+   openai-agents
 
-Choose Framework [1-2]: 1
+? Choose a provider (Use arrow keys)
+ » openai
+   anthropic
+   gemini
+   openrouter
+   ollama
+   groq
 
-  1  openai
-  2  anthropic
-  3  gemini
-  4  openrouter
-  5  ollama
-  6  groq
-
-Choose Provider [1-6]: 1
-
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ github-actions
 ```
 
 > If you pick `openai-agents`, only `openai` and `openrouter` appear as provider choices — the list is filtered per framework.
@@ -449,12 +436,10 @@ my-rag/
 **Prompts:**
 
 ```
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ github-actions
 ```
 
 RAG System uses a fixed stack — **LlamaIndex + ChromaDB + OpenAI** — so there's no framework or provider prompt, unlike Chatbot and Agent. On first run, it automatically ingests documents from `data/` into a local ChromaDB index, then lets you ask questions against them. Requires an `OPENAI_API_KEY` (used for both the LLM and embeddings).
@@ -493,19 +478,16 @@ my-data-project/
 **Prompts:**
 
 ```
-  1  Data Analysis
-  2  Dashboard
-  3  ETL Pipeline
-  4  Machine Learning
+? Choose Project Type (Use arrow keys)
+ » Data Analysis
+   Dashboard
+   ETL Pipeline
+   Machine Learning
 
-Choose Project Type [1-4]: 1
-
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ github-actions
 ```
 
 **Available extras:** `ruff` `pytest` `github-actions`
@@ -548,12 +530,10 @@ my-mcp-server/
 **Prompts:**
 
 ```
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
+? Choose extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ github-actions
 ```
 
 MCP Server uses a fixed stack — the official `mcp` Python SDK's `FastMCP` — so there's no framework or provider prompt, the same as RAG System.
@@ -604,13 +584,11 @@ Initialize Git? [Y/n]: Y
 Initialize uv? [Y/n]: Y
 Dependencies (comma separated, optional): fastapi, uvicorn
 
-  Optional Setup
-  1  Ruff
-  2  Pytest
-  3  Pre-commit
-  4  Dockerfile
-
-Enter numbers separated by commas, or press Enter to skip: 1,2
+? Optional Setup (space to toggle, enter to confirm)
+ ● Ruff
+ ● Pytest
+ ○ Pre-commit
+ ○ Dockerfile
 
 Additional ignore patterns (optional, comma separated): data/, *.csv
 
@@ -715,7 +693,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.4
+# → Spawn v1.0.5
 ```
 
 ### Publish to GitHub
@@ -747,6 +725,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- Arrow-key menus, no-args banner, and consistent Ctrl+C handling (v1.0.5)
 - AGENTS.md / CLAUDE.md generation — every project ships agent context automatically, `--claude-md` opt-in for Claude Code (v1.0.4)
 - MCP Server intent — official `mcp` SDK, one working tool + resource, stdio transport (v1.0.3)
 - Non-interactive mode — `--name`/`--template`/flags or `--config` JSON, zero prompts (v1.0.2)
