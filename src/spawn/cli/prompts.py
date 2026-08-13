@@ -1,6 +1,6 @@
 import typer
+import questionary
 from pathlib import Path
-from rich.text import Text
 from rich.prompt import Confirm
 
 from spawn.utils.console import console
@@ -12,41 +12,62 @@ from spawn.utils.validators import validate_project_name
 from spawn.core.exceptions import SpawnError
 
 
-def _print_list(items: list[str]) -> None:
-    """Print a numbered list with dim numbers and bright item names."""
-    console.print()
-    for i, item in enumerate(items, start=1):
-        line = Text()
-        line.append(f"  {i}  ", style="dim")
-        line.append(item, style="bold white")
-        console.print(line)
-    console.print()
+# ---------------------------------------------------------------------------
+# Questionary helpers
+# ---------------------------------------------------------------------------
+
+_QSTYLE = questionary.Style([
+    ("qmark",       "fg:#2D5E8E bold"),
+    ("question",    "bold"),
+    ("pointer",     "fg:#2D5E8E bold"),
+    ("highlighted", "fg:#2D5E8E bold"),
+    ("selected",    "fg:#2D5E8E"),
+])
+
+
+def _select(message: str, choices: list[str], default: str | None = None) -> str:
+    """Arrow-key single-select. Raises KeyboardInterrupt on Ctrl+C/Esc so the
+    existing top-level abort handling in cli/app.py catches it uniformly."""
+    answer = questionary.select(
+        message, choices=choices, default=default, style=_QSTYLE
+    ).ask(kbi_msg="")
+    if answer is None:
+        raise KeyboardInterrupt
+    return answer
+
+
+def _multiselect(message: str, choices: list[str]) -> list[str]:
+    """Arrow-key + spacebar multi-select. Empty selection is valid (skip)."""
+    answer = questionary.checkbox(
+        message, choices=choices, style=_QSTYLE
+    ).ask(kbi_msg="")
+    if answer is None:
+        raise KeyboardInterrupt
+    return answer
+
+
+# ---------------------------------------------------------------------------
+# Custom Structure optional-setup multi-select
+# ---------------------------------------------------------------------------
+
+_OPTIONAL_SETUP_CHOICES = ["Ruff", "Pytest", "Pre-commit", "Dockerfile"]
+_OPTIONAL_SETUP_KEY = {
+    "Ruff":       "ruff",
+    "Pytest":     "pytest",
+    "Pre-commit": "precommit",
+    "Dockerfile": "dockerfile",
+}
 
 
 def _prompt_optional_setup() -> list[str]:
-    """Numbered multi-select for optional dev tooling (Custom Structure flow)."""
-    options = [
-        ("1", "ruff",       "Ruff"),
-        ("2", "pytest",     "Pytest"),
-        ("3", "precommit",  "Pre-commit"),
-        ("4", "dockerfile", "Dockerfile"),
-    ]
-    console.print()
-    console.print("[bold]Optional Setup[/bold]")
-    for num, _, label in options:
-        console.print(f"  {num}  {label}")
-    console.print()
-    raw = typer.prompt(
-        typer.style(
-            "Enter numbers separated by commas, or press Enter to skip",
-            fg=typer.colors.CYAN,
-        ),
-        default="",
-        show_default=False,
-    )
-    chosen_nums = {n.strip() for n in raw.split(",") if n.strip()}
-    return [key for num, key, _label in options if num in chosen_nums]
+    """Checkbox multi-select for optional dev tooling (Custom Structure flow)."""
+    chosen = _multiselect("Optional Setup (space to toggle)", _OPTIONAL_SETUP_CHOICES)
+    return [_OPTIONAL_SETUP_KEY[label] for label in chosen]
 
+
+# ---------------------------------------------------------------------------
+# Main interactive config builder
+# ---------------------------------------------------------------------------
 
 def get_project_config() -> ProjectConfig:
     # --- Project name ---
@@ -73,135 +94,44 @@ def get_project_config() -> ProjectConfig:
 
     # --- Template selection ---
     templates = list_templates()
-
-    # registry templates in order, then the sentinel for Custom Structure
-    choice_map = {
-        str(i): meta.slug
-        for i, meta in enumerate(templates, start=1)
-    }
-    custom_index = str(len(templates) + 1)
-    choice_map[custom_index] = "__custom_structure__"
-
     display_names = [meta.display_name for meta in templates] + ["Custom Structure"]
-    _print_list(display_names)
+    slug_by_display = {meta.display_name: meta.slug for meta in templates}
+    slug_by_display["Custom Structure"] = "__custom_structure__"
 
-    valid_range = len(display_names)
-    choice = typer.prompt(
-        typer.style(f"Choose Template [1-{valid_range}]", fg=typer.colors.CYAN)
-    )
+    chosen_display = _select("Choose a template", display_names)
+    chosen_slug = slug_by_display[chosen_display]
 
-    while choice not in choice_map:
-        typer.secho("Invalid choice. Please select a valid number.", fg=typer.colors.RED)
-        choice = typer.prompt(
-            typer.style(f"Choose Template [1-{valid_range}]", fg=typer.colors.CYAN)
-        )
-
-    if choice_map[choice] == "__custom_structure__":
+    if chosen_slug == "__custom_structure__":
         return _get_custom_structure_config(project_name)
 
-    template = choice_map[choice]
+    template = chosen_slug
 
-    # --- Framework selection ---
+    # --- Sub-selections ---
     selected_framework: str | None = None
     selected_cli_type: str | None = None
     selected_data_type: str | None = None
     selected_provider: str | None = None
     meta = get_metadata(template)
 
-    # --- CLI type selection ---
+    # --- CLI type ---
     if meta and meta.available_cli_types:
         cli_types = meta.available_cli_types
-        cli_type_map = {
-            str(i): ct
-            for i, ct in enumerate(cli_types, start=1)
-        }
+        chosen = _select("Choose CLI Type", cli_types, default=cli_types[0])
+        selected_cli_type = chosen
 
-        _print_list(cli_types)
-
-        valid_ct_range = len(cli_types)
-        ct_choice = typer.prompt(
-            typer.style(
-                f"Choose CLI Type [1-{valid_ct_range}]",
-                fg=typer.colors.CYAN,
-            ),
-            default="1",
-        )
-
-        while ct_choice not in cli_type_map:
-            typer.secho(
-                "Invalid choice. Please select a valid number.",
-                fg=typer.colors.RED,
-            )
-            ct_choice = typer.prompt(
-                typer.style(
-                    f"Choose CLI Type [1-{valid_ct_range}]",
-                    fg=typer.colors.CYAN,
-                ),
-                default="1",
-            )
-
-        selected_cli_type = cli_type_map[ct_choice]
-
-    # --- Data type selection ---
+    # --- Data type ---
     if meta and meta.available_data_types:
         data_types = meta.available_data_types
-        data_type_map = {
-            str(i): dt
-            for i, dt in enumerate(data_types, start=1)
-        }
+        chosen = _select("Choose Project Type", data_types, default=data_types[0])
+        selected_data_type = chosen
 
-        _print_list(data_types)
-
-        valid_dt_range = len(data_types)
-        dt_choice = typer.prompt(
-            typer.style(
-                f"Choose Project Type [1-{valid_dt_range}]",
-                fg=typer.colors.CYAN,
-            ),
-            default="1",
-        )
-
-        while dt_choice not in data_type_map:
-            typer.secho(
-                "Invalid choice. Please select a valid number.",
-                fg=typer.colors.RED,
-            )
-            dt_choice = typer.prompt(
-                typer.style(
-                    f"Choose Project Type [1-{valid_dt_range}]",
-                    fg=typer.colors.CYAN,
-                ),
-                default="1",
-            )
-
-        selected_data_type = data_type_map[dt_choice]
-
-    # --- Framework selection ---
+    # --- Framework ---
     if meta and meta.available_frameworks:
         frameworks = meta.available_frameworks
-        framework_map = {
-            str(i): fw
-            for i, fw in enumerate(frameworks, start=1)
-        }
+        chosen = _select("Choose Framework", frameworks, default=frameworks[0])
+        selected_framework = chosen
 
-        _print_list(frameworks)
-
-        valid_fw_range = len(frameworks)
-        fw_choice = typer.prompt(
-            typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
-            default="1",
-        )
-
-        while fw_choice not in framework_map:
-            typer.secho("Invalid choice. Please select a valid number.", fg=typer.colors.RED)
-            fw_choice = typer.prompt(
-                typer.style(f"Choose Framework [1-{valid_fw_range}]", fg=typer.colors.CYAN),
-                default="1",
-            )
-
-        selected_framework = framework_map[fw_choice]
-
-    # --- Provider selection ---
+    # --- Provider ---
     if meta and meta.available_providers and selected_framework:
         if meta.slug == "agent":
             provider_options = get_agent_providers(selected_framework)
@@ -209,67 +139,16 @@ def get_project_config() -> ProjectConfig:
             provider_options = get_chatbot_providers(selected_framework)
         else:
             provider_options = meta.available_providers
-        provider_choice_map = {
-            str(i): p for i, p in enumerate(provider_options, start=1)
-        }
+        chosen = _select("Choose Provider", provider_options, default=provider_options[0])
+        selected_provider = chosen
 
-        _print_list(provider_options)
-
-        valid_prov_range = len(provider_options)
-        prov_choice = typer.prompt(
-            typer.style(
-                f"Choose Provider [1-{valid_prov_range}]",
-                fg=typer.colors.CYAN,
-            ),
-            default="1",
-        )
-
-        while prov_choice not in provider_choice_map:
-            typer.secho(
-                "Invalid choice. Please select a valid number.",
-                fg=typer.colors.RED,
-            )
-            prov_choice = typer.prompt(
-                typer.style(
-                    f"Choose Provider [1-{valid_prov_range}]",
-                    fg=typer.colors.CYAN,
-                ),
-                default="1",
-            )
-
-        selected_provider = provider_choice_map[prov_choice]
-
-    # --- Extras selection ---
+    # --- Extras ---
     selected_extras: list[str] = []
-
     if meta and meta.available_extras:
-        extras = meta.available_extras
-        extras_map = {
-            str(i): slug
-            for i, slug in enumerate(extras, start=1)
-        }
-
-        _print_list(extras)
-
-        typer.secho(
-            "  Enter numbers separated by commas, or press Enter to skip",
-            fg=typer.colors.CYAN,
+        selected_extras = _multiselect(
+            "Select extras (space to toggle, enter to confirm)",
+            meta.available_extras,
         )
-
-        raw = typer.prompt(
-            typer.style("Extras", fg=typer.colors.CYAN),
-            default="",
-        )
-
-        parsed: list[str] = []
-        seen: set[str] = set()
-        for token in raw.split(","):
-            token = token.strip()
-            if token in extras_map and token not in seen:
-                parsed.append(extras_map[token])
-                seen.add(token)
-
-        selected_extras = parsed
 
     # --- Git ---
     use_git = typer.confirm(
@@ -289,6 +168,7 @@ def get_project_config() -> ProjectConfig:
         data_type=selected_data_type,
         provider=selected_provider,
     )
+
 
 def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     """

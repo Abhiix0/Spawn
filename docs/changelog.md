@@ -3,6 +3,25 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.5 — 2026
+
+### Added
+
+- **Arrow-key selection menus** — every prompt in `spawn create` (template,
+  framework, provider, CLI type, project type, extras, and Custom
+  Structure's optional setup) now uses arrow-key/spacebar selection
+  instead of typed numbers, powered by `questionary`.
+- **`spawn` with no arguments** now shows the banner, current version, and
+  a list of available commands, instead of Click's default usage error.
+
+### Fixed
+
+- **Consistent, clean cancellation** — pressing Ctrl+C at any point in
+  `spawn create` (prompts, arrow-key menus, or mid-generation) now shows
+  a single `Cancelled.` message and exits with code `130`, instead of a
+  raw Python traceback or inconsistent messages depending on where the
+  interrupt happened.
+
 ## v1.0.4 — 2026
 
 ### Added
