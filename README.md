@@ -5,6 +5,8 @@
 
 Spawn is a local CLI tool that transforms one command into a complete Python project foundation — directories, Git, dependencies, and a virtual environment set up automatically, so you can start building immediately.
 
+[![PyPI](https://img.shields.io/pypi/v/spawnio?style=flat-square&color=blue)](https://pypi.org/project/spawnio/)
+[![Downloads](https://img.shields.io/pypi/dm/spawnio?style=flat-square&color=brightgreen)](https://pypi.org/project/spawnio/)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat-square)](https://python.org)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen?style=flat-square)](https://github.com/Abhiix0/spawn/actions)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
@@ -90,14 +92,34 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 
 ## Installation
 
+**Option 1 — Install from PyPI (recommended)**
+
+```bash
+pip install spawnio
+```
+
+or, using `uv`:
+
+```bash
+uv tool install spawnio
+```
+
+or run it without installing:
+
+```bash
+uvx --from spawnio spawn create
+```
+
+You can now run `spawn` from anywhere on your machine.
+
+**Option 2 — Install from source (for contributing)**
+
 ```bash
 git clone https://github.com/Abhiix0/spawn.git
 cd spawn
 uv sync
 uv tool install .
 ```
-
-You can now run `spawn` from anywhere on your machine.
 
 ---
 
@@ -119,7 +141,6 @@ Spawn rejects names with spaces or special characters, and tells you immediately
 
 **Step 2 — Pick a template**
 
-```
 Use the arrow keys to move, Enter to select — the same pattern every prompt in Spawn follows.
 
 ```
@@ -133,7 +154,6 @@ Use the arrow keys to move, Enter to select — the same pattern every prompt in
    Data Project
    MCP Server
    Custom Structure
-```
 ```
 
 **Step 3 — Additional prompts** *(template-dependent — framework, provider, project type, and/or extras, depending on what you picked. See [Project Templates](#project-templates) below for each one's exact flow.)*
@@ -554,7 +574,7 @@ Then add it to your MCP client's config — see the generated project's own READ
 
 ## Bring Your Own Structure
 
-None of the eight templates above fit? **Custom Structure** shows up as the last option in the same `spawn create` picker (`9`) — it's not a separate command, just a different path through the same flow.
+None of the eight templates above fit? **Custom Structure** shows up as the last option in the same `spawn create` picker — it's not a separate command, just a different path through the same flow.
 
 Paste any of three text formats — Unix `tree` output, a Markdown list, or plain indented hierarchy — and Spawn parses it, previews the detected folders and files, then creates the structure with the same Git and uv setup as every other template.
 
@@ -725,6 +745,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- Published to PyPI as `spawnio` — install with `pip install spawnio` (v1.0.5)
 - Arrow-key menus, no-args banner, and consistent Ctrl+C handling (v1.0.5)
 - AGENTS.md / CLAUDE.md generation — every project ships agent context automatically, `--claude-md` opt-in for Claude Code (v1.0.4)
 - MCP Server intent — official `mcp` SDK, one working tool + resource, stdio transport (v1.0.3)
