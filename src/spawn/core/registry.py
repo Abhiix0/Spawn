@@ -10,6 +10,7 @@ from spawn.templates.agent import AgentTemplate
 from spawn.templates.rag import RAGTemplate
 from spawn.templates.data_project import DataProjectTemplate
 from spawn.templates.mcp_server import MCPServerTemplate
+from spawn.templates.web_js import WebJSTemplate
 from spawn.templates.base import BaseTemplate
 
 
@@ -95,6 +96,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         description="Model Context Protocol server with the official Python SDK",
         template_class=MCPServerTemplate,
         available_extras=["ruff", "pytest", "github-actions"],
+    ),
+    "web-js": TemplateMetadata(
+        slug="web-js",
+        display_name="Web (JavaScript)",
+        description="Vanilla JS, Express API, React, or Next.js project",
+        template_class=WebJSTemplate,
+        available_frameworks=["vanilla", "express", "react", "nextjs"],
+        available_extras=["eslint", "prettier", "github-actions"],
     ),
 }
 
