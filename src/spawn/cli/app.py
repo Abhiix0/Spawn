@@ -104,7 +104,6 @@ def create(
                 console.print(config)
                 return
         else:
-            show_banner()
             config = get_project_config()
 
         try:
