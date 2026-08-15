@@ -1,33 +1,91 @@
 # Command Reference
 
-## 1. Overview
+## Overview
 
-| Command | Description | When to use it |
-|---|---|---|
-| `spawn create` | Scaffold a new Python project interactively | Starting a new project from a template |
-| `spawn version` | Print the installed Spawn version | Confirming which version is on your PATH |
-| `spawn doctor` | Score the current directory against project health checks | Auditing an existing project's setup |
+| Command | Description |
+|---|---|
+| `spawn` | Show the banner, version, and command list |
+| `spawn create` | Scaffold a new project (interactive or non-interactive) |
+| `spawn doctor` | Score a project directory's health out of 135 |
+| `spawn version` | Print the installed version |
 
 ---
 
-## 2. `spawn create`
+## `spawn` (no arguments)
 
-Creates a new project directory from a template, writes starter files, installs dependencies, optionally runs `git init`, and runs `uv init --bare` + `uv venv`.
+Running `spawn` with no arguments prints the banner, the installed version, and the command list.
 
-### Prompt sequence
+```
+SPAWN — scaffold your next project
+v1.0.6
+
+Commands
+  create    Scaffold a new project
+  doctor    Check the health of a project directory
+  version   Show the installed version
+
+Run spawn COMMAND --help for details on a command.
+```
+
+---
+
+## `spawn create`
+
+Creates a new project directory, writes starter files, installs dependencies, and optionally runs `git init` and `uv init`.
+
+### Interactive mode
+
+Run with no flags to enter the arrow-key prompt flow:
+
+```bash
+spawn create
+```
+
+**Prompt sequence**
 
 | Step | Prompt | When shown |
 |---|---|---|
 | 1 | `Project Name` | Always |
-| 2 | Template list → `Choose Template [1-4]` | Always |
-| 3 | CLI Type list → `Choose CLI Type [1-2]` | Only for CLI Application |
-| 4 | Framework list → `Choose Framework [1-N]` | Only for templates with frameworks |
-| 5 | Extras list → `Extras` | Only for templates with extras |
-| 6 | `Initialize Git? [Y/n]` | Always |
-| 7 | `Publish to GitHub? [y/N]` | Only if Git was enabled |
-| 8 | `Repository URL` | Only if publish was confirmed |
+| 2 | `Choose a template` | Always |
+| 3 | `Choose CLI Type` | CLI Application only |
+| 4 | `Choose Project Type` | Data Project only |
+| 5 | `Choose Framework` | Backend API, CLI Application, AI Chatbot, AI Agent |
+| 6 | `Choose Provider` | AI Chatbot, AI Agent (filtered by framework) |
+| 7 | `Select extras` | Templates with available extras |
+| 8 | `Initialize Git? [Y/n]` | Always |
+| 9 | `Also generate CLAUDE.md for Claude Code? [y/N]` | Always |
+| 10 | `Publish to GitHub? [y/N]` | Only when Git was enabled and not in non-interactive mode |
 
-#### `Project Name` validation
+Every menu (steps 2–7) is **arrow-key / spacebar** driven — no typed numbers.
+
+**Template list**
+
+```
+? Choose a template (Use arrow keys)
+ » Backend API
+   CLI Application
+   Automation Tool
+   AI Chatbot
+   AI Agent
+   RAG System
+   Data Project
+   MCP Server
+   Custom Structure
+```
+
+**Extras selection (checkbox)**
+
+```
+? Select extras (space to toggle, enter to confirm)
+ ● ruff
+ ● pytest
+ ○ docker
+ ○ github-actions
+```
+
+Space toggles, Enter confirms. Empty selection is valid (skip all extras).
+
+**Project Name validation**
 
 | Rule | Detail |
 |---|---|
@@ -35,480 +93,381 @@ Creates a new project directory from a template, writes starter files, installs 
 | Required | At least one letter or digit |
 | Rejected examples | `my project` (space), `my/project` (slash), `---` (no alphanumeric) |
 
-**Error message (exact):**
+---
+
+### Non-interactive mode
+
+Pass `--name` to skip all prompts. `--template` is required when using `--name`.
+
+```bash
+spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest
 ```
-Project name can only contain letters, numbers, hyphens (-), and underscores (_).
+
+Pass `--config` to read settings from a JSON file instead of flags:
+
+```bash
+spawn create --config spawn.json
 ```
 
-#### Template list
+`--config` takes precedence over individual flags. The JSON file may contain:
 
-Templates are displayed as a numbered list. The current registry order:
+```json
+{
+  "name": "my-api",
+  "template": "backend-api",
+  "framework": "fastapi",
+  "provider": null,
+  "cli_type": null,
+  "data_type": null,
+  "extras": ["ruff", "pytest"],
+  "git": true,
+  "uv": true,
+  "claude_md": false
+}
+```
 
-| Input | Template | Description |
+**All `spawn create` flags**
+
+| Flag | Default | Description |
 |---|---|---|
-| `1` | `backend-api` | Backend API — production-ready FastAPI, Flask, or Django |
-| `2` | `cli` | CLI Application — Typer, Click, or Argparse with Utility or Interactive type |
-| `3` | `automation` | Automation Tool — workflow-based automation with logging and tasks |
-| `4` | `chatbot` | AI Chatbot — PydanticAI or OpenAI SDK with provider abstraction |
+| `--name` | — | Project name. Setting this enables non-interactive mode. |
+| `--template` | — | Template slug (see table below). Required with `--name`. |
+| `--framework` | first available | Framework for templates that support it |
+| `--provider` | first available | AI provider for chatbot/agent templates |
+| `--cli-type` | `utility` | `utility` or `interactive` (CLI Application only) |
+| `--data-type` | `Data Analysis` | Sub-type for Data Project |
+| `--extras` | none | Comma-separated extras, e.g. `ruff,pytest` |
+| `--git` / `--no-git` | `--git` | Initialize a Git repository |
+| `--uv` / `--no-uv` | `--uv` | Initialize uv and install dependencies |
+| `--claude-md` / `--no-claude-md` | `--no-claude-md` | Also write `CLAUDE.md` alongside `AGENTS.md` |
+| `--config` | — | Path to a JSON config file |
+| `--yes` / `-y` | false | Skip the GitHub publish prompt |
+| `--dry-run` | false | Validate and print the config without creating anything |
 
-**Invalid input error (exact):**
-```
-Invalid choice. Please select a valid number.
-```
+**Template slugs**
+
+| Slug | Display name | Frameworks | Providers | CLI types | Project types | Extras |
+|---|---|---|---|---|---|---|
+| `backend-api` | Backend API | fastapi, flask, django | — | — | — | ruff, pytest, docker, github-actions |
+| `cli` | CLI Application | typer, click, argparse | — | utility, interactive | — | ruff, pytest, github-actions |
+| `automation` | Automation Tool | — | — | — | — | ruff, pytest, github-actions |
+| `chatbot` | AI Chatbot | pydantic-ai, openai-sdk, litellm | openai, anthropic, gemini, openrouter, ollama, groq | — | — | ruff, pytest, rich, github-actions |
+| `agent` | AI Agent | pydantic-ai, openai-agents | openai, anthropic, gemini, openrouter, ollama, groq | — | — | ruff, pytest, github-actions |
+| `rag` | RAG System | — | — | — | — | ruff, pytest, github-actions |
+| `data` | Data Project | — | — | — | Data Analysis, Dashboard, ETL Pipeline, Machine Learning | ruff, pytest, github-actions |
+| `mcp` | MCP Server | — | — | — | — | ruff, pytest, github-actions |
+
+> `openai-agents` only supports `openai` and `openrouter` as providers — the list is filtered per framework.
+
+> Custom Structure is interactive-only. It is not available via `--template`.
 
 ---
 
-### Backend API intent
+### Per-template prompt flows
 
-Selecting Backend API triggers two additional prompts before the Git question.
-
-#### Framework selection
+#### Backend API
 
 ```
-  1  fastapi
-  2  flask
-  3  django
+? Choose a framework (Use arrow keys)
+ » fastapi
+   flask
+   django
 
-Choose Framework [1-3]:
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ docker
+ ○ github-actions
 ```
 
-| Input | Framework | Run command |
-|---|---|---|
-| `1` (default) | FastAPI | `uv run uvicorn app.main:app --reload` |
-| `2` | Flask | `uv run python run.py` |
-| `3` | Django | `uv run python manage.py runserver` |
-
-Pressing Enter (empty) selects `1` (FastAPI).
-
-#### Extras selection
-
-```
-  1  ruff
-  2  pytest
-  3  docker
-  4  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []:
-```
-
-| Extra | What it adds |
+| Framework | Run command |
 |---|---|
-| `ruff` | Installs `ruff`; appends `[tool.ruff]` to `pyproject.toml` |
-| `pytest` | Installs `pytest` + `httpx`; adds `filterwarnings` config to `pyproject.toml` |
-| `docker` | Writes `Dockerfile` and `.dockerignore` for the selected framework |
-| `github-actions` | Writes `.github/workflows/ci.yml` with ruff + pytest steps |
-
-Enter comma-separated numbers (e.g. `1,2`) or press Enter to skip all. Invalid numbers are silently ignored.
-
-#### Dependency installation
-
-After `uv init`, Spawn calls `uv add` with the base and selected-extras dependencies automatically. No manual `pip install` or `uv add` is needed.
-
-| Framework | Base dependencies |
-|---|---|
-| FastAPI | `fastapi`, `uvicorn[standard]`, `pydantic-settings` |
-| Flask | `flask`, `python-dotenv` |
-| Django | `django` |
-
-#### Generated project structure (FastAPI example)
-
-```
-my-api/
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── api/
-│   │   └── routes/
-│   │       ├── __init__.py
-│   │       └── health.py
-│   ├── core/
-│   │   ├── __init__.py
-│   │   └── config.py
-│   ├── models/
-│   ├── schemas/
-│   └── services/
-├── tests/
-│   ├── __init__.py
-│   └── test_health.py
-├── .env.example
-├── .spawn/
-│   └── meta.json
-├── .gitignore
-├── README.md
-└── pyproject.toml
-```
-
-#### Generated project structure (Flask example)
-
-```
-my-api/
-├── app/
-│   ├── __init__.py         # App factory (create_app)
-│   ├── config.py
-│   └── routes/
-│       ├── __init__.py
-│       └── health.py
-├── run.py
-├── tests/
-│   ├── __init__.py
-│   └── test_health.py
-├── .env.example
-├── .spawn/
-│   └── meta.json
-└── pyproject.toml
-```
-
-#### Generated project structure (Django example)
-
-```
-my-api/
-├── manage.py
-├── config/
-│   ├── __init__.py
-│   ├── settings.py
-│   ├── urls.py
-│   ├── asgi.py
-│   └── wsgi.py
-├── apps/
-│   └── health/
-│       ├── __init__.py
-│       ├── views.py
-│       ├── urls.py
-│       └── tests.py
-├── .spawn/
-│   └── meta.json
-└── pyproject.toml
-```
-
-#### Next steps by framework
-
-| Framework | Command |
-|---|---|
-| FastAPI | `uv run uvicorn app.main:app --reload` |
-| Flask | `uv run python run.py` |
-| Django | `uv run python manage.py runserver` |
+| fastapi | `uv run uvicorn app.main:app --reload` |
+| flask | `uv run python run.py` |
+| django | `uv run python manage.py runserver` |
 
 ---
 
-### CLI Application intent
-
-Selecting CLI Application triggers two additional prompts before the extras and Git questions.
-
-#### CLI Type selection
+#### CLI Application
 
 ```
-  1  utility
-  2  interactive
+? Choose CLI Type (Use arrow keys)
+ » utility
+   interactive
 
-Choose CLI Type [1-2]:
+? Choose a framework (Use arrow keys)
+ » typer
+   click
+   argparse
+
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
 ```
 
-| Input | CLI Type | Description |
-|---|---|---|
-| `1` (default) | `utility` | Command-oriented CLI; generates `src/commands/` and `src/utils/` |
-| `2` | `interactive` | Prompt-driven CLI; adds `src/prompts/` and `src/ui/` |
-
-Pressing Enter (empty) selects `1` (utility).
-
-#### Framework selection
-
-```
-  1  typer
-  2  click
-  3  argparse
-
-Choose Framework [1-3]:
-```
-
-| Input | Framework | Dependencies |
-|---|---|---|
-| `1` (default) | Typer | `typer` |
-| `2` | Click | `click` |
-| `3` | Argparse | None (stdlib only) |
-
-#### Extras selection
-
-```
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []:
-```
-
-| Extra | What it adds |
+| CLI type | Run command |
 |---|---|
-| `ruff` | Installs `ruff`; appends `[tool.ruff]` to `pyproject.toml` |
-| `pytest` | Installs `pytest`; appends `[tool.pytest.ini_options]` to `pyproject.toml` |
-| `github-actions` | Writes `.github/workflows/ci.yml` with ruff + pytest steps |
-
-#### Generated project structure (Typer utility example)
-
-```
-my-cli/
-├── src/
-│   ├── __init__.py
-│   ├── commands/
-│   │   └── __init__.py
-│   ├── utils/
-│   │   └── __init__.py
-│   └── main.py
-├── tests/
-│   ├── __init__.py
-│   └── test_cli.py
-├── .spawn/
-│   └── meta.json
-├── .gitignore
-├── README.md
-└── pyproject.toml
-```
-
-#### Generated project structure (Typer interactive example)
-
-```
-my-cli/
-├── src/
-│   ├── __init__.py
-│   ├── commands/
-│   │   └── __init__.py
-│   ├── prompts/
-│   │   └── __init__.py
-│   ├── ui/
-│   │   └── __init__.py
-│   ├── utils/
-│   │   └── __init__.py
-│   └── main.py
-├── tests/
-│   ├── __init__.py
-│   └── test_cli.py
-├── .spawn/
-│   └── meta.json
-├── .gitignore
-├── README.md
-└── pyproject.toml
-```
-
-#### Next steps by CLI type
-
-| CLI Type | Command |
-|---|---|
-| Utility | `uv run python -m src.main hello` |
-| Interactive | `uv run python -m src.main greet` |
+| utility | `uv run python -m src.main hello` |
+| interactive | `uv run python -m src.main greet` |
 
 ---
 
-### Automation Tool intent
-
-Automation Tool has no framework or type selection. After picking template 3,
-only extras and Git are prompted.
-
-#### Extras selection
+#### Automation Tool
 
 ```
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []:
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
 ```
 
-| Extra | What it adds |
+Run: `uv run python -m src.main`
+
+---
+
+#### AI Chatbot
+
+```
+? Choose a framework (Use arrow keys)
+ » pydantic-ai
+   openai-sdk
+   litellm
+
+? Choose a provider (Use arrow keys)
+ » openai
+   anthropic
+   gemini
+   openrouter
+   ollama
+   groq
+
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ rich
+ ○ github-actions
+```
+
+Run: add provider API key to `.env`, then `uv run python -m src.main`
+
+---
+
+#### AI Agent
+
+```
+? Choose a framework (Use arrow keys)
+ » pydantic-ai
+   openai-agents
+
+? Choose a provider (Use arrow keys)
+ » openai
+   anthropic   ← pydantic-ai only
+   ...
+
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
+```
+
+Run: add provider API key to `.env`, then `uv run python -m src.main`
+
+---
+
+#### RAG System
+
+No framework or provider prompt. Requires `OPENAI_API_KEY` in `.env`.
+
+```
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
+```
+
+Run: `uv run python -m src.main` (auto-ingests `data/` on first run)
+
+---
+
+#### Data Project
+
+```
+? Choose Project Type (Use arrow keys)
+ » Data Analysis
+   Dashboard
+   ETL Pipeline
+   Machine Learning
+
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
+```
+
+| Type | Run command |
 |---|---|
-| `ruff` | Installs `ruff`; appends `[tool.ruff]` to `pyproject.toml` |
-| `pytest` | Installs `pytest`; appends `[tool.pytest.ini_options]` to `pyproject.toml` |
-| `github-actions` | Writes `.github/workflows/ci.yml` with ruff + pytest steps |
-
-#### Generated project structure
-
-```
-my-automation/
-├── src/
-│   ├── __init__.py
-│   ├── workflows/
-│   │   ├── __init__.py
-│   │   └── report_workflow.py
-│   ├── tasks/
-│   │   ├── __init__.py
-│   │   ├── data_task.py
-│   │   └── report_task.py
-│   ├── integrations/
-│   │   └── __init__.py
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   └── logger.py
-│   └── main.py
-├── logs/
-│   └── .gitkeep
-├── tests/
-│   ├── __init__.py
-│   └── test_automation.py
-├── .env.example
-├── .spawn/
-│   └── meta.json
-├── .gitignore
-├── README.md
-└── pyproject.toml
-```
-
-#### Next steps
-
-```
-cd my-automation
-uv run python -m src.main
-```
+| Data Analysis | `uv run jupyter notebook` |
+| Dashboard | `uv run streamlit run dashboard/app.py` |
+| ETL Pipeline | `uv run python -m pipelines.run` |
+| Machine Learning | `uv run python src/train.py` |
 
 ---
 
-### AI Chatbot intent
+#### MCP Server
 
-Selecting AI Chatbot triggers a framework prompt then extras.
-
-#### Framework selection
+No framework or provider prompt.
 
 ```
-  1  pydantic-ai
-  2  openai-sdk
-
-Choose Framework [1-2]:
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
 ```
 
-| Input | Framework | Key dependency |
-|---|---|---|
-| `1` (default) | PydanticAI | `pydantic-ai` |
-| `2` | OpenAI SDK | `openai` |
-
-Both variants install `python-dotenv` and use the same project structure.
-
-Provider switching requires changes only in `src/providers/llm.py` and `.env`.
+Run: `uv run python -m src.server` (waits on stdio for an MCP client to connect)
 
 ---
 
-### `.spawn/meta.json`
+#### Custom Structure
 
-Every generated project receives a `.spawn/meta.json` file:
+The last option in the template picker. After selecting it, Spawn switches to a different flow:
+
+1. Paste your folder/file layout (Tree, Markdown list, or Indented format) then Ctrl+D
+2. Spawn previews the detected folder/file count
+3. `Initialize Git? [Y/n]`
+4. `Also generate CLAUDE.md for Claude Code? [y/N]`
+5. `Initialize uv? [Y/n]`
+6. *(if uv)* `Dependencies (comma separated, optional):`
+7. *(if uv)* Optional Setup checkbox — `Ruff`, `Pytest`, `Pre-commit`, `Dockerfile`
+8. `Additional ignore patterns (optional, comma separated):`
+9. `Proceed? [Y/n]`
+
+If the pasted structure contains a `README.md` or `.gitignore` entry, Spawn populates those files with generated content instead of leaving them empty.
+
+---
+
+### Generated files (every project)
+
+Every generated project includes:
+
+| File | Contents |
+|---|---|
+| `README.md` | Template-specific content with project name, structure, setup, and run instructions |
+| `AGENTS.md` | Agent context file with project structure, setup, and conventions |
+| `.gitignore` | Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, etc.) |
+| `.spawn/meta.json` | `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `git`, `uv` |
+
+If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAUDE.md` file identical to `AGENTS.md` is also written.
+
+`.spawn/meta.json` example:
 
 ```json
 {
   "intent": "backend-api",
   "framework": "fastapi",
-  "spawn_version": "1.0.6"
+  "provider": null,
+  "spawn_version": "1.0.6",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "generator": "blueprint",
+  "git": true,
+  "uv": true,
+  "source": null
 }
 ```
 
-This file is excluded from git via `.gitignore`. It records the intent slug, framework used (or `null`), and the Spawn version that created the project.
-
 ---
 
-### `Initialize Git?`
+### GitHub publishing
 
-| Answer | Behavior |
-|---|---|
-| `Y` / Enter | Prints `Initializing Git...` (yellow), runs `git init` |
-| `N` | Skips `git init`. After success panel, prints: `ℹ GitHub publishing requires Git. Skipping.` (yellow). Command ends — no GitHub prompt. |
-
-### `Publish to GitHub?`
-
-Only shown when Git was enabled. Default is **N**.
-
-| Answer | Behavior |
-|---|---|
-| `N` / Enter | Command ends after success panel |
-| `Y` | Prompts `Repository URL`, then runs publish flow |
-
-#### `Repository URL` formats
-
-| Format | Example |
-|---|---|
-| HTTPS | `https://github.com/user/repo` |
-| HTTPS with `.git` | `https://github.com/user/repo.git` |
-| SSH | `git@github.com:user/repo.git` |
-
-### Success panel
+After a successful creation, if Git was enabled, Spawn asks:
 
 ```
-╭────── ✨ Project Created Successfully ──────╮
-│                                              │
-│  Project      my-api                         │
-│  Template     Backend API                    │
-│  Git          ✓ Enabled                      │
-│  UV           ✓ Initialized                  │
-│  Virtual Env  ✓ Created                      │
-│                                              │
-│  Next Steps                                  │
-│    cd my-api                                 │
-│    uv run uvicorn app.main:app --reload      │
-│                                              │
-╰──────────────────────────────────────────────╯
+Publish to GitHub? [y/N]: y
+Repository URL: https://github.com/your-username/my-project
 ```
+
+Supported URL formats: `https://github.com/user/repo`, `https://github.com/user/repo.git`, `git@github.com:user/repo.git`.
+
+Spawn stages all files, creates the initial commit, renames the branch to `main`, adds the remote, and pushes.
+
+> The repository must already exist on GitHub. Spawn connects to it; it does not create it.
+
+In non-interactive mode or when `--yes` / `-y` is passed, the publish prompt is skipped automatically.
+
+---
 
 ### Error cases
 
-All generation errors are prefixed with `❌` in red. The partially created directory is deleted on failure.
-
-| Situation | Message (exact) |
-|---|---|
-| Directory already exists | `❌ Directory '{name}' already exists.` |
-| Git not installed | `❌ Git is not installed or not available in PATH.` |
-| uv not installed | `❌ UV is not installed or not available in PATH.` |
-| uv command failed | `❌ {uv stderr}` or `❌ Failed to initialize UV environment.` |
-| Package install failed | `❌ {uv stderr}` or `❌ Failed to install packages.` |
-| Unknown template | `❌ Unknown template: {template}` |
-| Invalid GitHub URL | `❌ Invalid GitHub repository URL.` |
-| Origin remote already exists | `❌ Origin remote already exists.` |
-
----
-
-## 3. `spawn version`
-
-Prints the installed package version.
-
-**Output (exact):**
-
-```
-Spawn v1.0.6
-```
-
----
-
-## 4. `spawn doctor`
-
-Scans the **current working directory** for project health indicators and prints a weighted score out of 100.
-
-### All checks
-
-| Check Name | Category | Weight | What it looks for |
-|---|---|---|---|
-| README.md | Documentation | 10 | `README.md` file exists |
-| LICENSE | Documentation | 5 | `LICENSE` file exists |
-| Git Repository | Version Control | 15 | `.git/` directory exists |
-| .gitignore | Version Control | 10 | `.gitignore` file exists |
-| Tests | Quality | 15 | `tests/` directory exists |
-| Ruff | Quality | 10 | `ruff.toml`, `.ruff.toml`, or Ruff config/dependency in `pyproject.toml` |
-| Pytest | Quality | 10 | `pytest.ini`, `setup.cfg` `[pytest]`, or Pytest config/dependency in `pyproject.toml` |
-| Dockerfile | Deployment | 10 | `Dockerfile` file exists |
-| GitHub Actions | Deployment | 10 | `.github/workflows/*.yml` or `*.yaml` |
-| .env.example | Configuration | 5 | `.env.example` file exists |
-
-**Max score:** 100
-
-### Scoring
-
-| Score range | Color | Meaning |
-|---|---|---|
-| 80%+ | Green | Strong project hygiene |
-| 50–79% | Yellow | Core setup present, gaps remain |
-| 0–49% | Red | Missing multiple essentials |
-
----
-
-## 5. Exit codes
+All errors print `❌ message` in red. Any partial directory is deleted on failure.
 
 | Situation | Exit code |
 |---|---|
-| Command completes successfully | 0 |
-| `spawn create` — `SpawnError` caught | 0 |
-| `spawn create` — `GitHubPublishError` caught | 0 |
-| Uncaught exception (e.g. keyboard interrupt) | 1 |
+| Successful creation | 0 |
+| SpawnError (bad name, unknown template, etc.) | 0 (error printed) |
+| Non-interactive validation error | 1 |
+| Ctrl+C at any prompt | 130 |
+
+---
+
+## `spawn doctor`
+
+Scores the current directory (or a given path) for project health. All checks are filesystem-based — nothing is executed or sent over the network.
+
+```bash
+spawn doctor
+spawn doctor ./path/to/project
+```
+
+**All checks**
+
+| Check | Category | Weight |
+|---|---|---|
+| README.md | Documentation | 10 |
+| AGENTS.md | Documentation | 5 |
+| LICENSE | Documentation | 5 |
+| CHANGELOG.md | Documentation | 5 |
+| Git repository | Version Control | 15 |
+| .gitignore | Version Control | 10 |
+| Tests directory | Testing | 15 |
+| Pytest configured | Testing | 10 |
+| pyproject.toml | Configuration | 10 |
+| .env.example | Configuration | 5 |
+| Ruff configured | Code Quality | 10 |
+| Type checker | Code Quality | 5 |
+| Pre-commit | Code Quality | 5 |
+| Dockerfile | Automation | 10 |
+| GitHub Actions | Automation | 10 |
+
+**Max score: 135**
+
+**Score tiers**
+
+| Score | Label |
+|---|---|
+| ≥ 80% | Excellent |
+| 60–79% | Good |
+| 40–59% | Fair |
+| < 40% | Needs Attention |
+
+---
+
+## `spawn version`
+
+Prints the installed version.
+
+```bash
+spawn version
+# Spawn v1.0.6
+```
+
+---
+
+## Exit codes
+
+| Situation | Exit code |
+|---|---|
+| Any command succeeds | 0 |
+| `spawn doctor` — path does not exist or is not a directory | 1 |
+| Non-interactive validation error | 1 |
+| Ctrl+C / EOF at any point | 130 |

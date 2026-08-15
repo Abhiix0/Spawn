@@ -2,120 +2,102 @@
 
 ## 1. Prerequisites
 
-| Requirement | Install command | Link |
+| Requirement | Minimum version | Install |
 |---|---|---|
-| Python 3.12+ | `uv python install 3.12` | [python.org/downloads](https://www.python.org/downloads/) |
-| uv | `pip install uv` | [github.com/astral-sh/uv](https://github.com/astral-sh/uv) |
-| Git | `brew install git` | [git-scm.com/downloads](https://git-scm.com/downloads/) |
+| Python | 3.12 | [python.org/downloads](https://www.python.org/downloads/) |
+| uv | any | `pip install uv` or [github.com/astral-sh/uv](https://github.com/astral-sh/uv) |
+| Git | any | [git-scm.com/downloads](https://git-scm.com/downloads/) |
+
+---
 
 ## 2. Installation
+
+**From PyPI (recommended)**
 
 ```bash
 pip install spawnio
 ```
 
-Or using `uv`:
+or using `uv`:
 
 ```bash
 uv tool install spawnio
 ```
 
-You can now run `spawn` from anywhere on your machine.
-
-**Install from source (for contributing):**
+or run once without installing:
 
 ```bash
-git clone https://github.com/Abhiix0/Spawn.git
-cd Spawn
+uvx --from spawnio spawn create
+```
+
+**From source (for contributing)**
+
+```bash
+git clone https://github.com/Abhiix0/spawn.git
+cd spawn
 uv sync
 uv tool install .
 ```
 
-## 3. Your First Project
+After installation, `spawn` is available anywhere on your machine.
 
-### Option A — CLI Application (Typer, Utility)
+---
 
-```bash
-$ spawn create
-```
-
-```
-  1  Backend API
-  2  CLI Application
-  3  Automation Tool
-  4  AI Chatbot
-
-Choose Template [1-4]: 2
-
-  1  utility
-  2  interactive
-
-Choose CLI Type [1-2]: 1
-
-  1  typer
-  2  click
-  3  argparse
-
-Choose Framework [1-3]: 1
-
-  1  ruff
-  2  pytest
-  3  github-actions
-
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
-
-Initialize Git? [Y/n]: y
-Initializing Git...
-Installing dependencies...
-
-╭────── ✨ Project Created Successfully ──────╮
-│                                              │
-│  Project      my-cli                         │
-│  Template     CLI Application                │
-│  Git          ✓ Enabled                      │
-│  UV           ✓ Initialized                  │
-│  Virtual Env  ✓ Created                      │
-│                                              │
-│  Next Steps                                  │
-│    cd my-cli                                 │
-│    uv run python -m src.main hello           │
-│                                              │
-╰──────────────────────────────────────────────╯
-```
-
-### Option B — Backend API
+## 3. Verify the installation
 
 ```bash
-$ spawn create
+spawn version
+# Spawn v1.0.6
+```
+
+Or just run `spawn` with no arguments to see the command overview:
+
+```
+SPAWN — scaffold your next project
+v1.0.6
+
+Commands
+  create    Scaffold a new project
+  doctor    Check the health of a project directory
+  version   Show the installed version
+
+Run spawn COMMAND --help for details on a command.
+```
+
+---
+
+## 4. Your first project
+
+### Option A — Backend API (FastAPI)
+
+```bash
+spawn create
 ```
 
 ```
-  1  Backend API
-  2  CLI Application
-  3  Automation Tool
-  4  AI Chatbot
+Project Name: my-api
 
-Choose Template [1-4]: 1
+? Choose a template (Use arrow keys)
+ » Backend API
+   CLI Application
+   ...
 
-  1  fastapi
-  2  flask
-  3  django
+? Choose a framework (Use arrow keys)
+ » fastapi
+   flask
+   django
 
-Choose Framework [1-3]: 1
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ docker
+ ○ github-actions
 
-  1  ruff
-  2  pytest
-  3  docker
-  4  github-actions
+Initialize Git? [Y/n]: Y
+Also generate CLAUDE.md for Claude Code? [y/N]: N
+```
 
-  Enter numbers separated by commas, or press Enter to skip
-Extras []: 1,2
-
-Initialize Git? [Y/n]: y
-Initializing Git...
-Installing dependencies...
-
+```
 ╭────── ✨ Project Created Successfully ──────╮
 │                                              │
 │  Project      my-api                         │
@@ -131,74 +113,153 @@ Installing dependencies...
 ╰──────────────────────────────────────────────╯
 ```
 
-## 4. What Gets Created (Backend API / FastAPI)
-
-```
-my-api/
-├── .git/
-├── .gitignore
-├── .spawn/
-│   └── meta.json
-├── .venv/
-├── .env.example
-├── README.md
-├── pyproject.toml
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── api/
-│   │   └── routes/
-│   │       ├── __init__.py
-│   │       └── health.py
-│   ├── core/
-│   │   ├── __init__.py
-│   │   └── config.py
-│   ├── models/
-│   ├── schemas/
-│   └── services/
-└── tests/
-    ├── __init__.py
-    └── test_health.py
-```
-
-| File / Folder | Purpose |
-|---|---|
-| `app/main.py` | FastAPI app entry point |
-| `app/api/routes/health.py` | `GET /` health check route returning `{"status": "running"}` |
-| `app/core/config.py` | Pydantic settings with `.env` support |
-| `tests/test_health.py` | Health check test using `TestClient` |
-| `.env.example` | Documents required environment variables |
-| `.spawn/meta.json` | Spawn metadata: intent, framework, version |
-| `pyproject.toml` | Project metadata + installed dependencies |
-| `.venv/` | Local virtual environment |
-
-## 5. Verify It Works
-
-```bash
-spawn version
-```
-
-```
-Spawn v1.0.6
-```
-
 ```bash
 cd my-api
 uv run uvicorn app.main:app --reload
+# GET http://localhost:8000/ → {"status": "running"}
 ```
 
-Visit `http://localhost:8000/` — should return `{"status": "running"}`.
+---
+
+### Option B — CLI Application (Typer, utility)
 
 ```bash
-uv run pytest
+spawn create
+```
+
+```
+Project Name: my-cli
+
+? Choose a template (Use arrow keys)
+   Backend API
+ » CLI Application
+   ...
+
+? Choose CLI Type (Use arrow keys)
+ » utility
+   interactive
+
+? Choose a framework (Use arrow keys)
+ » typer
+   click
+   argparse
+
+? Select extras (space to toggle, enter to confirm)
+ ○ ruff
+ ○ pytest
+ ○ github-actions
+
+Initialize Git? [Y/n]: Y
+Also generate CLAUDE.md for Claude Code? [y/N]: N
 ```
 
 ```bash
+cd my-cli
+uv run python -m src.main hello
+```
+
+---
+
+### Option C — Non-interactive (zero prompts)
+
+```bash
+spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --no-git
+```
+
+Or from a JSON config file:
+
+```json
+{
+  "name": "my-api",
+  "template": "backend-api",
+  "framework": "fastapi",
+  "extras": ["ruff", "pytest"],
+  "git": false,
+  "uv": true
+}
+```
+
+```bash
+spawn create --config spawn.json
+```
+
+Use `--dry-run` to validate and print the config without creating any files:
+
+```bash
+spawn create --name my-api --template backend-api --dry-run
+# ✓ Config valid
+# ProjectConfig(name='my-api', template='backend-api', ...)
+```
+
+---
+
+## 5. What gets created
+
+Every generated project includes:
+
+| File | Purpose |
+|---|---|
+| `README.md` | Project README with setup and run instructions |
+| `AGENTS.md` | Agent context file (structure, setup, conventions) |
+| `.gitignore` | Python defaults |
+| `.spawn/meta.json` | Spawn metadata (intent, framework, version, timestamps) |
+| `pyproject.toml` | Project config + installed dependencies |
+| `.venv/` | Local virtual environment |
+
+**Backend API / FastAPI structure:**
+
+```
+my-api/
+├── app/
+│   ├── api/routes/health.py   # GET / → {"status": "running"}
+│   ├── core/config.py
+│   ├── models/
+│   ├── schemas/
+│   ├── services/
+│   └── main.py
+├── tests/
+│   └── test_health.py
+├── .env.example
+├── AGENTS.md
+├── README.md
+├── .gitignore
+└── pyproject.toml
+```
+
+---
+
+## 6. All 8 templates at a glance
+
+| Template | Slug | Frameworks | Run command |
+|---|---|---|---|
+| Backend API | `backend-api` | fastapi / flask / django | `uv run uvicorn app.main:app --reload` (fastapi) |
+| CLI Application | `cli` | typer / click / argparse | `uv run python -m src.main hello` |
+| Automation Tool | `automation` | — | `uv run python -m src.main` |
+| AI Chatbot | `chatbot` | pydantic-ai / openai-sdk / litellm | `uv run python -m src.main` |
+| AI Agent | `agent` | pydantic-ai / openai-agents | `uv run python -m src.main` |
+| RAG System | `rag` | — (LlamaIndex + ChromaDB + OpenAI) | `uv run python -m src.main` |
+| Data Project | `data` | — | varies by sub-type |
+| MCP Server | `mcp` | — (official mcp SDK) | `uv run python -m src.server` |
+
+For full details on each template — structures, all prompt options, available extras, and run commands — see [commands.md](commands.md) or the [Project Templates section of README.md](../README.md#project-templates).
+
+---
+
+## 7. Check project health
+
+After creating a project (or on any existing Python project):
+
+```bash
+cd my-api
 spawn doctor
 ```
 
-## 6. Next Steps
+Spawn scores the project out of 135 across Documentation, Version Control, Configuration, Testing, Automation, and Code Quality, and shows a prioritized recommendation for the most impactful next improvement.
 
-- Learn all commands → [commands.md](commands.md)
-- Understand how Spawn works → [architecture.md](architecture.md)
-- See what's changed → [changelog.md](changelog.md)
+---
+
+## 8. Next steps
+
+- All commands and flags → [commands.md](commands.md)
+- Architecture and contribution guide → [architecture.md](architecture.md)
+- Full version history → [changelog.md](changelog.md)
