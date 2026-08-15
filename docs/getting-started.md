@@ -11,13 +11,25 @@
 ## 2. Installation
 
 ```bash
+pip install spawnio
+```
+
+Or using `uv`:
+
+```bash
+uv tool install spawnio
+```
+
+You can now run `spawn` from anywhere on your machine.
+
+**Install from source (for contributing):**
+
+```bash
 git clone https://github.com/Abhiix0/Spawn.git
 cd Spawn
 uv sync
 uv tool install .
 ```
-
-You can now run `spawn` from anywhere on your machine.
 
 ## 3. Your First Project
 
@@ -167,7 +179,7 @@ spawn version
 ```
 
 ```
-Spawn v0.6.0
+Spawn v1.0.6
 ```
 
 ```bash

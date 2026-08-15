@@ -713,7 +713,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.5
+# → Spawn v1.0.6
 ```
 
 ### Publish to GitHub
@@ -745,6 +745,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- Removed duplicate banner from `spawn create`; `spawn` alone now shows the banner and command overview (v1.0.6)
 - Published to PyPI as `spawnio` — install with `pip install spawnio` (v1.0.5)
 - Arrow-key menus, no-args banner, and consistent Ctrl+C handling (v1.0.5)
 - AGENTS.md / CLAUDE.md generation — every project ships agent context automatically, `--claude-md` opt-in for Claude Code (v1.0.4)

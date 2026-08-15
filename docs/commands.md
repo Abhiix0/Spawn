@@ -394,7 +394,7 @@ Every generated project receives a `.spawn/meta.json` file:
 {
   "intent": "backend-api",
   "framework": "fastapi",
-  "spawn_version": "0.6.0"
+  "spawn_version": "1.0.6"
 }
 ```
 
@@ -468,7 +468,7 @@ Prints the installed package version.
 **Output (exact):**
 
 ```
-Spawn v0.6.0
+Spawn v1.0.6
 ```
 
 ---
