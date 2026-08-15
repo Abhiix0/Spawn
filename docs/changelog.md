@@ -3,6 +3,20 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.6 — 2026
+
+### Fixed
+
+- **`spawn create` no longer shows the banner** — running `spawn create` directly
+  now skips straight to the project name prompt. The banner is shown only by the
+  bare `spawn` command (no subcommand), keeping it as a "home screen" rather than
+  repeating it on every creation run.
+
+### Internal
+
+- PyPI package renamed to `spawnio`; `importlib.metadata` lookup updated from
+  `version("spawn")` to `version("spawnio")`
+
 ## v1.0.5 — 2026
 
 ### Added
