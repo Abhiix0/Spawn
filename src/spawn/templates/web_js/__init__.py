@@ -164,10 +164,10 @@ class WebJSTemplate(BaseTemplate):
                 GITHUB_ACTIONS_CI_NODE, encoding="utf-8"
             )
 
-        node_ok = shutil.which("node")
-        npm_ok = shutil.which("npm")
+        node_path = shutil.which("node")
+        npm_path = shutil.which("npm")
 
-        if not (node_ok and npm_ok):
+        if not (node_path and npm_path):
             console.print(
                 "[yellow]node/npm not found on PATH -- skipping `npm install`. "
                 "Install Node.js from nodejs.org, then run `npm install` "
@@ -177,12 +177,28 @@ class WebJSTemplate(BaseTemplate):
 
         console.print("[dim]Running npm install...[/dim]")
         try:
+            # Use the resolved path from shutil.which(), not the bare string
+            # "npm". On Windows, npm is npm.cmd (a batch wrapper), and
+            # subprocess/CreateProcess can't launch a bare ".cmd" name
+            # without going through cmd.exe -- passing the fully resolved
+            # path (extension included) lets Windows invoke it correctly
+            # without needing shell=True.
             subprocess.run(
-                ["npm", "install"],
+                [npm_path, "install"],
                 cwd=project_path,
                 check=True,
                 capture_output=True,
                 text=True,
+            )
+        except FileNotFoundError:
+            # Belt-and-suspenders: even with the resolved path this can
+            # still fail on some Windows setups (odd PATH entries,
+            # antivirus interference, etc). Never let a failed npm install
+            # take down the rest of `spawn create` -- the project files
+            # are already written at this point.
+            console.print(
+                f"[yellow]Found npm at {npm_path} but couldn't launch it. "
+                "Run `npm install` manually inside the project.[/yellow]"
             )
         except subprocess.CalledProcessError as e:
             console.print(
