@@ -125,6 +125,30 @@ uv tool install .
 
 ## Usage
 
+### Quick overview — `spawn` with no arguments
+
+Running `spawn` with no arguments shows the banner, the installed version, and the list of available commands — useful when you just want a reminder of what's available without starting a project flow.
+
+```
+╭──────────────────────── ◆ ─────────────────────────╮
+│                                                     │
+│     ███████╗██████╗  █████╗ ██╗    ██╗███╗  ██╗    │
+│     ...                                             │
+╰─────────────────────────────────────────────────────╯
+v1.0.6
+
+Commands
+  create    Scaffold a new project
+  doctor    Check the health of a project directory
+  version   Show the installed version
+
+Run spawn COMMAND --help for details on a command.
+```
+
+---
+
+### `spawn create`
+
 ```bash
 spawn create
 ```
