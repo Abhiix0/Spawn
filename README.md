@@ -130,11 +130,7 @@ uv tool install .
 Running `spawn` with no arguments shows the banner, the installed version, and the list of available commands — useful when you just want a reminder of what's available without starting a project flow.
 
 ```
-╭──────────────────────── ◆ ─────────────────────────╮
-│                                                     │
-│     ███████╗██████╗  █████╗ ██╗    ██╗███╗  ██╗    │
-│     ...                                             │
-╰─────────────────────────────────────────────────────╯
+SPAWN — scaffold your next project
 v1.0.6
 
 Commands
