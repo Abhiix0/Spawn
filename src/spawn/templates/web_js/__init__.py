@@ -119,19 +119,7 @@ class WebJSTemplate(BaseTemplate):
             starter_files=files,
         )
 
-        if framework == "express":
-            self.next_steps = [
-                "cd {project_name}",
-                "npm install",
-                "npm run dev",
-            ]
-        elif framework == "react":
-            self.next_steps = [
-                "cd {project_name}",
-                "npm install",
-                "npm run dev",
-            ]
-        elif framework == "nextjs":
+        if framework in ("express", "react", "nextjs"):
             self.next_steps = [
                 "cd {project_name}",
                 "npm install",

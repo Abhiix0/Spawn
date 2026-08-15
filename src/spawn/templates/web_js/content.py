@@ -1,5 +1,3 @@
-INIT_CONTENT = ""
-
 # ---------------------------------------------------------------------------
 # Vanilla JS
 # ---------------------------------------------------------------------------
@@ -22,19 +20,19 @@ VANILLA_INDEX_HTML = """<!DOCTYPE html>
 </html>
 """
 
-VANILLA_STYLE_CSS = """:root {
+VANILLA_STYLE_CSS = """:root {{
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
-}
+}}
 
-body {
+body {{
   display: flex;
   min-height: 100vh;
   align-items: center;
   justify-content: center;
   margin: 0;
   text-align: center;
-}
+}}
 """
 
 VANILLA_SCRIPT_JS = """console.log("{project_name} is running.");
@@ -182,7 +180,7 @@ function App() {{
 export default App;
 """
 
-REACT_APP_CSS = """.app {
+REACT_APP_CSS = """.app {{
   display: flex;
   min-height: 100vh;
   flex-direction: column;
@@ -190,7 +188,7 @@ REACT_APP_CSS = """.app {
   justify-content: center;
   gap: 1rem;
   font-family: system-ui, sans-serif;
-}
+}}
 """
 
 REACT_VITE_CONFIG = """import {{ defineConfig }} from "vite";
@@ -263,7 +261,7 @@ NEXTJS_PAGE_JS = """export default function Home() {{
 }}
 """
 
-NEXTJS_GLOBALS_CSS = """body {
+NEXTJS_GLOBALS_CSS = """body {{
   display: flex;
   min-height: 100vh;
   align-items: center;
@@ -271,7 +269,7 @@ NEXTJS_GLOBALS_CSS = """body {
   margin: 0;
   font-family: system-ui, sans-serif;
   text-align: center;
-}
+}}
 """
 
 NEXTJS_CONFIG_JS = """/** @type {{import('next').NextConfig}} */
@@ -310,7 +308,8 @@ npm run dev
 """
 
 # ---------------------------------------------------------------------------
-# Optional extras
+# Optional extras (written directly, NOT passed through .format_map --
+# these are not in any starter_files list, see post_install() in __init__.py)
 # ---------------------------------------------------------------------------
 
 ESLINTRC_CONTENT = """{
