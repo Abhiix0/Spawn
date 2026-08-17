@@ -597,18 +597,6 @@ def make_readme(framework: str, provider: str) -> str:
         "## Running Tests\n\n"
         "```bash\n"
         "uv run pytest\n"
-        "```\n\n"
-        "## Roadmap (Not Yet Available)\n\n"
-        "```bash\n"
-        "spawn add rag\n"
-        "spawn add tools\n"
-        "spawn add vector-db\n"
-        "spawn add memory\n"
-        "spawn add mcp\n"
-        "spawn add voice\n"
-        "spawn add web-ui\n"
-        "spawn add streaming\n"
-        "spawn add observability\n"
         "```\n"
     )
 
