@@ -83,6 +83,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 ## Prerequisites
 
 - **Python 3.12+** — [Download here](https://python.org/downloads)
+  > `pip install spawnio` will silently return "no matching distribution" on Python < 3.12. If you're using uv, run `uv python install 3.12` to get a compatible interpreter in seconds.
 - **uv** — [Install guide](https://github.com/astral-sh/uv)
 - **Git** — [Download here](https://git-scm.com/downloads)
 
