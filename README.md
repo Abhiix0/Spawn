@@ -766,6 +766,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 **Recently shipped**
 
+- Fixed UTF-8 console output crash on Windows (non-terminal stdout), added Windows reserved device name validation, clarified Python 3.12 prerequisite (v1.0.7)
 - Removed duplicate banner from `spawn create`; `spawn` alone now shows the banner and command overview (v1.0.6)
 - Published to PyPI as `spawnio` — install with `pip install spawnio` (v1.0.5)
 - Arrow-key menus, no-args banner, and consistent Ctrl+C handling (v1.0.5)

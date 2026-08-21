@@ -8,6 +8,8 @@
 | uv | any | `pip install uv` or [github.com/astral-sh/uv](https://github.com/astral-sh/uv) |
 | Git | any | [git-scm.com/downloads](https://git-scm.com/downloads/) |
 
+> **Python 3.12 is required.** `pip install spawnio` will silently return "no matching distribution" on Python < 3.12. If you're using uv, run `uv python install 3.12` to get a compatible interpreter in seconds.
+
 ---
 
 ## 2. Installation
@@ -47,7 +49,7 @@ After installation, `spawn` is available anywhere on your machine.
 
 ```bash
 spawn version
-# Spawn v1.0.6
+# Spawn v1.0.7
 ```
 
 Or just run `spawn` with no arguments to see the command overview:

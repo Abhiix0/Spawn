@@ -3,6 +3,25 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.7 — 2026
+
+### Fixed
+
+- **UTF-8 console output crash on Windows** — `spawn create` and `spawn doctor` no
+  longer raise `UnicodeEncodeError` when stdout is redirected or piped (e.g.
+  `spawn create ... > out.txt`). stdout/stderr are now reconfigured to UTF-8 with
+  `errors="replace"` at startup, so glyphs like ✨ and 🏥 degrade to `?` instead
+  of crashing the process.
+- **Windows reserved device name validation** — project names matching Windows
+  reserved device names (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`COM9`, `LPT1`–`LPT9`,
+  case-insensitive) are now rejected upfront by `validate_project_name()` with a
+  clear `SpawnError`. Previously `PRN` raised a raw `NotADirectoryError` traceback.
+
+### Documentation
+
+- Clarified that `pip install spawnio` fails silently with "no matching distribution"
+  on Python < 3.12, and that `uv python install 3.12` resolves it in seconds.
+
 ## v1.0.6 — 2026
 
 ### Fixed
