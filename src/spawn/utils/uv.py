@@ -33,13 +33,17 @@ def initialize_uv(project_path: Path) -> None:
         ) from exc
 
 
-def install_packages(project_path: Path, packages: list[str]) -> None:
+def install_packages(
+    project_path: Path, packages: list[str], dev: bool = False
+) -> None:
     if not packages:
         return
 
+    cmd = ["uv", "add"] + (["--dev"] if dev else []) + packages
+
     try:
         subprocess.run(
-            ["uv", "add"] + packages,
+            cmd,
             cwd=project_path,
             check=True,
             capture_output=True,

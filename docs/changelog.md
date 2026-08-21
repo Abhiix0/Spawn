@@ -3,6 +3,313 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.6 — 2026
+
+### Fixed
+
+- **`spawn create` no longer shows the banner** — running `spawn create` directly
+  now skips straight to the project name prompt. The banner is shown only by the
+  bare `spawn` command (no subcommand), keeping it as a "home screen" rather than
+  repeating it on every creation run.
+
+### Internal
+
+- PyPI package renamed to `spawnio`; `importlib.metadata` lookup updated from
+  `version("spawn")` to `version("spawnio")`
+
+## v1.0.5 — 2026
+
+### Added
+
+- **Arrow-key selection menus** — every prompt in `spawn create` (template,
+  framework, provider, CLI type, project type, extras, and Custom
+  Structure's optional setup) now uses arrow-key/spacebar selection
+  instead of typed numbers, powered by `questionary`.
+- **`spawn` with no arguments** now shows the banner, current version, and
+  a list of available commands, instead of Click's default usage error.
+
+### Fixed
+
+- **Consistent, clean cancellation** — pressing Ctrl+C at any point in
+  `spawn create` (prompts, arrow-key menus, or mid-generation) now shows
+  a single `Cancelled.` message and exits with code `130`, instead of a
+  raw Python traceback or inconsistent messages depending on where the
+  interrupt happened.
+
+## v1.0.4 — 2026
+
+### Added
+
+- **AGENTS.md generation** — every generated project now ships an
+  `AGENTS.md` file alongside its README, orienting coding agents on
+  project structure, setup, and conventions. Uses a shared generic
+  default for Automation, CLI, and Data Project, with template-specific
+  content for Backend API (framework + run command), Chatbot/Agent
+  (provider + required environment variable), RAG (required API key +
+  ingestion behavior), and MCP Server (how to add tools/resources).
+  Custom Structure generates it only when the user's pasted layout
+  includes an `AGENTS.md` path, matching how README.md and .gitignore
+  already work in that flow.
+- **`--claude-md` / `--no-claude-md`** flag, interactive prompt, and
+  `"claude_md"` config-file key — opt-in generation of an identical
+  `CLAUDE.md` alongside `AGENTS.md`. Off by default.
+- **`spawn doctor`** now checks for `AGENTS.md` as a Recommended-tier
+  Documentation item.
+
+## v1.0.3 — 2026
+
+### Added
+
+- **MCP Server intent** — `spawn create` can now scaffold a Model
+  Context Protocol server using the official `mcp` Python SDK
+  (`FastMCP`), with one working example tool and one example
+  resource over `stdio` transport, plus a README explaining how to
+  connect it to Claude Desktop or another MCP client.
+
+## v1.0.2 — 2026
+
+### Added
+
+- **Non-interactive mode** — `spawn create` now accepts `--name`, `--template`,
+  `--framework`, `--provider`, `--cli-type`, `--data-type`, `--extras`,
+  `--git`/`--no-git`, and `--uv`/`--no-uv` flags, or a `--config <file.json>`
+  JSON config file, to scaffold a project with zero prompts. Covers all 7
+  registry templates (Custom Structure is not yet supported non-interactively).
+- **`--dry-run`** — validates a non-interactive config and prints it without
+  creating anything.
+- **`--yes` / `-y`** — skips the GitHub-publish prompt. Non-interactive mode
+  also always skips this prompt automatically, so agent-driven invocations
+  never hang waiting for stdin.
+
+## v1.0.1 — 2026
+
+### Added
+
+- **Custom Structure: dependency installation** — an optional "Dependencies (comma
+  separated)" prompt when uv is enabled; packages install via `uv add` immediately
+  after generation
+- **Custom Structure: Optional Setup menu** — toggle Ruff, Pytest, Pre-commit, and/or
+  Dockerfile; each installs its dependency (via `uv add --dev`) and generates its
+  config file automatically
+- **Custom Structure: README auto-population** — a pasted `README.md` is generated
+  with real content (project name, structure tree, setup instructions) instead of
+  being created empty
+- **Custom Structure: smart .gitignore** — a pasted `.gitignore` is populated with
+  Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`,
+  `.ruff_cache/`, etc.), plus an optional prompt for additional patterns,
+  deduplicated against the defaults
+
+### Fixed
+
+- **Custom Structure metadata `source` field** — now reflects the actually detected
+  input format (`tree`/`markdown`/`indented`) instead of a hardcoded `"tree"`
+  placeholder
+
+### Internal
+
+- `install_packages()` gains an optional `dev: bool = False` parameter for
+  `uv add --dev`; existing callers unaffected
+- `ProjectConfig` gains `custom_dependencies`, `custom_dev_setup`,
+  `custom_gitignore_extra`, `custom_source_format`
+- `GITIGNORE_CONTENT` in `shared_content.py` extended with `.ruff_cache/`
+- Version bumped to `1.0.1`
+
+## v1.0.0 — 2026
+
+### New Features
+
+- **Custom Structure workflow** — bootstrap a project from your own pasted folder
+  structure (Tree, Markdown list, or Indented format) instead of choosing a predefined
+  blueprint; Spawn parses, previews detected folders/files, and reuses the existing
+  Git/uv flow
+- **Rich `.spawn/meta.json` metadata** — every generated project now records
+  `created_at`, `generator`, `git`, `uv`, and `source` in addition to the existing
+  `intent`/`framework`/`provider`/`spawn_version` fields; fully backward compatible
+- **Doctor 2.0** — per-category health percentages (Documentation, Version Control,
+  Configuration, Testing, Automation, Code Quality), three new checks (CHANGELOG.md,
+  pyproject.toml, Type Checking, Pre-commit), tiered recommendations (Critical /
+  Recommended / Optional), health rating label (Excellent / Good / Fair / Needs
+  Attention), and a "Next Best Step" panel
+
+### Internal
+
+- `src/spawn/generators/custom_structure.py` — new module: `parse_structure()`,
+  `ParsedEntry`, `CustomStructureGenerator`
+- `ProjectConfig` gains `use_uv: bool = True` and `custom_entries: list | None = None`
+- `StructureParseError` added to `core/exceptions.py`
+- Doctor checks recategorized: `Quality` → `Testing` / `Code Quality`,
+  `Deployment` → `Automation` (category names only; check logic unchanged)
+- Version bumped to `1.0.0`
+
+## v0.9.0 — 2026
+
+### Added
+
+- Data Project intent — 4 sub-types: Data Analysis, Dashboard, ETL Pipeline, Machine Learning
+- Data Analysis: pandas + Jupyter notebook workflow with sample dataset
+- Dashboard: Streamlit + Plotly interactive dashboard with sidebar filtering
+- ETL Pipeline: configurable input/output paths via `.env`, data cleaning demo
+- Machine Learning: RandomForestClassifier training script with per-run experiment logging to `experiments/`
+- `ProjectConfig.data_type` field and matching CLI selection prompt ("Choose Project Type")
+- Type-specific `.gitignore` rules for generated data artifacts (CSVs, models, experiment logs, notebook checkpoints)
+
+### Fixed
+
+- ETL `pipelines/run.py` next-step instruction caused `ModuleNotFoundError` — changed from script invocation (`python pipelines/run.py`) to module invocation (`python -m pipelines.run`)
+- Dashboard used deprecated Streamlit `use_container_width` parameter, replaced with `width="stretch"`
+- ML README example output didn't match actual results (dataset is trivially separable, always scores 1.0 accuracy) — corrected the documented example
+- CLI prompt "Choose Data Type" renamed to "Choose Project Type" for clarity
+
+## v0.8.0 — 2026
+
+### New Features
+
+- **RAG System intent** — generates a fully runnable Retrieval-Augmented Generation
+  project using a fixed stack: LlamaIndex + ChromaDB + OpenAI
+- **Fixed stack, no framework/provider prompt** — RAG skips the framework/provider
+  selection entirely; `spawn create` goes straight from intent to extras
+- **Auto-ingestion on first run** — if `chroma_db/` is empty, `src/main.py` ingests
+  everything in `data/` automatically before accepting questions; no separate ingest
+  command required
+- **Sample knowledge base** — every generated project ships with
+  `data/sample_knowledge.md` so users get a working Q&A demo immediately, with zero
+  setup beyond an API key
+- **Local vector persistence** — `src/knowledge/index.py` owns a
+  `chromadb.PersistentClient` writing to `chroma_db/`, shared by both ingestion and
+  retrieval
+- **Correct modern LlamaIndex packaging** — installs `llama-index-core`,
+  `llama-index-vector-stores-chroma`, `llama-index-embeddings-openai`,
+  `llama-index-llms-openai`, and `chromadb` explicitly, instead of the heavy
+  `llama-index` meta-package
+- **`chroma_db/` gitignored correctly** — binary ChromaDB files are excluded via
+  `.gitignore`, while a `.gitkeep` keeps the directory tracked in git
+
+### Internal
+
+- Registry: `rag` slug added with `available_extras` only — no `available_frameworks`
+  or `available_providers`
+- `RAGTemplate` follows the same `BaseTemplate` contract as other intents
+  (`get_dependencies()`, `get_readme_content()`, `post_install()`, `next_steps`)
+- `prompts.py` required no changes — empty `available_frameworks` and
+  `available_providers` already skip those prompts automatically
+- `shared_content.py`'s `GITIGNORE_CONTENT` extended with a `chroma_db/` rule
+- Version bumped to `0.8.0`
+
+## v0.7.0 — 2026
+
+### New Features
+
+- **AI Agent intent** — generates a fully runnable tool-calling agent project
+  with `src/agent/`, `src/tools/`, `src/prompts/`, `src/config/`
+- **2 frameworks**: PydanticAI, OpenAI Agents SDK
+- **Provider-agnostic architecture** — users select a framework, not a provider;
+  PydanticAI supports 6 providers (OpenAI, Anthropic, Gemini, OpenRouter, Ollama,
+  Groq), OpenAI Agents SDK supports 2 (OpenAI, OpenRouter)
+- **Calculator tool** — every generated agent ships with one working example
+  tool, demonstrating real tool invocation with no API keys or external services
+- **Centralized prompts** — `src/prompts/agent_prompt.txt` is editable without
+  touching Python code
+- **Provider-specific env vars and dependencies** — correct `.env.example` and
+  `pyproject.toml` dependencies generated per framework + provider combination
+  (e.g. `pydantic-ai[groq]` for the Groq combination)
+
+### Internal
+
+- Registry: `agent` slug added with `available_frameworks`, `available_providers`,
+  and `available_extras`
+- `AgentTemplate` follows the same `BaseTemplate` contract as chatbot/automation
+  (`get_dependencies()`, `get_readme_content()`, `post_install()`, `next_steps`)
+- CLI prompt flow filters provider choices per selected framework via
+  `get_supported_providers()`, preventing invalid framework/provider combos
+- Version bumped to `0.7.0`
+
+## v0.6.0 — 2026
+
+### New Features
+
+- **AI Chatbot intent** — generates a fully runnable conversational AI project
+  with runtime memory, centralized prompt management, and provider abstraction
+- **3 frameworks**: PydanticAI, OpenAI SDK, LiteLLM
+- **6 providers**: OpenAI, Anthropic, Gemini, OpenRouter, Ollama, Groq
+- **16 supported combinations** — each generates correct dependencies,
+  provider-specific env vars, and working llm.py out of the box
+- **Runtime memory** — `src/memory/history.py` maintains conversation
+  context across turns within a session; no database required
+- **Plain-text prompt system** — `src/prompts/system.txt` is editable
+  without touching Python code; loaded dynamically at runtime
+- **Rich extra** — opt-in `rich` terminal UI with colored panels and
+  styled input/output
+- **Provider-specific env vars** — generated `.env.example` uses the
+  correct key name for each provider (OPENAI_API_KEY, ANTHROPIC_API_KEY,
+  GOOGLE_API_KEY, OPENROUTER_API_KEY, OLLAMA_BASE_URL)
+
+### Bug Fixes
+
+- Fixed `result.data` → `result.output` in PydanticAI provider
+  (AgentRunResult attribute name in current pydantic-ai)
+- Fixed `setdefault("OPENAI_API_KEY")` pattern that silently broke
+  non-OpenAI providers; api_key is now passed directly to run_sync()
+
+### Internal
+
+- `ProjectConfig` gains `provider: str | None = None` field
+- `TemplateMetadata` gains `available_providers: list[str]` field
+- `instantiate_template()` forwards `provider` to template constructors
+- Registry: chatbot updated to 3 frameworks, 5 providers, 4 extras
+- Version bumped to 0.6.0
+
+## v0.5.0 — 2026
+
+### New Features
+
+- **Automation Tool intent** — generates a workflow-based automation project
+  with `src/workflows/`, `src/tasks/`, `src/integrations/`, `src/utils/`,
+  `logs/`, and a working example that runs immediately
+- **Logging out of the box** — every generated project includes a `setup_logger()`
+  utility and writes to `logs/app.log` with no manual configuration required
+- **Working example workflow** — `load_sample_data → generate_report → log output`
+  runs on first `uv run python -m src.main` without modification
+- **`.env.example`** — pre-wired environment config template included in every
+  generated project
+- **Automation extras** — opt-in `ruff`, `pytest`, `github-actions`;
+  installed and wired automatically
+
+### Internal
+
+- Registry expanded to three active templates: `backend-api`, `cli`, `automation`
+- No new fields added to `ProjectConfig` or `TemplateMetadata` — automation
+  uses the existing `extras` field; prompt flow adapts automatically via guards
+- Version bumped to `0.5.0`
+
+## v0.4.0 — June 2026
+
+### New Features
+
+- **CLI Application intent** — generates Typer, Click, or Argparse projects
+  with Utility or Interactive sub-types; each produces the correct folder
+  structure, main entry point, working example command, and tests
+- **CLI type selection** — choose Utility (command-oriented) or Interactive
+  (prompt-driven) at creation time; Utility generates `src/commands/` and
+  `src/utils/`; Interactive adds `src/prompts/` and `src/ui/`
+- **CLI extras** — opt-in `ruff`, `pytest`, `github-actions`; installed and
+  wired automatically the same way as Backend API extras
+- **Interactive README** — each CLI type × framework combination now produces
+  a tailored README with the correct run command and commands table
+
+### Breaking Changes
+
+- The `python`, `data-science`, and `ml` template slugs have been removed
+  from the active menu. These intents are planned for future re-registration
+  as fully-featured, intent-based templates. Projects generated with those
+  slugs are unaffected — `.spawn/meta.json` still records the original slug.
+
+### Internal
+
+- Registry reduced to two active templates: `backend-api` and `cli`
+- `_REMOVED_SLUGS` updated to include `python`, `data-science`, `ml`
+- CLI type prompt now precedes framework prompt (matches PRD spec)
+- Version bumped to `0.4.0`
+
 ## v0.3.0 — June 2026
 
 ### Breaking Changes
