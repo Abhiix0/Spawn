@@ -91,3 +91,25 @@ def test_dot_gives_bad_chars_message():
 def test_at_sign_gives_bad_chars_message():
     with pytest.raises(SpawnError, match=_BAD_CHARS):
         validate_project_name("my@project")
+
+
+# ---------------------------------------------------------------------------
+# Windows reserved device names → "reserved Windows device name"
+# ---------------------------------------------------------------------------
+
+_RESERVED = "reserved Windows device name"
+
+
+@pytest.mark.parametrize("name", [
+    "CON", "PRN", "AUX", "NUL",
+    "COM1", "LPT1",
+    "con", "prn",
+])
+def test_reserved_windows_name_raises(name):
+    with pytest.raises(SpawnError, match=_RESERVED):
+        validate_project_name(name)
+
+
+def test_valid_name_is_not_caught_as_reserved():
+    """A normal name must never be mistaken for a reserved device name."""
+    validate_project_name("my-project")
