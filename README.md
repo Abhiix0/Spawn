@@ -764,22 +764,31 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 ## Roadmap
 
-**Recently shipped**
+### Shipped
 
-- Fixed UTF-8 console output crash on Windows (non-terminal stdout), added Windows reserved device name validation, clarified Python 3.12 prerequisite (v1.0.7)
-- Removed duplicate banner from `spawn create`; `spawn` alone now shows the banner and command overview (v1.0.6)
-- Published to PyPI as `spawnio` — install with `pip install spawnio` (v1.0.5)
-- Arrow-key menus, no-args banner, and consistent Ctrl+C handling (v1.0.5)
-- AGENTS.md / CLAUDE.md generation — every project ships agent context automatically, `--claude-md` opt-in for Claude Code (v1.0.4)
-- MCP Server intent — official `mcp` SDK, one working tool + resource, stdio transport (v1.0.3)
-- Non-interactive mode — `--name`/`--template`/flags or `--config` JSON, zero prompts (v1.0.2)
-- Custom Structure workflow — paste any folder layout, Spawn creates it (v1.0.0)
-- Doctor 2.0 — per-category health percentages, tiered recommendations, Next Best Step (v1.0.0)
-- Data Project intent — analysis, dashboard, ETL, ML sub-options (v0.9.0)
-- RAG System intent — LlamaIndex + ChromaDB (v0.8.0)
-- AI Agent intent — tool-calling with PydanticAI / OpenAI Agents SDK (v0.7.0)
+| Version | Highlight |
+|---|---|
+| **v1.0.7** | Fixed UTF-8 console crash on Windows when stdout is redirected/piped, added Windows reserved device name validation (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`9`, `LPT1`–`9`), clarified Python 3.12 requirement |
+| **v1.0.6** | Removed duplicate banner from `spawn create`; `spawn` alone now shows the banner and command overview |
+| **v1.0.5** | Published to PyPI as `spawnio`; arrow-key selection menus, no-args banner, consistent Ctrl+C handling |
+| **v1.0.4** | `AGENTS.md` / `CLAUDE.md` generation for every project, `--claude-md` opt-in |
+| **v1.0.3** | MCP Server intent — official `mcp` SDK, one working tool + resource |
+| **v1.0.2** | Non-interactive mode — `--name`/`--template` flags or `--config` JSON |
+| **v1.0.1** | Custom Structure: dependency install, optional dev tooling setup, smart README/`.gitignore` generation |
+| **v1.0.0** | Custom Structure workflow (paste any folder layout) + Doctor 2.0 (per-category scores, tiered recommendations) |
+| **v0.9.0** | Data Project intent — analysis, dashboard, ETL, ML sub-types |
+| **v0.8.0** | RAG System intent — LlamaIndex + ChromaDB |
+| **v0.7.0** | AI Agent intent — tool-calling with PydanticAI / OpenAI Agents SDK |
+| **v0.6.0** | AI Chatbot intent — 3 frameworks, 6 providers, runtime memory |
+| **v0.5.0** | Automation Tool intent — workflows, logging, working example out of the box |
+| **v0.4.0** | CLI Application intent — Typer/Click/Argparse, Utility/Interactive types |
+| **v0.3.0** | Backend API intent — FastAPI/Flask/Django, extras system, `.spawn/meta.json` |
+| **v0.2.0** | GitHub publishing from the CLI, `spawn doctor` health checker, CI workflow |
+| **v0.1.0** | Initial release — `spawn create`, 4 templates, Git + uv integration |
 
-**What's next**
+---
+
+## What's next
 
 Nothing formally scheduled yet. Ideas under consideration live in [Issues](https://github.com/Abhiix0/spawn/issues); open one if there's something you'd want to see.
 
@@ -826,6 +835,6 @@ This project is open source under the [MIT License](LICENSE).
 
 <div align="center">
 
-**[Star on GitHub](https://github.com/Abhiix0/spawn)** · **[Report a Bug](https://github.com/Abhiix0/spawn/issues)** · **[Request a Feature](https://github.com/Abhiix0/spawn/issues)**
+**[ Star on GitHub](https://github.com/Abhiix0/spawn)**  ·  **[ report a bug](https://github.com/Abhiix0/spawn/issues)**  ·  **[ request a Feature](https://github.com/Abhiix0/spawn/issues)**  ·  **[ PyPI](https://pypi.org/project/spawnio/)**
 
 </div>
