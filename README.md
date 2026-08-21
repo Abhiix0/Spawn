@@ -734,7 +734,7 @@ Checks span six categories — Documentation, Version Control, Configuration, Te
 
 ```bash
 spawn version
-# → Spawn v1.0.6
+# → Spawn v1.0.7
 ```
 
 ### Publish to GitHub
