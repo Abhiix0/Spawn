@@ -60,51 +60,51 @@ CHATBOT_FOLDERS = [
 
 # Maps (framework, provider) → llm content
 _LLM_MAP: dict[tuple[str, str], str] = {
-    ("pydantic-ai",  "openai"):     PYDANTIC_AI_OPENAI_LLM_CONTENT,
-    ("pydantic-ai",  "anthropic"):  PYDANTIC_AI_ANTHROPIC_LLM_CONTENT,
-    ("pydantic-ai",  "gemini"):     PYDANTIC_AI_GEMINI_LLM_CONTENT,
-    ("pydantic-ai",  "openrouter"): PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
-    ("pydantic-ai",  "ollama"):     PYDANTIC_AI_OLLAMA_LLM_CONTENT,
-    ("pydantic-ai",  "groq"):       PYDANTIC_AI_GROQ_LLM_CONTENT,
-    ("openai-sdk",   "openai"):     OPENAI_SDK_OPENAI_LLM_CONTENT,
-    ("openai-sdk",   "openrouter"): OPENAI_SDK_OPENROUTER_LLM_CONTENT,
-    ("openai-sdk",   "gemini"):     OPENAI_SDK_GEMINI_LLM_CONTENT,
-    ("openai-sdk",   "groq"):       OPENAI_SDK_GROQ_LLM_CONTENT,
-    ("litellm",      "openai"):     LITELLM_OPENAI_LLM_CONTENT,
-    ("litellm",      "anthropic"):  LITELLM_ANTHROPIC_LLM_CONTENT,
-    ("litellm",      "gemini"):     LITELLM_GEMINI_LLM_CONTENT,
-    ("litellm",      "openrouter"): LITELLM_OPENROUTER_LLM_CONTENT,
-    ("litellm",      "ollama"):     LITELLM_OLLAMA_LLM_CONTENT,
-    ("litellm",      "groq"):       LITELLM_GROQ_LLM_CONTENT,
+    ("pydantic-ai", "openai"): PYDANTIC_AI_OPENAI_LLM_CONTENT,
+    ("pydantic-ai", "anthropic"): PYDANTIC_AI_ANTHROPIC_LLM_CONTENT,
+    ("pydantic-ai", "gemini"): PYDANTIC_AI_GEMINI_LLM_CONTENT,
+    ("pydantic-ai", "openrouter"): PYDANTIC_AI_OPENROUTER_LLM_CONTENT,
+    ("pydantic-ai", "ollama"): PYDANTIC_AI_OLLAMA_LLM_CONTENT,
+    ("pydantic-ai", "groq"): PYDANTIC_AI_GROQ_LLM_CONTENT,
+    ("openai-sdk", "openai"): OPENAI_SDK_OPENAI_LLM_CONTENT,
+    ("openai-sdk", "openrouter"): OPENAI_SDK_OPENROUTER_LLM_CONTENT,
+    ("openai-sdk", "gemini"): OPENAI_SDK_GEMINI_LLM_CONTENT,
+    ("openai-sdk", "groq"): OPENAI_SDK_GROQ_LLM_CONTENT,
+    ("litellm", "openai"): LITELLM_OPENAI_LLM_CONTENT,
+    ("litellm", "anthropic"): LITELLM_ANTHROPIC_LLM_CONTENT,
+    ("litellm", "gemini"): LITELLM_GEMINI_LLM_CONTENT,
+    ("litellm", "openrouter"): LITELLM_OPENROUTER_LLM_CONTENT,
+    ("litellm", "ollama"): LITELLM_OLLAMA_LLM_CONTENT,
+    ("litellm", "groq"): LITELLM_GROQ_LLM_CONTENT,
 }
 
 # Maps provider → env example (pydantic-ai uses prefixed MODEL format)
 _ENV_MAP_PYDANTIC: dict[str, str] = {
-    "openai":     ENV_PYDANTIC_OPENAI,
-    "anthropic":  ENV_PYDANTIC_ANTHROPIC,
-    "gemini":     ENV_PYDANTIC_GEMINI,
+    "openai": ENV_PYDANTIC_OPENAI,
+    "anthropic": ENV_PYDANTIC_ANTHROPIC,
+    "gemini": ENV_PYDANTIC_GEMINI,
     "openrouter": ENV_PYDANTIC_OPENROUTER,
-    "ollama":     ENV_PYDANTIC_OLLAMA,
-    "groq":       ENV_PYDANTIC_GROQ,
+    "ollama": ENV_PYDANTIC_OLLAMA,
+    "groq": ENV_PYDANTIC_GROQ,
 }
 
 _ENV_MAP_GENERIC: dict[str, str] = {
-    "openai":     ENV_OPENAI,
-    "anthropic":  ENV_ANTHROPIC,
-    "gemini":     ENV_GEMINI,
+    "openai": ENV_OPENAI,
+    "anthropic": ENV_ANTHROPIC,
+    "gemini": ENV_GEMINI,
     "openrouter": ENV_OPENROUTER,
-    "ollama":     ENV_OLLAMA,
-    "groq":       ENV_GROQ,
+    "ollama": ENV_OLLAMA,
+    "groq": ENV_GROQ,
 }
 
 # litellm+ollama uses OLLAMA_API_BASE (litellm convention) instead of OLLAMA_BASE_URL
 _ENV_MAP_LITELLM: dict[str, str] = {
-    "openai":     ENV_OPENAI,
-    "anthropic":  ENV_ANTHROPIC,
-    "gemini":     ENV_GEMINI,
+    "openai": ENV_OPENAI,
+    "anthropic": ENV_ANTHROPIC,
+    "gemini": ENV_GEMINI,
     "openrouter": ENV_OPENROUTER,
-    "ollama":     ENV_LITELLM_OLLAMA,
-    "groq":       ENV_LITELLM_GROQ,
+    "ollama": ENV_LITELLM_OLLAMA,
+    "groq": ENV_LITELLM_GROQ,
 }
 
 
@@ -127,24 +127,26 @@ def _resolve_env(framework: str, provider: str) -> str:
     return _ENV_MAP_GENERIC.get(provider, ENV_OPENAI)
 
 
-def _build_files(main_content: str, llm_content: str, env_content: str, memory_content: str) -> list:
+def _build_files(
+    main_content: str, llm_content: str, env_content: str, memory_content: str
+) -> list:
     return [
-        ("src/__init__.py",           INIT_CONTENT),
-        ("src/chatbot/__init__.py",   INIT_CONTENT),
-        ("src/chatbot/chat.py",       CHAT_CONTENT),
+        ("src/__init__.py", INIT_CONTENT),
+        ("src/chatbot/__init__.py", INIT_CONTENT),
+        ("src/chatbot/chat.py", CHAT_CONTENT),
         ("src/providers/__init__.py", INIT_CONTENT),
-        ("src/providers/llm.py",      llm_content),
-        ("src/prompts/__init__.py",   INIT_CONTENT),
-        ("src/prompts/system.txt",    SYSTEM_PROMPT_TXT_CONTENT),
-        ("src/memory/__init__.py",    INIT_CONTENT),
-        ("src/memory/history.py",     memory_content),
-        ("src/config/__init__.py",    INIT_CONTENT),
-        ("src/config/settings.py",    SETTINGS_CONTENT),
-        ("src/main.py",               main_content),
-        ("tests/__init__.py",         INIT_CONTENT),
-        ("tests/conftest.py",         CONFTEST_CONTENT),
-        ("tests/test_chatbot.py",     TEST_CONTENT),
-        (".env.example",              env_content),
+        ("src/providers/llm.py", llm_content),
+        ("src/prompts/__init__.py", INIT_CONTENT),
+        ("src/prompts/system.txt", SYSTEM_PROMPT_TXT_CONTENT),
+        ("src/memory/__init__.py", INIT_CONTENT),
+        ("src/memory/history.py", memory_content),
+        ("src/config/__init__.py", INIT_CONTENT),
+        ("src/config/settings.py", SETTINGS_CONTENT),
+        ("src/main.py", main_content),
+        ("tests/__init__.py", INIT_CONTENT),
+        ("tests/conftest.py", CONFTEST_CONTENT),
+        ("tests/test_chatbot.py", TEST_CONTENT),
+        (".env.example", env_content),
     ]
 
 
@@ -156,12 +158,14 @@ class ChatbotTemplate(BaseTemplate):
         extras: list[str] | None = None,
     ) -> None:
         self.framework = framework or "pydantic-ai"
-        self.provider  = provider  or "openai"
-        self.extras    = extras    or []
+        self.provider = provider or "openai"
+        self.extras = extras or []
 
-        llm_content  = _resolve_llm(self.framework, self.provider)
-        env_content  = _resolve_env(self.framework, self.provider)
-        main_content = MAIN_CONTENT_RICH if "rich" in self.extras else MAIN_CONTENT_NO_RICH
+        llm_content = _resolve_llm(self.framework, self.provider)
+        env_content = _resolve_env(self.framework, self.provider)
+        main_content = (
+            MAIN_CONTENT_RICH if "rich" in self.extras else MAIN_CONTENT_NO_RICH
+        )
         memory_content = (
             MEMORY_HISTORY_CONTENT_PYDANTIC
             if self.framework == "pydantic-ai"
@@ -171,7 +175,9 @@ class ChatbotTemplate(BaseTemplate):
         super().__init__(
             name="AI Chatbot",
             folders=list(CHATBOT_FOLDERS),
-            starter_files=_build_files(main_content, llm_content, env_content, memory_content),
+            starter_files=_build_files(
+                main_content, llm_content, env_content, memory_content
+            ),
             next_steps=[
                 "cd {project_name}",
                 "Rename .env.example to .env and fill in your API key",
@@ -189,25 +195,30 @@ class ChatbotTemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         dep_map: dict[tuple[str, str], list[str]] = {
-            ("pydantic-ai",  "openai"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",  "anthropic"):  ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",  "gemini"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",  "openrouter"): ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",  "ollama"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",  "groq"):       ["pydantic-ai[groq]", "python-dotenv"],
-            ("openai-sdk",   "openai"):     ["openai",       "python-dotenv"],
-            ("openai-sdk",   "openrouter"): ["openai",       "python-dotenv"],
-            ("openai-sdk",   "gemini"):     ["openai",       "python-dotenv"],
-            ("openai-sdk",   "groq"):       ["openai",       "python-dotenv"],
-            ("litellm",      "openai"):     ["litellm",      "python-dotenv"],
-            ("litellm",      "anthropic"):  ["litellm",      "python-dotenv"],
-            ("litellm",      "gemini"):     ["litellm",      "python-dotenv"],
-            ("litellm",      "openrouter"): ["litellm",      "python-dotenv"],
-            ("litellm",      "ollama"):     ["litellm",      "python-dotenv"],
-            ("litellm",      "groq"):       ["litellm",      "python-dotenv"],
+            ("pydantic-ai", "openai"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "anthropic"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "gemini"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "openrouter"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "ollama"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "groq"): ["pydantic-ai[groq]", "python-dotenv"],
+            ("openai-sdk", "openai"): ["openai", "python-dotenv"],
+            ("openai-sdk", "openrouter"): ["openai", "python-dotenv"],
+            ("openai-sdk", "gemini"): ["openai", "python-dotenv"],
+            ("openai-sdk", "groq"): ["openai", "python-dotenv"],
+            ("litellm", "openai"): ["litellm", "python-dotenv"],
+            ("litellm", "anthropic"): ["litellm", "python-dotenv"],
+            ("litellm", "gemini"): ["litellm", "python-dotenv"],
+            ("litellm", "openrouter"): ["litellm", "python-dotenv"],
+            ("litellm", "ollama"): ["litellm", "python-dotenv"],
+            ("litellm", "groq"): ["litellm", "python-dotenv"],
         }
 
-        base = list(dep_map.get((self.framework, self.provider), ["pydantic-ai", "openai", "python-dotenv"]))
+        base = list(
+            dep_map.get(
+                (self.framework, self.provider),
+                ["pydantic-ai", "openai", "python-dotenv"],
+            )
+        )
 
         if "pytest" in self.extras:
             base.append("pytest")
@@ -220,11 +231,11 @@ class ChatbotTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"
-        current   = pyproject.read_text(encoding="utf-8")
+        current = pyproject.read_text(encoding="utf-8")
         additions = ""
 
         if "pytest" in self.extras:
-            additions += "\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n"
+            additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"

@@ -23,9 +23,7 @@ def initialize_uv(project_path: Path) -> None:
         )
 
     except FileNotFoundError:
-        raise SpawnError(
-            "UV is not installed or not available in PATH."
-        )
+        raise SpawnError("UV is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError as exc:
         raise SpawnError(
@@ -51,11 +49,7 @@ def install_packages(
         )
 
     except FileNotFoundError:
-        raise SpawnError(
-            "UV is not installed or not available in PATH."
-        )
+        raise SpawnError("UV is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError as exc:
-        raise SpawnError(
-            exc.stderr.strip() or "Failed to install packages."
-        ) from exc
+        raise SpawnError(exc.stderr.strip() or "Failed to install packages.") from exc

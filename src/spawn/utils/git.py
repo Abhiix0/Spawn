@@ -15,14 +15,11 @@ def initialize_git(project_path: Path) -> None:
         )
 
     except FileNotFoundError:
-        raise SpawnError(
-            "Git is not installed or not available in PATH."
-        )
+        raise SpawnError("Git is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError:
-        raise SpawnError(
-            "Failed to initialize Git repository."
-        )
+        raise SpawnError("Failed to initialize Git repository.")
+
 
 def run_git_command(
     project_path: Path,
@@ -42,15 +39,11 @@ def run_git_command(
         )
 
     except FileNotFoundError:
-        raise SpawnError(
-            "Git is not installed or not available in PATH."
-        )
+        raise SpawnError("Git is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError as exc:
-        raise SpawnError(
-            exc.stderr.strip()
-            or "Git command failed."
-        ) from exc
+        raise SpawnError(exc.stderr.strip() or "Git command failed.") from exc
+
 
 def add_all(project_path: Path) -> None:
     run_git_command(
@@ -58,6 +51,7 @@ def add_all(project_path: Path) -> None:
         "add",
         ".",
     )
+
 
 def commit(
     project_path: Path,
@@ -70,6 +64,7 @@ def commit(
         message,
     )
 
+
 def rename_main_branch(
     project_path: Path,
 ) -> None:
@@ -79,6 +74,7 @@ def rename_main_branch(
         "-M",
         "main",
     )
+
 
 def add_remote(
     project_path: Path,
@@ -92,6 +88,7 @@ def add_remote(
         repo_url,
     )
 
+
 def push_origin_main(
     project_path: Path,
 ) -> None:
@@ -102,6 +99,7 @@ def push_origin_main(
         "origin",
         "main",
     )
+
 
 def remote_exists(
     project_path: Path,
@@ -118,12 +116,11 @@ def remote_exists(
         return "origin" in result.stdout.splitlines()
 
     except FileNotFoundError:
-        raise SpawnError(
-            "Git is not installed or not available in PATH."
-        )
+        raise SpawnError("Git is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError:
         return False
+
 
 def is_git_repository(
     project_path: Path,

@@ -100,11 +100,19 @@ def test_at_sign_gives_bad_chars_message():
 _RESERVED = "reserved Windows device name"
 
 
-@pytest.mark.parametrize("name", [
-    "CON", "PRN", "AUX", "NUL",
-    "COM1", "LPT1",
-    "con", "prn",
-])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "LPT1",
+        "con",
+        "prn",
+    ],
+)
 def test_reserved_windows_name_raises(name):
     with pytest.raises(SpawnError, match=_RESERVED):
         validate_project_name(name)

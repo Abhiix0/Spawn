@@ -34,11 +34,11 @@ def test_agent_template_default_extras_empty():
 
 def test_agent_folders():
     t = AgentTemplate()
-    assert "src/agent"   in t.folders
-    assert "src/tools"   in t.folders
+    assert "src/agent" in t.folders
+    assert "src/tools" in t.folders
     assert "src/prompts" in t.folders
-    assert "src/config"  in t.folders
-    assert "tests"       in t.folders
+    assert "src/config" in t.folders
+    assert "tests" in t.folders
 
 
 def test_agent_required_files():
@@ -103,12 +103,12 @@ def test_unknown_framework_defaults_to_openai():
 # ─── ALL_COMBINATIONS parametrized ───────────────────────────────────────
 
 ALL_COMBINATIONS = [
-    ("pydantic-ai",   "openai"),
-    ("pydantic-ai",   "anthropic"),
-    ("pydantic-ai",   "gemini"),
-    ("pydantic-ai",   "openrouter"),
-    ("pydantic-ai",   "ollama"),
-    ("pydantic-ai",   "groq"),
+    ("pydantic-ai", "openai"),
+    ("pydantic-ai", "anthropic"),
+    ("pydantic-ai", "gemini"),
+    ("pydantic-ai", "openrouter"),
+    ("pydantic-ai", "ollama"),
+    ("pydantic-ai", "groq"),
     ("openai-agents", "openai"),
     ("openai-agents", "openrouter"),
 ]
@@ -142,7 +142,9 @@ def test_all_combinations_agent_run_compiles(framework, provider):
     t = AgentTemplate(framework=framework, provider=provider)
     files = dict(t.starter_files)
     content = files["src/agent/run.py"].format_map({"project_name": "test"})
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".py", delete=False, encoding="utf-8"
+    ) as f:
         f.write(content)
         fname = f.name
     try:
@@ -165,9 +167,14 @@ def test_all_combinations_env_has_api_key(framework, provider):
     files = dict(t.starter_files)
     env = files[".env.example"].format_map({"project_name": "test"})
     has_key = any(
-        key in env for key in [
-            "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY",
-            "OPENROUTER_API_KEY", "GROQ_API_KEY", "OLLAMA_BASE_URL",
+        key in env
+        for key in [
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "GOOGLE_API_KEY",
+            "OPENROUTER_API_KEY",
+            "GROQ_API_KEY",
+            "OLLAMA_BASE_URL",
         ]
     )
     assert has_key, f"{framework}+{provider} env missing API key"
@@ -226,6 +233,7 @@ def test_next_steps_has_run_command():
 def test_openai_agents_openrouter_agents_md_has_openai_key():
     """openai-agents+openrouter must reference OPENAI_API_KEY, not OPENROUTER_API_KEY."""
     from spawn.templates.agent import AgentTemplate
+
     t = AgentTemplate(framework="openai-agents", provider="openrouter")
     result = t.get_agents_md_content({"project_name": "my-agent"})
     assert result is not None

@@ -7,6 +7,7 @@ def test_invalid_template_returns_none():
 
 def test_backend_api_template_is_registered():
     from spawn.templates.backend_api import BackendAPITemplate
+
     template = get_template("backend-api")
     assert template is not None
     assert isinstance(template, BackendAPITemplate)
@@ -40,6 +41,7 @@ def test_backend_api_in_list_templates():
 
 def test_backend_api_metadata():
     from spawn.core.registry import get_metadata
+
     meta = get_metadata("backend-api")
     assert meta is not None
     assert meta.slug == "backend-api"
@@ -51,6 +53,7 @@ def test_backend_api_metadata():
 
 def test_backend_api_template_exists():
     from spawn.templates.backend_api import BackendAPITemplate
+
     template = get_template("backend-api")
     assert template is not None
     assert isinstance(template, BackendAPITemplate)
@@ -59,6 +62,7 @@ def test_backend_api_template_exists():
 
 def test_backend_api_frameworks_include_flask_and_django():
     from spawn.core.registry import get_metadata
+
     meta = get_metadata("backend-api")
     assert "flask" in meta.available_frameworks
     assert "django" in meta.available_frameworks
@@ -66,6 +70,7 @@ def test_backend_api_frameworks_include_flask_and_django():
 
 def test_backend_api_extras_include_docker_and_github_actions():
     from spawn.core.registry import get_metadata
+
     meta = get_metadata("backend-api")
     assert "docker" in meta.available_extras
     assert "github-actions" in meta.available_extras
@@ -154,6 +159,7 @@ def test_chatbot_in_list_templates():
 def test_agent_template_is_registered():
     from spawn.templates.agent import AgentTemplate
     from spawn.core.registry import get_template
+
     t = get_template("agent")
     assert t is not None
     assert isinstance(t, AgentTemplate)
@@ -170,6 +176,7 @@ def test_agent_metadata():
 
 def test_rag_is_registered():
     from spawn.templates.rag import RAGTemplate
+
     t = get_template("rag")
     assert t is not None
     assert isinstance(t, RAGTemplate)

@@ -203,7 +203,7 @@ class BackendAPITemplate(BaseTemplate):
         if "pytest" in self.extras:
             additions += (
                 "\n[tool.pytest.ini_options]\n"
-                'filterwarnings = [\n'
+                "filterwarnings = [\n"
                 '    "ignore::DeprecationWarning:starlette",\n'
                 '    "ignore::DeprecationWarning:httpx",\n'
                 "]\n"
@@ -238,6 +238,4 @@ class BackendAPITemplate(BaseTemplate):
                 ci_content += GITHUB_ACTIONS_CI_RUFF_STEP
             if "pytest" in self.extras:
                 ci_content += GITHUB_ACTIONS_CI_PYTEST_STEP
-            (workflows_path / "ci.yml").write_text(
-                ci_content, encoding="utf-8"
-            )
+            (workflows_path / "ci.yml").write_text(ci_content, encoding="utf-8")

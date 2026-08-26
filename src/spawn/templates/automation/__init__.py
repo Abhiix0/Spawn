@@ -76,10 +76,7 @@ class AutomationTemplate(BaseTemplate):
         additions = ""
 
         if "pytest" in self.extras:
-            additions += (
-                "\n[tool.pytest.ini_options]\n"
-                'testpaths = ["tests"]\n'
-            )
+            additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"
@@ -95,6 +92,4 @@ class AutomationTemplate(BaseTemplate):
                 ci_content += GITHUB_ACTIONS_CI_RUFF_STEP
             if "pytest" in self.extras:
                 ci_content += GITHUB_ACTIONS_CI_PYTEST_STEP
-            (workflows_path / "ci.yml").write_text(
-                ci_content, encoding="utf-8"
-            )
+            (workflows_path / "ci.yml").write_text(ci_content, encoding="utf-8")

@@ -27,24 +27,16 @@ class GitHubPublisher:
     ) -> None:
 
         if not project_path.exists():
-            raise GitHubPublishError(
-                f"Project path does not exist: {project_path}"
-            )
+            raise GitHubPublishError(f"Project path does not exist: {project_path}")
 
         if not is_valid_github_url(repo_url):
-            raise GitHubPublishError(
-                "Invalid GitHub repository URL."
-            )
+            raise GitHubPublishError("Invalid GitHub repository URL.")
 
         if not is_git_repository(project_path):
-            raise GitHubPublishError(
-                "Project is not a Git repository."
-            )
+            raise GitHubPublishError("Project is not a Git repository.")
 
         if remote_exists(project_path):
-            raise GitHubPublishError(
-                "Origin remote already exists."
-            )
+            raise GitHubPublishError("Origin remote already exists.")
 
         try:
             add_all(project_path)
@@ -64,6 +56,4 @@ class GitHubPublisher:
             push_origin_main(project_path)
 
         except SpawnError as exc:
-            raise GitHubPublishError(
-                str(exc)
-            ) from exc
+            raise GitHubPublishError(str(exc)) from exc

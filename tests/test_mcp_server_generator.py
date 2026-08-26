@@ -22,9 +22,11 @@ def _cfg(
 
 @contextmanager
 def _mock_uv_and_install():
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(MCPServerTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(MCPServerTemplate, "post_install"),
+    ):
         yield
 
 
@@ -108,9 +110,11 @@ def test_mcp_meta_json(tmp_path, monkeypatch):
 
 def test_mcp_install_packages_called_with_correct_deps(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(MCPServerTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(MCPServerTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg())
     args = mock_install.call_args[0][1]
     assert "mcp" in args

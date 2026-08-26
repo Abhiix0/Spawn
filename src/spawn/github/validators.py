@@ -17,7 +17,4 @@ def is_valid_github_url(url: str) -> bool:
     if not url:
         return False
 
-    return any(
-        re.match(pattern, url)
-        for pattern in _GITHUB_PATTERNS
-    )
+    return any(re.match(pattern, url) for pattern in _GITHUB_PATTERNS)

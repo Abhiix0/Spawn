@@ -1,4 +1,5 @@
 """Generator integration tests for the AI Chatbot template."""
+
 import json
 
 from contextlib import contextmanager
@@ -25,9 +26,11 @@ def _cfg(
 
 @contextmanager
 def _mock_uv_and_install():
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ChatbotTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ChatbotTemplate, "post_install"),
+    ):
         yield
 
 
@@ -187,8 +190,12 @@ def test_chatbot_openai_sdk_llm_uses_openai_client(tmp_path, monkeypatch):
 def test_chatbot_creates_spawn_meta_json(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
-        name="my-bot", template="chatbot", use_git=False,
-        framework="pydantic-ai", provider="openai", extras=[],
+        name="my-bot",
+        template="chatbot",
+        use_git=False,
+        framework="pydantic-ai",
+        provider="openai",
+        extras=[],
     )
     with _mock_uv_and_install():
         ProjectGenerator().generate(config)
@@ -220,9 +227,11 @@ def test_chatbot_openai_sdk_meta_json(tmp_path, monkeypatch):
 
 def test_chatbot_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ChatbotTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ChatbotTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
     args = mock_install.call_args[0][1]
     assert "pydantic-ai" in args
@@ -231,9 +240,11 @@ def test_chatbot_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
 
 def test_chatbot_openai_sdk_install_packages_called(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ChatbotTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ChatbotTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg(framework="openai-sdk"))
     args = mock_install.call_args[0][1]
     assert "openai" in args
@@ -243,9 +254,11 @@ def test_chatbot_openai_sdk_install_packages_called(tmp_path, monkeypatch):
 
 def test_chatbot_extras_reach_install_packages(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ChatbotTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ChatbotTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg(extras=["ruff", "pytest"]))
     args = mock_install.call_args[0][1]
     assert "ruff" in args
@@ -254,12 +267,18 @@ def test_chatbot_extras_reach_install_packages(tmp_path, monkeypatch):
 
 def test_chatbot_meta_json_has_provider(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ChatbotTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ChatbotTemplate, "post_install"),
+    ):
         config = ProjectConfig(
-            name="my-bot", template="chatbot", use_git=False,
-            framework="pydantic-ai", provider="gemini", extras=[],
+            name="my-bot",
+            template="chatbot",
+            use_git=False,
+            framework="pydantic-ai",
+            provider="gemini",
+            extras=[],
         )
         ProjectGenerator().generate(config)
     meta = json.loads(
@@ -271,9 +290,11 @@ def test_chatbot_meta_json_has_provider(tmp_path, monkeypatch):
 def test_chatbot_pydantic_ai_only_pydantic_dep(tmp_path, monkeypatch):
     """pydantic-ai projects should not install openai/anthropic separately."""
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ChatbotTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ChatbotTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg(framework="pydantic-ai"))
     args = mock_install.call_args[0][1]
     assert "pydantic-ai" in args

@@ -149,7 +149,9 @@ def test_backend_api_django_readme():
 
 def test_backend_api_docker_extra_fastapi(tmp_path):
     template = BackendAPITemplate(framework="fastapi", extras=["docker"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     template.post_install(tmp_path)
     assert (tmp_path / "Dockerfile").exists()
     assert (tmp_path / ".dockerignore").exists()
@@ -159,7 +161,9 @@ def test_backend_api_docker_extra_fastapi(tmp_path):
 
 def test_backend_api_docker_extra_flask(tmp_path):
     template = BackendAPITemplate(framework="flask", extras=["docker"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     template.post_install(tmp_path)
     dockerfile = (tmp_path / "Dockerfile").read_text(encoding="utf-8")
     assert "run.py" in dockerfile
@@ -167,7 +171,9 @@ def test_backend_api_docker_extra_flask(tmp_path):
 
 def test_backend_api_docker_extra_django(tmp_path):
     template = BackendAPITemplate(framework="django", extras=["docker"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     template.post_install(tmp_path)
     dockerfile = (tmp_path / "Dockerfile").read_text(encoding="utf-8")
     assert "manage.py" in dockerfile
@@ -179,8 +185,12 @@ def test_backend_api_docker_extra_django(tmp_path):
 
 
 def test_backend_api_github_actions_extra(tmp_path):
-    template = BackendAPITemplate(framework="fastapi", extras=["github-actions", "ruff", "pytest"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    template = BackendAPITemplate(
+        framework="fastapi", extras=["github-actions", "ruff", "pytest"]
+    )
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     template.post_install(tmp_path)
     ci_path = tmp_path / ".github" / "workflows" / "ci.yml"
     assert ci_path.exists()

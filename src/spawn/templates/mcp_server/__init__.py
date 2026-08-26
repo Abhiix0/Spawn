@@ -21,11 +21,11 @@ MCP_SERVER_FOLDERS = [
 
 def _build_files() -> list:
     return [
-        ("src/__init__.py",      INIT_CONTENT),
-        ("src/server.py",        SERVER_CONTENT),
-        ("tests/__init__.py",    INIT_CONTENT),
+        ("src/__init__.py", INIT_CONTENT),
+        ("src/server.py", SERVER_CONTENT),
+        ("tests/__init__.py", INIT_CONTENT),
         ("tests/test_server.py", TEST_CONTENT),
-        (".env.example",         ENV_CONTENT),
+        (".env.example", ENV_CONTENT),
     ]
 
 
@@ -60,11 +60,11 @@ class MCPServerTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"
-        current   = pyproject.read_text(encoding="utf-8")
+        current = pyproject.read_text(encoding="utf-8")
         additions = ""
 
         if "pytest" in self.extras:
-            additions += "\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n"
+            additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"

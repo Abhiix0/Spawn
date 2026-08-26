@@ -41,40 +41,40 @@ _OPTIONAL: set[str] = {
 
 # Complete-sentence recommendation text keyed by check name
 _REC_TEXT: dict[str, str] = {
-    "Git Repository":   "Initialize a git repository with 'git init'.",
-    "Tests":            "Create a tests/ directory and add test files.",
-    "README.md":        "Add a README.md file to document your project.",
-    "AGENTS.md":        "Add an AGENTS.md file so coding agents understand this project's conventions.",
-    ".gitignore":       "Add a .gitignore file to exclude generated files from version control.",
-    "LICENSE":          "Add a LICENSE file to specify usage terms for your project.",
-    "Ruff":             "Configure Ruff in pyproject.toml for automated code quality checks.",
-    "Pytest":           "Configure Pytest in pyproject.toml or create pytest.ini.",
-    "GitHub Actions":   "Set up GitHub Actions in .github/workflows/ for automated CI/CD.",
-    "pyproject.toml":   "Add a pyproject.toml to centralise project configuration.",
-    "Dockerfile":       "Add a Dockerfile for reproducible, containerised deployment.",
-    ".env.example":     "Create a .env.example file to document required environment variables.",
-    "CHANGELOG.md":     "Add a CHANGELOG.md to document project history and releases.",
-    "Type Checking":    "Configure a type checker (mypy or pyright) to catch type errors early.",
-    "Pre-commit":       "Add a .pre-commit-config.yaml to enforce checks before every commit.",
+    "Git Repository": "Initialize a git repository with 'git init'.",
+    "Tests": "Create a tests/ directory and add test files.",
+    "README.md": "Add a README.md file to document your project.",
+    "AGENTS.md": "Add an AGENTS.md file so coding agents understand this project's conventions.",
+    ".gitignore": "Add a .gitignore file to exclude generated files from version control.",
+    "LICENSE": "Add a LICENSE file to specify usage terms for your project.",
+    "Ruff": "Configure Ruff in pyproject.toml for automated code quality checks.",
+    "Pytest": "Configure Pytest in pyproject.toml or create pytest.ini.",
+    "GitHub Actions": "Set up GitHub Actions in .github/workflows/ for automated CI/CD.",
+    "pyproject.toml": "Add a pyproject.toml to centralise project configuration.",
+    "Dockerfile": "Add a Dockerfile for reproducible, containerised deployment.",
+    ".env.example": "Create a .env.example file to document required environment variables.",
+    "CHANGELOG.md": "Add a CHANGELOG.md to document project history and releases.",
+    "Type Checking": "Configure a type checker (mypy or pyright) to catch type errors early.",
+    "Pre-commit": "Add a .pre-commit-config.yaml to enforce checks before every commit.",
 }
 
 # Estimated effort per check name
 _EFFORT: dict[str, str] = {
-    "Git Repository":   "30 seconds",
-    "README.md":        "2 minutes",
-    "AGENTS.md":        "1 minute",
-    "LICENSE":          "1 minute",
-    "CHANGELOG.md":     "2 minutes",
-    ".gitignore":       "1 minute",
-    "pyproject.toml":   "2 minutes",
-    ".env.example":     "2 minutes",
-    "Tests":            "10 minutes",
-    "Pytest":           "5 minutes",
-    "Ruff":             "5 minutes",
-    "Type Checking":    "5 minutes",
-    "Pre-commit":       "5 minutes",
-    "GitHub Actions":   "10 minutes",
-    "Dockerfile":       "15 minutes",
+    "Git Repository": "30 seconds",
+    "README.md": "2 minutes",
+    "AGENTS.md": "1 minute",
+    "LICENSE": "1 minute",
+    "CHANGELOG.md": "2 minutes",
+    ".gitignore": "1 minute",
+    "pyproject.toml": "2 minutes",
+    ".env.example": "2 minutes",
+    "Tests": "10 minutes",
+    "Pytest": "5 minutes",
+    "Ruff": "5 minutes",
+    "Type Checking": "5 minutes",
+    "Pre-commit": "5 minutes",
+    "GitHub Actions": "10 minutes",
+    "Dockerfile": "15 minutes",
 }
 
 
@@ -239,7 +239,9 @@ class ProjectHealthChecker:
                 pass
 
         msg = f"Pytest configured in {location}" if ok else "Pytest not configured"
-        return HealthCheck(name="Pytest", category="Testing", passed=ok, message=msg, weight=10)
+        return HealthCheck(
+            name="Pytest", category="Testing", passed=ok, message=msg, weight=10
+        )
 
     # ------------------------------------------------------------------
     # Automation Checks
@@ -330,7 +332,11 @@ class ProjectHealthChecker:
             except (OSError, ValueError):
                 pass
 
-        msg = f"Type checking configured ({location})" if ok else "Type checking not configured"
+        msg = (
+            f"Type checking configured ({location})"
+            if ok
+            else "Type checking not configured"
+        )
         return HealthCheck(
             name="Type Checking",
             category="Code Quality",
@@ -415,9 +421,7 @@ class ProjectHealthChecker:
             return ("🟠", "Fair", "Several recommended practices are missing.")
         return ("🔴", "Needs Attention", "Core project setup is incomplete.")
 
-    def get_next_best_step(
-        self, checks: List[HealthCheck]
-    ) -> tuple[str, str] | None:
+    def get_next_best_step(self, checks: List[HealthCheck]) -> tuple[str, str] | None:
         """Return (recommendation, effort) for the single highest-priority failed check."""
         failed = [c for c in checks if not c.passed]
         if not failed:
@@ -435,9 +439,7 @@ class ProjectHealthChecker:
         effort = _EFFORT.get(top.name, "a few minutes")
         return (rec, effort)
 
-    def generate_recommendations(
-        self, checks: List[HealthCheck]
-    ) -> List[str]:
+    def generate_recommendations(self, checks: List[HealthCheck]) -> List[str]:
         """Return tiered recommendations for all failed checks.
 
         Returns a flat list ordered Critical → Recommended → Optional,
@@ -498,7 +500,9 @@ class ProjectHealthChecker:
         else:
             score_color = "red"
         content.append("Project Score: ", style="bold")
-        content.append(f"{score_percent}%  ({score}/{max_score})\n", style=f"bold {score_color}")
+        content.append(
+            f"{score_percent}%  ({score}/{max_score})\n", style=f"bold {score_color}"
+        )
 
         category_order = [
             "Documentation",

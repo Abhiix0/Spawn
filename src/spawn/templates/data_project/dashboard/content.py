@@ -100,6 +100,7 @@ def make_readme() -> str:
         "```\n"
     )
 
+
 # ─── GitHub Actions ───────────────────────────────────────────────────────
 
 GITHUB_ACTIONS_CI_BASE = """\

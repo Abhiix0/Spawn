@@ -20,9 +20,11 @@ def _cfg(name: str = "my-analysis", extras: list[str] | None = None) -> ProjectC
 
 @contextmanager
 def _mock_uv_and_install():
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(DataAnalysisTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(DataAnalysisTemplate, "post_install"),
+    ):
         yield
 
 
@@ -85,10 +87,10 @@ def test_data_analysis_notebook_cells():
     nb = json.loads(files["notebooks/analysis.ipynb"])
     cells = nb["cells"]
     assert "import pandas" in "".join(cells[0]["source"])
-    assert "sample.csv"   in "".join(cells[0]["source"])
-    assert "describe"     in "".join(cells[1]["source"])
-    assert "groupby"      in "".join(cells[1]["source"])
-    assert "savefig"      in "".join(cells[2]["source"])
+    assert "sample.csv" in "".join(cells[0]["source"])
+    assert "describe" in "".join(cells[1]["source"])
+    assert "groupby" in "".join(cells[1]["source"])
+    assert "savefig" in "".join(cells[2]["source"])
     assert "reports/summary.png" in "".join(cells[2]["source"])
     assert cells[3]["cell_type"] == "markdown"
     assert "Insights" in "".join(cells[3]["source"])

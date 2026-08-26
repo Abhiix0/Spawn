@@ -121,8 +121,7 @@ def build_config_from_args(
             if item not in metadata.available_extras:
                 valid = ", ".join(metadata.available_extras)
                 raise SpawnError(
-                    f"Invalid extra: '{item}'. "
-                    f"Valid options for '{template}': {valid}"
+                    f"Invalid extra: '{item}'. Valid options for '{template}': {valid}"
                 )
         # Build de-duplicated result preserving input order.
         seen: set[str] = set()

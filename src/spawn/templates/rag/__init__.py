@@ -32,21 +32,21 @@ RAG_FOLDERS = [
 
 def _build_files() -> list:
     return [
-        ("data/sample_knowledge.md",      SAMPLE_KNOWLEDGE_CONTENT),
-        ("src/__init__.py",               INIT_CONTENT),
-        ("src/config/__init__.py",        INIT_CONTENT),
-        ("src/config/settings.py",        SETTINGS_CONTENT),
-        ("src/knowledge/__init__.py",     INIT_CONTENT),
-        ("src/knowledge/index.py",        KNOWLEDGE_INDEX_CONTENT),
-        ("src/ingestion/__init__.py",     INIT_CONTENT),
-        ("src/ingestion/ingest.py",       INGESTION_CONTENT),
-        ("src/retrieval/__init__.py",     INIT_CONTENT),
-        ("src/retrieval/retrieve.py",     RETRIEVAL_CONTENT),
-        ("src/main.py",                   MAIN_CONTENT),
-        ("tests/__init__.py",             INIT_CONTENT),
-        ("tests/conftest.py",             CONFTEST_CONTENT),
-        ("tests/test_rag.py",             TEST_CONTENT),
-        (".env.example",                  ENV_CONTENT),
+        ("data/sample_knowledge.md", SAMPLE_KNOWLEDGE_CONTENT),
+        ("src/__init__.py", INIT_CONTENT),
+        ("src/config/__init__.py", INIT_CONTENT),
+        ("src/config/settings.py", SETTINGS_CONTENT),
+        ("src/knowledge/__init__.py", INIT_CONTENT),
+        ("src/knowledge/index.py", KNOWLEDGE_INDEX_CONTENT),
+        ("src/ingestion/__init__.py", INIT_CONTENT),
+        ("src/ingestion/ingest.py", INGESTION_CONTENT),
+        ("src/retrieval/__init__.py", INIT_CONTENT),
+        ("src/retrieval/retrieve.py", RETRIEVAL_CONTENT),
+        ("src/main.py", MAIN_CONTENT),
+        ("tests/__init__.py", INIT_CONTENT),
+        ("tests/conftest.py", CONFTEST_CONTENT),
+        ("tests/test_rag.py", TEST_CONTENT),
+        (".env.example", ENV_CONTENT),
     ]
 
 
@@ -88,11 +88,11 @@ class RAGTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"
-        current   = pyproject.read_text(encoding="utf-8")
+        current = pyproject.read_text(encoding="utf-8")
         additions = ""
 
         if "pytest" in self.extras:
-            additions += "\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n"
+            additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"

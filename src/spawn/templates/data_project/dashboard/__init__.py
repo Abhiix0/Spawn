@@ -14,12 +14,12 @@ from spawn.templates.data_project.dashboard.content import (
 FOLDERS = ["data", "dashboard", "src", "tests"]
 
 FILES = [
-    ("data/sample.csv",           DASHBOARD_SAMPLE_CSV),
-    ("dashboard/__init__.py",     ""),
-    ("dashboard/app.py",          DASHBOARD_APP_CONTENT),
-    ("tests/test_dashboard.py",   DASHBOARD_TEST_CONTENT),
-    ("tests/__init__.py",         ""),
-    ("src/__init__.py",           ""),
+    ("data/sample.csv", DASHBOARD_SAMPLE_CSV),
+    ("dashboard/__init__.py", ""),
+    ("dashboard/app.py", DASHBOARD_APP_CONTENT),
+    ("tests/test_dashboard.py", DASHBOARD_TEST_CONTENT),
+    ("tests/__init__.py", ""),
+    ("src/__init__.py", ""),
 ]
 
 DEPENDENCIES = ["streamlit", "pandas", "plotly"]
@@ -58,4 +58,5 @@ class DashboardTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         from spawn.templates.data_project import _DataProjectPostInstallMixin
+
         _DataProjectPostInstallMixin.post_install(self, project_path)  # type: ignore[arg-type]

@@ -16,13 +16,15 @@ from spawn.core.exceptions import SpawnError
 # Questionary helpers
 # ---------------------------------------------------------------------------
 
-_QSTYLE = questionary.Style([
-    ("qmark",       "fg:#2D5E8E bold"),
-    ("question",    "bold"),
-    ("pointer",     "fg:#2D5E8E bold"),
-    ("highlighted", "fg:#2D5E8E bold"),
-    ("selected",    "fg:#2D5E8E"),
-])
+_QSTYLE = questionary.Style(
+    [
+        ("qmark", "fg:#2D5E8E bold"),
+        ("question", "bold"),
+        ("pointer", "fg:#2D5E8E bold"),
+        ("highlighted", "fg:#2D5E8E bold"),
+        ("selected", "fg:#2D5E8E"),
+    ]
+)
 
 
 def _select(message: str, choices: list[str], default: str | None = None) -> str:
@@ -38,9 +40,9 @@ def _select(message: str, choices: list[str], default: str | None = None) -> str
 
 def _multiselect(message: str, choices: list[str]) -> list[str]:
     """Arrow-key + spacebar multi-select. Empty selection is valid (skip)."""
-    answer = questionary.checkbox(
-        message, choices=choices, style=_QSTYLE
-    ).ask(kbi_msg="")
+    answer = questionary.checkbox(message, choices=choices, style=_QSTYLE).ask(
+        kbi_msg=""
+    )
     if answer is None:
         raise KeyboardInterrupt
     return answer
@@ -52,8 +54,8 @@ def _multiselect(message: str, choices: list[str]) -> list[str]:
 
 _OPTIONAL_SETUP_CHOICES = ["Ruff", "Pytest", "Pre-commit", "Dockerfile"]
 _OPTIONAL_SETUP_KEY = {
-    "Ruff":       "ruff",
-    "Pytest":     "pytest",
+    "Ruff": "ruff",
+    "Pytest": "pytest",
     "Pre-commit": "precommit",
     "Dockerfile": "dockerfile",
 }
@@ -69,12 +71,11 @@ def _prompt_optional_setup() -> list[str]:
 # Main interactive config builder
 # ---------------------------------------------------------------------------
 
+
 def get_project_config() -> ProjectConfig:
     # --- Project name ---
     while True:
-        project_name = typer.prompt(
-            typer.style("Project Name", fg=typer.colors.CYAN)
-        )
+        project_name = typer.prompt(typer.style("Project Name", fg=typer.colors.CYAN))
 
         try:
             validate_project_name(project_name)
@@ -139,7 +140,9 @@ def get_project_config() -> ProjectConfig:
             provider_options = get_chatbot_providers(selected_framework)
         else:
             provider_options = meta.available_providers
-        chosen = _select("Choose Provider", provider_options, default=provider_options[0])
+        chosen = _select(
+            "Choose Provider", provider_options, default=provider_options[0]
+        )
         selected_provider = chosen
 
     # --- Extras ---
@@ -155,7 +158,9 @@ def get_project_config() -> ProjectConfig:
         typer.style("Initialize Git?", fg=typer.colors.CYAN),
         default=True,
     )
-    generate_claude_md = Confirm.ask("Also generate CLAUDE.md for Claude Code?", default=False)
+    generate_claude_md = Confirm.ask(
+        "Also generate CLAUDE.md for Claude Code?", default=False
+    )
 
     return ProjectConfig(
         name=project_name,
@@ -204,7 +209,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         raise SpawnError("Could not parse structure.") from e
 
     folders = [e for e in entries if not e.is_file]
-    files   = [e for e in entries if e.is_file]
+    files = [e for e in entries if e.is_file]
 
     console.print()
     console.print("[bold]Detected[/bold]")
@@ -215,7 +220,9 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     use_git = typer.confirm(
         typer.style("Initialize Git?", fg=typer.colors.CYAN), default=True
     )
-    generate_claude_md = Confirm.ask("Also generate CLAUDE.md for Claude Code?", default=False)
+    generate_claude_md = Confirm.ask(
+        "Also generate CLAUDE.md for Claude Code?", default=False
+    )
     use_uv = typer.confirm(
         typer.style("Initialize uv?", fg=typer.colors.CYAN), default=True
     )
@@ -230,9 +237,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
             show_default=False,
         )
         if deps_raw.strip():
-            custom_dependencies = [
-                d.strip() for d in deps_raw.split(",") if d.strip()
-            ]
+            custom_dependencies = [d.strip() for d in deps_raw.split(",") if d.strip()]
     custom_dev_setup = _prompt_optional_setup() if use_uv else []
     console.print()
     extra_ignores_raw = typer.prompt(
@@ -246,9 +251,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     custom_gitignore_extra = [
         p.strip() for p in extra_ignores_raw.split(",") if p.strip()
     ]
-    proceed = typer.confirm(
-        typer.style("Proceed?", fg=typer.colors.CYAN), default=True
-    )
+    proceed = typer.confirm(typer.style("Proceed?", fg=typer.colors.CYAN), default=True)
 
     if not proceed:
         raise SpawnError("Cancelled.")

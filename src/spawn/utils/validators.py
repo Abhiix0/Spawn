@@ -3,7 +3,10 @@ import re
 from spawn.core.exceptions import SpawnError
 
 _WINDOWS_RESERVED = {
-    "CON", "PRN", "AUX", "NUL",
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
     *(f"COM{i}" for i in range(1, 10)),
     *(f"LPT{i}" for i in range(1, 10)),
 }
@@ -19,9 +22,7 @@ def validate_project_name(name: str) -> None:
         )
 
     if not re.search(r"[a-zA-Z0-9]", name):
-        raise SpawnError(
-            "Project name must contain at least one letter or number."
-        )
+        raise SpawnError("Project name must contain at least one letter or number.")
 
     if not re.match(r"^[a-zA-Z0-9_-]+$", name):
         raise SpawnError(

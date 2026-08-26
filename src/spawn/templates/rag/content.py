@@ -428,6 +428,7 @@ def make_agents_md() -> str:
         "Documents placed in `data/` are automatically ingested into `chroma_db/` on first run.\n"
     )
 
+
 # ─── GitHub Actions ───────────────────────────────────────────────────────
 
 GITHUB_ACTIONS_CI_BASE = """\
