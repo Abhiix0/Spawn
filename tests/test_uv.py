@@ -18,9 +18,7 @@ def _make_called_process_error(stderr: str) -> subprocess.CalledProcessError:
 
 @patch("subprocess.run")
 def test_uv_stderr_included_in_spawn_error(mock_run, tmp_path):
-    mock_run.side_effect = _make_called_process_error(
-        "error: Python 3.12 not found"
-    )
+    mock_run.side_effect = _make_called_process_error("error: Python 3.12 not found")
 
     with pytest.raises(SpawnError) as exc_info:
         initialize_uv(tmp_path)

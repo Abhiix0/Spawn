@@ -11,6 +11,7 @@ from spawn.generators.project_generator import ProjectGenerator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cli_config(name="demo", **kwargs):
     """Return a minimal ProjectConfig using the cli template."""
     return ProjectConfig(name=name, template="cli", use_git=False, **kwargs)
@@ -19,6 +20,7 @@ def _cli_config(name="demo", **kwargs):
 def _patch_post_install():
     """Context manager that silences CLITemplate.post_install."""
     from spawn.templates.cli_application import CLITemplate
+
     return patch.object(CLITemplate, "post_install")
 
 
@@ -30,6 +32,7 @@ def _automation_config(name="demo", **kwargs):
 def _patch_automation_post_install():
     """Context manager that silences AutomationTemplate.post_install."""
     from spawn.templates.automation import AutomationTemplate
+
     return patch.object(AutomationTemplate, "post_install")
 
 
@@ -41,6 +44,7 @@ def _chatbot_config(name="demo", **kwargs):
 def _patch_chatbot_post_install():
     """Context manager that silences ChatbotTemplate.post_install."""
     from spawn.templates.chatbot import ChatbotTemplate
+
     return patch.object(ChatbotTemplate, "post_install")
 
 
@@ -51,7 +55,9 @@ def _patch_chatbot_post_install():
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_project_generator_creates_project(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_project_generator_creates_project(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config())
@@ -60,7 +66,9 @@ def test_project_generator_creates_project(mock_uv, mock_install, tmp_path, monk
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_project_generator_creates_folders(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_project_generator_creates_folders(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config())
@@ -79,7 +87,9 @@ def test_project_generator_creates_readme(mock_uv, mock_install, tmp_path, monke
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_project_generator_creates_gitignore(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_project_generator_creates_gitignore(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config())
@@ -150,9 +160,13 @@ def test_cli_template_creates_main(mock_uv, mock_install, tmp_path, monkeypatch)
 def test_backend_api_fastapi_creates_main(mock_uv, mock_install, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
-        name="demo", template="backend-api", use_git=False, framework="fastapi",
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
     )
     from spawn.templates.backend_api import BackendAPITemplate
+
     with patch.object(BackendAPITemplate, "post_install"):
         ProjectGenerator().generate(config)
     assert (tmp_path / "demo" / "app" / "main.py").exists()
@@ -169,7 +183,9 @@ def test_removed_template_slugs_raise_error(tmp_path, monkeypatch):
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_starter_file_contains_project_name(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_starter_file_contains_project_name(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config(name="my-app"))
@@ -270,8 +286,11 @@ def test_backend_api_extras_reach_template():
     from spawn.templates.backend_api import BackendAPITemplate
 
     config = ProjectConfig(
-        name="demo", template="backend-api", use_git=False,
-        framework="fastapi", extras=["ruff", "pytest"],
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
     )
     template = instantiate_template(config)
     assert isinstance(template, BackendAPITemplate)
@@ -284,8 +303,11 @@ def test_backend_api_extras_in_dependencies():
     from spawn.core.registry import instantiate_template
 
     config = ProjectConfig(
-        name="demo", template="backend-api", use_git=False,
-        framework="fastapi", extras=["ruff", "pytest"],
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
     )
     deps = instantiate_template(config).get_dependencies()
     assert "ruff" in deps
@@ -298,8 +320,11 @@ def test_backend_api_no_extras_excludes_optional_deps():
     from spawn.core.registry import instantiate_template
 
     config = ProjectConfig(
-        name="demo", template="backend-api", use_git=False,
-        framework="fastapi", extras=[],
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=[],
     )
     deps = instantiate_template(config).get_dependencies()
     assert "ruff" not in deps
@@ -317,10 +342,14 @@ def test_generator_passes_extras_to_install_packages(
     """ProjectGenerator must call install_packages with the full dependency list."""
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
-        name="demo", template="backend-api", use_git=False,
-        framework="fastapi", extras=["ruff", "pytest"],
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=["ruff", "pytest"],
     )
     from spawn.templates.backend_api import BackendAPITemplate
+
     with patch.object(BackendAPITemplate, "post_install"):
         ProjectGenerator().generate(config)
     assert mock_install.called
@@ -338,7 +367,10 @@ def test_argparse_template_never_calls_install_packages(
     """argparse framework has no dependencies — install_packages must not be called."""
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
-        name="demo", template="cli", use_git=False, framework="argparse",
+        name="demo",
+        template="cli",
+        use_git=False,
+        framework="argparse",
     )
     with _patch_post_install():
         ProjectGenerator().generate(config)
@@ -347,7 +379,9 @@ def test_argparse_template_never_calls_install_packages(
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_generator_creates_spawn_meta_json(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_generator_creates_spawn_meta_json(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     """Every generated project must have .spawn/meta.json."""
     import json
 
@@ -374,10 +408,14 @@ def test_backend_api_meta_json_has_framework(
 
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
-        name="demo", template="backend-api", use_git=False,
-        framework="fastapi", extras=[],
+        name="demo",
+        template="backend-api",
+        use_git=False,
+        framework="fastapi",
+        extras=[],
     )
     from spawn.templates.backend_api import BackendAPITemplate
+
     with patch.object(BackendAPITemplate, "post_install"):
         ProjectGenerator().generate(config)
 
@@ -433,7 +471,9 @@ def test_meta_json_rollback_on_failure(mock_uv, mock_install, tmp_path, monkeypa
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_automation_generator_creates_project(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_automation_generator_creates_project(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_automation_post_install():
         ProjectGenerator().generate(_automation_config())
@@ -442,7 +482,9 @@ def test_automation_generator_creates_project(mock_uv, mock_install, tmp_path, m
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_automation_generator_creates_folders(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_automation_generator_creates_folders(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_automation_post_install():
         ProjectGenerator().generate(_automation_config())
@@ -456,7 +498,9 @@ def test_automation_generator_creates_folders(mock_uv, mock_install, tmp_path, m
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_automation_generator_creates_main(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_automation_generator_creates_main(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_automation_post_install():
         ProjectGenerator().generate(_automation_config())
@@ -465,7 +509,9 @@ def test_automation_generator_creates_main(mock_uv, mock_install, tmp_path, monk
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_automation_generator_creates_env_example(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_automation_generator_creates_env_example(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_automation_post_install():
         ProjectGenerator().generate(_automation_config())
@@ -474,7 +520,9 @@ def test_automation_generator_creates_env_example(mock_uv, mock_install, tmp_pat
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_automation_generator_creates_meta_json(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_automation_generator_creates_meta_json(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     import json
 
     monkeypatch.chdir(tmp_path)
@@ -486,7 +534,9 @@ def test_automation_generator_creates_meta_json(mock_uv, mock_install, tmp_path,
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_automation_main_contains_project_name(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_automation_main_contains_project_name(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_automation_post_install():
         ProjectGenerator().generate(_automation_config(name="my-bot"))
@@ -514,7 +564,9 @@ def test_automation_extras_in_dependencies():
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_chatbot_generator_creates_project(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_chatbot_generator_creates_project(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_chatbot_post_install():
         ProjectGenerator().generate(_chatbot_config())
@@ -523,7 +575,9 @@ def test_chatbot_generator_creates_project(mock_uv, mock_install, tmp_path, monk
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_chatbot_generator_creates_folders(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_chatbot_generator_creates_folders(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_chatbot_post_install():
         ProjectGenerator().generate(_chatbot_config())
@@ -544,7 +598,9 @@ def test_chatbot_generator_creates_main(mock_uv, mock_install, tmp_path, monkeyp
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_chatbot_generator_creates_env_example(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_chatbot_generator_creates_env_example(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_chatbot_post_install():
         ProjectGenerator().generate(_chatbot_config())
@@ -553,7 +609,9 @@ def test_chatbot_generator_creates_env_example(mock_uv, mock_install, tmp_path, 
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_chatbot_generator_creates_meta_json(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_chatbot_generator_creates_meta_json(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     import json
 
     monkeypatch.chdir(tmp_path)
@@ -566,7 +624,9 @@ def test_chatbot_generator_creates_meta_json(mock_uv, mock_install, tmp_path, mo
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_chatbot_generator_with_openai_sdk_framework(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_chatbot_generator_with_openai_sdk_framework(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     import json
 
     monkeypatch.chdir(tmp_path)
@@ -581,7 +641,9 @@ def test_chatbot_generator_with_openai_sdk_framework(mock_uv, mock_install, tmp_
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_chatbot_env_example_contains_project_name(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_chatbot_env_example_contains_project_name(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     with _patch_chatbot_post_install():
         ProjectGenerator().generate(_chatbot_config(name="my-bot"))
@@ -593,8 +655,11 @@ def test_chatbot_pydantic_ai_extras_in_dependencies():
     from spawn.core.registry import instantiate_template
 
     config = ProjectConfig(
-        name="demo", template="chatbot", use_git=False,
-        framework="pydantic-ai", extras=["ruff", "pytest"],
+        name="demo",
+        template="chatbot",
+        use_git=False,
+        framework="pydantic-ai",
+        extras=["ruff", "pytest"],
     )
     deps = instantiate_template(config).get_dependencies()
     assert "pydantic-ai" in deps
@@ -607,8 +672,11 @@ def test_chatbot_openai_sdk_extras_in_dependencies():
     from spawn.core.registry import instantiate_template
 
     config = ProjectConfig(
-        name="demo", template="chatbot", use_git=False,
-        framework="openai-sdk", extras=["pytest"],
+        name="demo",
+        template="chatbot",
+        use_git=False,
+        framework="openai-sdk",
+        extras=["pytest"],
     )
     deps = instantiate_template(config).get_dependencies()
     assert "openai" in deps
@@ -669,7 +737,9 @@ def test_meta_json_backward_compatible(mock_uv, mock_install, tmp_path, monkeypa
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_project_generator_creates_agents_md(mock_uv, mock_install, tmp_path, monkeypatch):
+def test_project_generator_creates_agents_md(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
     """Every generated project must have AGENTS.md."""
     monkeypatch.chdir(tmp_path)
     with _patch_post_install():

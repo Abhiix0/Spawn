@@ -1,4 +1,5 @@
 """Generator integration tests for the Automation Tool template."""
+
 import json
 
 from contextlib import contextmanager
@@ -20,9 +21,11 @@ def _cfg(name: str = "demo", extras: list[str] | None = None) -> ProjectConfig:
 
 @contextmanager
 def _mock_uv_and_install():
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv") as mock_uv, \
-         patch.object(AutomationTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv") as mock_uv,
+        patch.object(AutomationTemplate, "post_install"),
+    ):
         yield mock_install, mock_uv
 
 

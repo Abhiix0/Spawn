@@ -189,7 +189,9 @@ class TestProjectHealthChecker:
         assert result.passed is False
 
     def test_check_ruff_in_pyproject_tool_section(self, temp_project_dir):
-        (temp_project_dir / "pyproject.toml").write_text("[tool.ruff]\nline-length = 88")
+        (temp_project_dir / "pyproject.toml").write_text(
+            "[tool.ruff]\nline-length = 88"
+        )
         checker = ProjectHealthChecker(temp_project_dir)
         result = checker.check_ruff_configured()
         assert result.name == "Ruff"
@@ -197,7 +199,9 @@ class TestProjectHealthChecker:
         assert "pyproject.toml" in result.message
 
     def test_check_ruff_in_pyproject_dependency(self, temp_project_dir):
-        (temp_project_dir / "pyproject.toml").write_text('[dependency-groups]\ndev = ["ruff>=0.15.0"]')
+        (temp_project_dir / "pyproject.toml").write_text(
+            '[dependency-groups]\ndev = ["ruff>=0.15.0"]'
+        )
         checker = ProjectHealthChecker(temp_project_dir)
         result = checker.check_ruff_configured()
         assert result.passed is True
@@ -217,7 +221,9 @@ class TestProjectHealthChecker:
         assert "not configured" in result.message
 
     def test_check_pytest_in_pyproject_tool_section(self, temp_project_dir):
-        (temp_project_dir / "pyproject.toml").write_text("[tool.pytest.ini_options]\ntestpaths = ['tests']")
+        (temp_project_dir / "pyproject.toml").write_text(
+            "[tool.pytest.ini_options]\ntestpaths = ['tests']"
+        )
         checker = ProjectHealthChecker(temp_project_dir)
         result = checker.check_pytest_configured()
         assert result.name == "Pytest"
@@ -225,7 +231,9 @@ class TestProjectHealthChecker:
         assert "pyproject.toml" in result.message
 
     def test_check_pytest_in_pyproject_dependency(self, temp_project_dir):
-        (temp_project_dir / "pyproject.toml").write_text('[dependency-groups]\ndev = ["pytest>=9.0.0"]')
+        (temp_project_dir / "pyproject.toml").write_text(
+            '[dependency-groups]\ndev = ["pytest>=9.0.0"]'
+        )
         checker = ProjectHealthChecker(temp_project_dir)
         result = checker.check_pytest_configured()
         assert result.passed is True
@@ -341,7 +349,7 @@ class TestProjectHealthChecker:
         assert max_score == 0
 
     def test_calculate_score_weighted(self, temp_project_dir):
-        (temp_project_dir / ".git").mkdir()   # weight 15
+        (temp_project_dir / ".git").mkdir()  # weight 15
         (temp_project_dir / "tests").mkdir()  # weight 15
         checker = ProjectHealthChecker(temp_project_dir)
         checks = checker.run_all_checks()
@@ -363,12 +371,14 @@ class TestProjectHealthChecker:
         assert "Configuration" in cats
         assert "Code Quality" in cats
 
-        assert len(cats["Documentation"]) == 4    # README + AGENTS.md + LICENSE + CHANGELOG
+        assert (
+            len(cats["Documentation"]) == 4
+        )  # README + AGENTS.md + LICENSE + CHANGELOG
         assert len(cats["Version Control"]) == 2  # git + .gitignore
-        assert len(cats["Testing"]) == 2          # Tests + Pytest
-        assert len(cats["Automation"]) == 2       # Dockerfile + GitHub Actions
-        assert len(cats["Configuration"]) == 2    # .env.example + pyproject.toml
-        assert len(cats["Code Quality"]) == 3     # Ruff + TypeChecker + Pre-commit
+        assert len(cats["Testing"]) == 2  # Tests + Pytest
+        assert len(cats["Automation"]) == 2  # Dockerfile + GitHub Actions
+        assert len(cats["Configuration"]) == 2  # .env.example + pyproject.toml
+        assert len(cats["Code Quality"]) == 3  # Ruff + TypeChecker + Pre-commit
 
     # Recommendations Tests
 
@@ -407,12 +417,14 @@ class TestProjectHealthChecker:
 class TestRunHealthCheck:
     def test_run_health_check_default_path(self, capsys):
         from spawn.utils.doctor import run_health_check
+
         run_health_check()
         captured = capsys.readouterr()
         assert len(captured.out) > 0 or len(captured.err) > 0
 
     def test_run_health_check_custom_path(self, complete_project, capsys):
         from spawn.utils.doctor import run_health_check
+
         run_health_check(complete_project)
         captured = capsys.readouterr()
         assert len(captured.out) > 0 or len(captured.err) > 0
@@ -420,6 +432,7 @@ class TestRunHealthCheck:
 
 def test_doctor_with_valid_path(tmp_path):
     from spawn.utils.doctor import ProjectHealthChecker
+
     checker = ProjectHealthChecker(tmp_path)
     checks = checker.run_all_checks()
     assert isinstance(checks, list)
@@ -428,6 +441,7 @@ def test_doctor_with_valid_path(tmp_path):
 
 def test_doctor_with_invalid_path(tmp_path):
     from spawn.utils.doctor import ProjectHealthChecker
+
     checker = ProjectHealthChecker(Path("/nonexistent/path/xyz"))
     checks = checker.run_all_checks()
     assert all(not c.passed for c in checks)
@@ -436,6 +450,7 @@ def test_doctor_with_invalid_path(tmp_path):
 # ---------------------------------------------------------------------------
 # New checks: CHANGELOG.md and pyproject.toml
 # ---------------------------------------------------------------------------
+
 
 def test_check_changelog_passes_when_present(tmp_path):
     (tmp_path / "CHANGELOG.md").write_text("# Changelog")
@@ -473,6 +488,7 @@ def test_check_pyproject_fails_when_missing(tmp_path):
 # ---------------------------------------------------------------------------
 # Code Quality new checks
 # ---------------------------------------------------------------------------
+
 
 def test_check_type_checker_detects_mypy_ini(tmp_path):
     (tmp_path / "mypy.ini").write_text("[mypy]\nstrict = True")
@@ -525,6 +541,7 @@ def test_check_precommit_fails_when_missing(tmp_path):
 # Category assertions
 # ---------------------------------------------------------------------------
 
+
 def test_ruff_check_category_is_code_quality(tmp_path):
     checker = ProjectHealthChecker(tmp_path)
     result = checker.check_ruff_configured()
@@ -547,22 +564,27 @@ def test_dockerfile_check_category_is_automation(tmp_path):
 # Per-category scoring
 # ---------------------------------------------------------------------------
 
+
 def test_calculate_category_scores_returns_all_categories(tmp_path):
     checker = ProjectHealthChecker(tmp_path)
     checks = checker.run_all_checks()
     scores = checker.calculate_category_scores(checks)
     for cat in (
-        "Documentation", "Version Control", "Configuration",
-        "Testing", "Automation", "Code Quality",
+        "Documentation",
+        "Version Control",
+        "Configuration",
+        "Testing",
+        "Automation",
+        "Code Quality",
     ):
         assert cat in scores, f"Missing category: {cat}"
 
 
 def test_calculate_category_scores_correct_math():
     checks = [
-        HealthCheck("A", "Documentation", passed=True,  message="", weight=10),
+        HealthCheck("A", "Documentation", passed=True, message="", weight=10),
         HealthCheck("B", "Documentation", passed=False, message="", weight=5),
-        HealthCheck("C", "Testing",       passed=True,  message="", weight=15),
+        HealthCheck("C", "Testing", passed=True, message="", weight=15),
     ]
     checker = ProjectHealthChecker()
     scores = checker.calculate_category_scores(checks)
@@ -573,6 +595,7 @@ def test_calculate_category_scores_correct_math():
 # ---------------------------------------------------------------------------
 # Health rating
 # ---------------------------------------------------------------------------
+
 
 def test_health_rating_excellent():
     checker = ProjectHealthChecker()
@@ -614,12 +637,15 @@ def test_health_rating_needs_attention():
 # Tiered recommendations
 # ---------------------------------------------------------------------------
 
+
 def test_recommendations_are_tiered():
     """Critical items must appear before Recommended before Optional."""
     checks = [
-        HealthCheck("Git Repository", "Version Control", passed=False, message="", weight=15),
-        HealthCheck("Ruff",           "Code Quality",   passed=False, message="", weight=10),
-        HealthCheck("Dockerfile",     "Automation",     passed=False, message="", weight=10),
+        HealthCheck(
+            "Git Repository", "Version Control", passed=False, message="", weight=15
+        ),
+        HealthCheck("Ruff", "Code Quality", passed=False, message="", weight=10),
+        HealthCheck("Dockerfile", "Automation", passed=False, message="", weight=10),
     ]
     checker = ProjectHealthChecker()
     recs = checker.generate_recommendations(checks)
@@ -635,8 +661,8 @@ def test_recommendations_are_tiered():
 def test_passed_check_never_recommended():
     """A passing Ruff check must never appear in recommendations."""
     checks = [
-        HealthCheck("Ruff", "Code Quality", passed=True,  message="ok", weight=10),
-        HealthCheck("Tests","Testing",       passed=False, message="",   weight=15),
+        HealthCheck("Ruff", "Code Quality", passed=True, message="ok", weight=10),
+        HealthCheck("Tests", "Testing", passed=False, message="", weight=15),
     ]
     checker = ProjectHealthChecker()
     recs = checker.generate_recommendations(checks)
@@ -648,10 +674,13 @@ def test_passed_check_never_recommended():
 # Next Best Step
 # ---------------------------------------------------------------------------
 
+
 def test_next_best_step_returns_none_when_all_pass():
     checks = [
-        HealthCheck("Git Repository", "Version Control", passed=True, message="ok", weight=15),
-        HealthCheck("README.md",      "Documentation",   passed=True, message="ok", weight=10),
+        HealthCheck(
+            "Git Repository", "Version Control", passed=True, message="ok", weight=15
+        ),
+        HealthCheck("README.md", "Documentation", passed=True, message="ok", weight=10),
     ]
     checker = ProjectHealthChecker()
     result = checker.get_next_best_step(checks)
@@ -661,8 +690,10 @@ def test_next_best_step_returns_none_when_all_pass():
 def test_next_best_step_prioritizes_critical():
     """Git failing + LICENSE failing → next best step must be about Git."""
     checks = [
-        HealthCheck("Git Repository", "Version Control", passed=False, message="", weight=15),
-        HealthCheck("LICENSE",        "Documentation",   passed=False, message="", weight=5),
+        HealthCheck(
+            "Git Repository", "Version Control", passed=False, message="", weight=15
+        ),
+        HealthCheck("LICENSE", "Documentation", passed=False, message="", weight=5),
     ]
     checker = ProjectHealthChecker()
     rec_text, effort = checker.get_next_best_step(checks)

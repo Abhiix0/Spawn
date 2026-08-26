@@ -20,9 +20,11 @@ def _cfg(name: str = "my-etl", extras: list[str] | None = None) -> ProjectConfig
 
 @contextmanager
 def _mock_uv_and_install():
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(ETLPipelineTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(ETLPipelineTemplate, "post_install"),
+    ):
         yield
 
 

@@ -15,9 +15,7 @@ from spawn.core.exceptions import SpawnError
 def test_missing_project_path():
     publisher = GitHubPublisher()
 
-    with pytest.raises(
-        GitHubPublishError
-    ):
+    with pytest.raises(GitHubPublishError):
         publisher.publish(
             Path("missing"),
             "https://github.com/user/repo",
@@ -27,9 +25,7 @@ def test_missing_project_path():
 def test_invalid_repo_url(tmp_path):
     publisher = GitHubPublisher()
 
-    with pytest.raises(
-        GitHubPublishError
-    ):
+    with pytest.raises(GitHubPublishError):
         publisher.publish(
             tmp_path,
             "not-a-url",
@@ -45,9 +41,7 @@ def test_not_git_repository(
 
     publisher = GitHubPublisher()
 
-    with pytest.raises(
-        GitHubPublishError
-    ):
+    with pytest.raises(GitHubPublishError):
         publisher.publish(
             tmp_path,
             "https://github.com/user/repo",
@@ -66,9 +60,7 @@ def test_remote_already_exists(
 
     publisher = GitHubPublisher()
 
-    with pytest.raises(
-        GitHubPublishError
-    ):
+    with pytest.raises(GitHubPublishError):
         publisher.publish(
             tmp_path,
             "https://github.com/user/repo",
@@ -102,27 +94,21 @@ def test_publish_success(
         "https://github.com/user/repo",
     )
 
-    mock_add_all.assert_called_once_with(
-        tmp_path
-    )
+    mock_add_all.assert_called_once_with(tmp_path)
 
     mock_commit.assert_called_once_with(
         tmp_path,
         "Initial commit",
     )
 
-    mock_rename_main_branch.assert_called_once_with(
-        tmp_path
-    )
+    mock_rename_main_branch.assert_called_once_with(tmp_path)
 
     mock_add_remote.assert_called_once_with(
         tmp_path,
         "https://github.com/user/repo",
     )
 
-    mock_push_origin_main.assert_called_once_with(
-        tmp_path
-    )
+    mock_push_origin_main.assert_called_once_with(tmp_path)
 
 
 @patch("spawn.github.publisher.is_git_repository")

@@ -21,6 +21,7 @@ from spawn.utils.git import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cpe(stderr: str = "") -> subprocess.CalledProcessError:
     exc = subprocess.CalledProcessError(returncode=1, cmd=["git", "init"])
     exc.stderr = stderr

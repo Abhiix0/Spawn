@@ -1,4 +1,5 @@
 """Integration tests for the Custom Structure end-to-end flow."""
+
 import json
 from unittest.mock import patch
 
@@ -29,9 +30,7 @@ def _write_custom_metadata(project_path, config) -> None:
                 "framework": None,
                 "provider": None,
                 "spawn_version": __version__,
-                "created_at": datetime.datetime.now(
-                    datetime.timezone.utc
-                ).isoformat(),
+                "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "generator": "custom",
                 "git": config.use_git,
                 "uv": config.use_uv,
@@ -56,8 +55,10 @@ def test_custom_structure_end_to_end(tmp_path, monkeypatch):
         custom_entries=entries,
     )
 
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"):
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+    ):
         project_path = CustomStructureGenerator().generate(
             project_name=config.name,
             entries=entries,
@@ -83,8 +84,10 @@ def test_custom_structure_creates_correct_fs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
 
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"):
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+    ):
         project_path = CustomStructureGenerator().generate(
             project_name="my-custom",
             entries=entries,
@@ -115,12 +118,17 @@ def test_meta_json_new_keys_present(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
     config = ProjectConfig(
-        name="my-custom", template="custom",
-        use_git=False, use_uv=False, custom_entries=entries,
+        name="my-custom",
+        template="custom",
+        use_git=False,
+        use_uv=False,
+        custom_entries=entries,
     )
 
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"):
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+    ):
         project_path = CustomStructureGenerator().generate(
             project_name=config.name,
             entries=entries,
@@ -129,8 +137,19 @@ def test_meta_json_new_keys_present(tmp_path, monkeypatch):
         )
 
     _write_custom_metadata(project_path, config)
-    meta = json.loads((project_path / ".spawn" / "meta.json").read_text(encoding="utf-8"))
+    meta = json.loads(
+        (project_path / ".spawn" / "meta.json").read_text(encoding="utf-8")
+    )
 
-    for key in ("intent", "framework", "provider", "spawn_version",
-                "created_at", "generator", "git", "uv", "source"):
+    for key in (
+        "intent",
+        "framework",
+        "provider",
+        "spawn_version",
+        "created_at",
+        "generator",
+        "git",
+        "uv",
+        "source",
+    ):
         assert key in meta, f"Missing meta key: {key}"

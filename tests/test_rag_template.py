@@ -31,8 +31,13 @@ def test_rag_template_default_extras():
 def test_rag_folders_complete():
     t = RAGTemplate()
     for required in [
-        "data", "chroma_db", "src/ingestion",
-        "src/retrieval", "src/knowledge", "src/config", "tests",
+        "data",
+        "chroma_db",
+        "src/ingestion",
+        "src/retrieval",
+        "src/knowledge",
+        "src/config",
+        "tests",
     ]:
         assert required in t.folders, f"Missing folder: {required}"
 
@@ -209,8 +214,8 @@ def test_rag_core_dependencies():
 def test_rag_no_framework_deps_by_default():
     t = RAGTemplate()
     deps = t.get_dependencies()
-    assert "llama-index" not in deps   # meta-package, too heavy
-    assert "openai" not in deps        # pulled transitively by llama-index-llms-openai
+    assert "llama-index" not in deps  # meta-package, too heavy
+    assert "openai" not in deps  # pulled transitively by llama-index-llms-openai
 
 
 def test_rag_pytest_extra():
@@ -263,11 +268,13 @@ def test_rag_next_steps_has_run():
 
 def test_gitignore_excludes_chroma_db():
     from spawn.templates.shared_content import GITIGNORE_CONTENT
+
     assert "chroma_db/" in GITIGNORE_CONTENT
 
 
 def test_gitignore_keeps_gitkeep():
     from spawn.templates.shared_content import GITIGNORE_CONTENT
+
     assert "!chroma_db/.gitkeep" in GITIGNORE_CONTENT
 
 
@@ -289,20 +296,28 @@ def test_collection_name_is_valid_for_various_project_names():
         ns: dict = {}
         # Stub out heavy imports so exec works without llama-index installed
         for mod in [
-            "chromadb", "llama_index", "llama_index.core",
-            "llama_index.vector_stores", "llama_index.vector_stores.chroma",
+            "chromadb",
+            "llama_index",
+            "llama_index.core",
+            "llama_index.vector_stores",
+            "llama_index.vector_stores.chroma",
         ]:
             ns[mod] = types.ModuleType(mod)
         import sys
+
         stubs = {}
         for mod in [
-            "chromadb", "llama_index", "llama_index.core",
-            "llama_index.vector_stores", "llama_index.vector_stores.chroma",
+            "chromadb",
+            "llama_index",
+            "llama_index.core",
+            "llama_index.vector_stores",
+            "llama_index.vector_stores.chroma",
         ]:
             stubs[mod] = sys.modules.get(mod)
             sys.modules[mod] = types.ModuleType(mod)
         # Provide minimal fakes so the module-level code executes
         import types as _types
+
         llama_core = _types.ModuleType("llama_index.core")
         llama_core.StorageContext = object  # type: ignore[attr-defined]
         sys.modules["llama_index.core"] = llama_core

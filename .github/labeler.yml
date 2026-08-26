@@ -1,0 +1,25 @@
+templates:
+  - changed-files:
+      - any-glob-to-any-file: "src/spawn/templates/**"
+
+core:
+  - changed-files:
+      - any-glob-to-any-file: "src/spawn/core/**"
+
+cli:
+  - changed-files:
+      - any-glob-to-any-file: "src/spawn/cli/**"
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "README.md"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: "tests/**"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"

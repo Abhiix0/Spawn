@@ -289,9 +289,13 @@ README.md
 def test_generator_creates_all_folders(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"):
-        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+    ):
+        CustomStructureGenerator().generate(
+            "my-project", entries, use_git=False, use_uv=False
+        )
     root = tmp_path / "my-project"
     assert (root / "app" / "api").is_dir()
     assert (root / "app" / "services").is_dir()
@@ -302,9 +306,13 @@ def test_generator_creates_all_folders(tmp_path, monkeypatch):
 def test_generator_creates_files(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"):
-        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+    ):
+        CustomStructureGenerator().generate(
+            "my-project", entries, use_git=False, use_uv=False
+        )
     root = tmp_path / "my-project"
     assert (root / "README.md").is_file()
     assert (root / ".env.example").is_file()
@@ -315,24 +323,34 @@ def test_generator_raises_if_dir_exists(tmp_path, monkeypatch):
     (tmp_path / "my-project").mkdir()
     entries = parse_structure(_TREE_RAW)
     with pytest.raises(SpawnError, match="already exists"):
-        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+        CustomStructureGenerator().generate(
+            "my-project", entries, use_git=False, use_uv=False
+        )
 
 
 def test_generator_skips_git_when_false(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_git") as mock_git, \
-         patch("spawn.generators.custom_structure.initialize_uv"):
-        CustomStructureGenerator().generate("my-project", entries, use_git=False, use_uv=False)
+    with (
+        patch("spawn.generators.custom_structure.initialize_git") as mock_git,
+        patch("spawn.generators.custom_structure.initialize_uv"),
+    ):
+        CustomStructureGenerator().generate(
+            "my-project", entries, use_git=False, use_uv=False
+        )
     mock_git.assert_not_called()
 
 
 def test_generator_calls_git_when_true(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_git") as mock_git, \
-         patch("spawn.generators.custom_structure.initialize_uv"):
-        CustomStructureGenerator().generate("my-project", entries, use_git=True, use_uv=False)
+    with (
+        patch("spawn.generators.custom_structure.initialize_git") as mock_git,
+        patch("spawn.generators.custom_structure.initialize_uv"),
+    ):
+        CustomStructureGenerator().generate(
+            "my-project", entries, use_git=True, use_uv=False
+        )
     mock_git.assert_called_once()
 
 
@@ -355,7 +373,9 @@ def test_generator_rolls_back_on_failure(tmp_path, monkeypatch):
                 "my-project", entries, use_git=False, use_uv=False
             )
 
-    assert not (tmp_path / "my-project").exists(), "rollback failed — directory still exists"
+    assert not (tmp_path / "my-project").exists(), (
+        "rollback failed — directory still exists"
+    )
 
 
 # ─── Dependency installation ───────────────────────────────────────────────
@@ -364,9 +384,11 @@ def test_generator_rolls_back_on_failure(tmp_path, monkeypatch):
 def test_generate_installs_dependencies_when_uv_and_deps_present(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"), \
-         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+        patch("spawn.generators.custom_structure.install_packages") as mock_install,
+    ):
         CustomStructureGenerator().generate(
             "my-project",
             entries,
@@ -380,9 +402,11 @@ def test_generate_installs_dependencies_when_uv_and_deps_present(tmp_path, monke
 def test_generate_skips_install_when_use_uv_false(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"), \
-         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+        patch("spawn.generators.custom_structure.install_packages") as mock_install,
+    ):
         CustomStructureGenerator().generate(
             "my-project",
             entries,
@@ -396,9 +420,11 @@ def test_generate_skips_install_when_use_uv_false(tmp_path, monkeypatch):
 def test_generate_skips_install_when_no_dependencies(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"), \
-         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+        patch("spawn.generators.custom_structure.install_packages") as mock_install,
+    ):
         # empty list
         CustomStructureGenerator().generate(
             "my-project-a",
@@ -413,9 +439,11 @@ def test_generate_skips_install_when_no_dependencies(tmp_path, monkeypatch):
 def test_generate_skips_install_when_dependencies_none(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch("spawn.generators.custom_structure.initialize_uv"), \
-         patch("spawn.generators.custom_structure.initialize_git"), \
-         patch("spawn.generators.custom_structure.install_packages") as mock_install:
+    with (
+        patch("spawn.generators.custom_structure.initialize_uv"),
+        patch("spawn.generators.custom_structure.initialize_git"),
+        patch("spawn.generators.custom_structure.install_packages") as mock_install,
+    ):
         # None (default)
         CustomStructureGenerator().generate(
             "my-project-b",
@@ -429,8 +457,8 @@ def test_generate_skips_install_when_dependencies_none(tmp_path, monkeypatch):
 
 # ─── _apply_dev_setup / dev_setup wiring ──────────────────────────────────
 
-_PATCH_UV   = "spawn.generators.custom_structure.initialize_uv"
-_PATCH_GIT  = "spawn.generators.custom_structure.initialize_git"
+_PATCH_UV = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT = "spawn.generators.custom_structure.initialize_git"
 _PATCH_INST = "spawn.generators.custom_structure.install_packages"
 
 
@@ -491,8 +519,7 @@ def test_install_packages_called_with_dev_flag(tmp_path, monkeypatch):
     """ruff + pytest + precommit selections must call install_packages with dev=True."""
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch(_PATCH_UV), patch(_PATCH_GIT), \
-         patch(_PATCH_INST) as mock_install:
+    with patch(_PATCH_UV), patch(_PATCH_GIT), patch(_PATCH_INST) as mock_install:
         CustomStructureGenerator().generate(
             "dev-project",
             entries,
@@ -511,8 +538,7 @@ def test_dockerfile_no_dependency_install(tmp_path, monkeypatch):
     """Dockerfile-only selection must NOT trigger install_packages at all."""
     monkeypatch.chdir(tmp_path)
     entries = parse_structure(_TREE_RAW)
-    with patch(_PATCH_UV), patch(_PATCH_GIT), \
-         patch(_PATCH_INST) as mock_install:
+    with patch(_PATCH_UV), patch(_PATCH_GIT), patch(_PATCH_INST) as mock_install:
         CustomStructureGenerator().generate(
             "dev-project",
             entries,
@@ -534,8 +560,8 @@ README.md
 .env.example
 """
 
-_PATCH_UV_R   = "spawn.generators.custom_structure.initialize_uv"
-_PATCH_GIT_R  = "spawn.generators.custom_structure.initialize_git"
+_PATCH_UV_R = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT_R = "spawn.generators.custom_structure.initialize_git"
 _PATCH_INST_R = "spawn.generators.custom_structure.install_packages"
 
 
@@ -638,8 +664,8 @@ src/
 README.md
 """
 
-_PATCH_UV_G   = "spawn.generators.custom_structure.initialize_uv"
-_PATCH_GIT_G  = "spawn.generators.custom_structure.initialize_git"
+_PATCH_UV_G = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_GIT_G = "spawn.generators.custom_structure.initialize_git"
 _PATCH_INST_G = "spawn.generators.custom_structure.install_packages"
 
 
@@ -670,7 +696,14 @@ def test_gitignore_includes_python_defaults(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     project_path = _gen_with_gitignore(tmp_path, _GITIGNORE_RAW)
     content = (project_path / ".gitignore").read_text(encoding="utf-8")
-    for pattern in (".venv/", ".env", "__pycache__/", ".pytest_cache/", ".mypy_cache/", ".ruff_cache/"):
+    for pattern in (
+        ".venv/",
+        ".env",
+        "__pycache__/",
+        ".pytest_cache/",
+        ".mypy_cache/",
+        ".ruff_cache/",
+    ):
         assert pattern in content, f"Expected '{pattern}' in .gitignore"
 
 
@@ -724,7 +757,7 @@ src/
 .git
 """
 
-_PATCH_UV_F  = "spawn.generators.custom_structure.initialize_uv"
+_PATCH_UV_F = "spawn.generators.custom_structure.initialize_uv"
 _PATCH_GIT_F = "spawn.generators.custom_structure.initialize_git"
 _PATCH_INS_F = "spawn.generators.custom_structure.install_packages"
 
@@ -785,7 +818,9 @@ def _gen_single(tmp_path, filename, project_name="kf-proj"):
 def test_license_classified_as_file(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     project_path = _gen_single(tmp_path, "LICENSE")
-    assert (project_path / "LICENSE").is_file(), "LICENSE should be a file, not a directory"
+    assert (project_path / "LICENSE").is_file(), (
+        "LICENSE should be a file, not a directory"
+    )
 
 
 def test_dockerfile_pasted_classified_as_file(tmp_path, monkeypatch):

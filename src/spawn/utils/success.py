@@ -14,7 +14,9 @@ def show_success(
     next_steps: list[str],
 ) -> None:
 
-    git_status = "[green]✓ Enabled[/green]" if use_git else "[yellow]○ Disabled[/yellow]"
+    git_status = (
+        "[green]✓ Enabled[/green]" if use_git else "[yellow]○ Disabled[/yellow]"
+    )
 
     table = Table.grid(padding=(0, 2))
     table.add_row("[bold cyan]Project[/bold cyan]", project_name)
@@ -23,10 +25,7 @@ def show_success(
     table.add_row("[bold cyan]UV[/bold cyan]", "[green]✓ Initialized[/green]")
     table.add_row("[bold cyan]Virtual Env[/bold cyan]", "[green]✓ Created[/green]")
 
-    formatted = [
-        step.format(project_name=project_name)
-        for step in next_steps
-    ]
+    formatted = [step.format(project_name=project_name) for step in next_steps]
     next_steps_content = "\n".join(formatted)
 
     next_steps_text = Text()

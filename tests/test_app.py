@@ -3,6 +3,7 @@
 All heavy I/O (filesystem, subprocess, prompts) is mocked so tests run
 instantly without touching the real system.
 """
+
 from pathlib import Path
 from unittest.mock import patch
 from typer.testing import CliRunner
@@ -196,7 +197,9 @@ def test_doctor_path_is_file_not_directory(tmp_path):
 # ---------------------------------------------------------------------------
 
 _VALID_AUTO_CONFIG = ProjectConfig(name="demo", template="automation", use_git=True)
-_VALID_AUTO_CONFIG_NO_GIT = ProjectConfig(name="demo", template="automation", use_git=False)
+_VALID_AUTO_CONFIG_NO_GIT = ProjectConfig(
+    name="demo", template="automation", use_git=False
+)
 
 
 @patch("spawn.cli.app.get_project_config")
@@ -205,13 +208,19 @@ _VALID_AUTO_CONFIG_NO_GIT = ProjectConfig(name="demo", template="automation", us
 @patch("spawn.cli.app.instantiate_template")
 @patch("spawn.cli.app.Confirm.ask", return_value=False)
 def test_noninteractive_name_template_succeeds(
-    mock_confirm, mock_instantiate, mock_show_success, mock_generator_cls, mock_get_config
+    mock_confirm,
+    mock_instantiate,
+    mock_show_success,
+    mock_generator_cls,
+    mock_get_config,
 ):
     """--name + --template skips get_project_config entirely and exits 0."""
     mock_generator_cls.return_value.generate.return_value = Path("demo")
     mock_instantiate.return_value = None
 
-    result = runner.invoke(app, ["create", "--name", "demo", "--template", "automation"])
+    result = runner.invoke(
+        app, ["create", "--name", "demo", "--template", "automation"]
+    )
 
     assert result.exit_code == 0
     assert mock_get_config.call_count == 0
@@ -313,7 +322,11 @@ def test_config_file_missing_exits_1(tmp_path):
 @patch("spawn.cli.app.instantiate_template")
 @patch("spawn.cli.app.Confirm.ask")
 def test_yes_flag_skips_confirm_ask(
-    mock_confirm, mock_instantiate, mock_show_success, mock_generator_cls, mock_get_config
+    mock_confirm,
+    mock_instantiate,
+    mock_show_success,
+    mock_generator_cls,
+    mock_get_config,
 ):
     """--yes must prevent Confirm.ask from ever being called."""
     mock_generator_cls.return_value.generate.return_value = Path("demo")
@@ -333,7 +346,11 @@ def test_yes_flag_skips_confirm_ask(
 @patch("spawn.cli.app.instantiate_template")
 @patch("spawn.cli.app.Confirm.ask")
 def test_noninteractive_without_yes_also_skips_confirm_ask(
-    mock_confirm, mock_instantiate, mock_show_success, mock_generator_cls, mock_get_config
+    mock_confirm,
+    mock_instantiate,
+    mock_show_success,
+    mock_generator_cls,
+    mock_get_config,
 ):
     """Non-interactive mode alone (no --yes) must also skip Confirm.ask."""
     mock_generator_cls.return_value.generate.return_value = Path("demo")
@@ -461,9 +478,13 @@ def test_custom_structure_generate_called_with_claude_md(mock_get_config, tmp_pa
         generate_claude_md=True,
     )
 
-    with patch("spawn.generators.custom_structure.CustomStructureGenerator") as mock_gen_cls, \
-         patch("spawn.cli.app._write_custom_metadata"), \
-         patch("spawn.cli.app.show_success"):
+    with (
+        patch(
+            "spawn.generators.custom_structure.CustomStructureGenerator"
+        ) as mock_gen_cls,
+        patch("spawn.cli.app._write_custom_metadata"),
+        patch("spawn.cli.app.show_success"),
+    ):
         mock_gen_cls.return_value.generate.return_value = Path("cs-proj")
         runner.invoke(app, ["create"])
 

@@ -26,9 +26,11 @@ def _cfg(
 
 @contextmanager
 def _mock_uv_and_install():
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(AgentTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(AgentTemplate, "post_install"),
+    ):
         yield
 
 
@@ -195,9 +197,11 @@ def test_agent_meta_json_openai_agents(tmp_path, monkeypatch):
 
 def test_agent_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(AgentTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(AgentTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg())
     args = mock_install.call_args[0][1]
     assert "pydantic-ai" in args
@@ -206,9 +210,11 @@ def test_agent_pydantic_ai_install_packages_called(tmp_path, monkeypatch):
 
 def test_agent_openai_agents_install_packages_called(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with patch("spawn.generators.project_generator.install_packages") as mock_install, \
-         patch("spawn.generators.project_generator.initialize_uv"), \
-         patch.object(AgentTemplate, "post_install"):
+    with (
+        patch("spawn.generators.project_generator.install_packages") as mock_install,
+        patch("spawn.generators.project_generator.initialize_uv"),
+        patch.object(AgentTemplate, "post_install"),
+    ):
         ProjectGenerator().generate(_cfg(framework="openai-agents", provider="openai"))
     args = mock_install.call_args[0][1]
     assert "openai-agents" in args

@@ -1,4 +1,5 @@
 """Unit tests for CLITemplate — no filesystem, no subprocess."""
+
 from spawn.templates.cli_application import CLITemplate
 
 
@@ -134,7 +135,7 @@ def test_cli_all_starter_file_paths_are_strings():
 def test_cli_post_install_adds_pytest_section(tmp_path):
     t = CLITemplate(framework="typer", extras=["pytest"])
     pyproject = tmp_path / "pyproject.toml"
-    pyproject.write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    pyproject.write_text('[project]\nname = "demo"\n', encoding="utf-8")
     t.post_install(tmp_path)
     content = pyproject.read_text(encoding="utf-8")
     assert "[tool.pytest.ini_options]" in content
@@ -144,7 +145,7 @@ def test_cli_post_install_adds_pytest_section(tmp_path):
 def test_cli_post_install_adds_ruff_section(tmp_path):
     t = CLITemplate(framework="typer", extras=["ruff"])
     pyproject = tmp_path / "pyproject.toml"
-    pyproject.write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    pyproject.write_text('[project]\nname = "demo"\n', encoding="utf-8")
     t.post_install(tmp_path)
     content = pyproject.read_text(encoding="utf-8")
     assert "[tool.ruff]" in content
@@ -153,7 +154,7 @@ def test_cli_post_install_adds_ruff_section(tmp_path):
 
 def test_cli_post_install_no_extras_does_not_modify_pyproject(tmp_path):
     t = CLITemplate(framework="typer", extras=[])
-    original = "[project]\nname = \"demo\"\n"
+    original = '[project]\nname = "demo"\n'
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text(original, encoding="utf-8")
     t.post_install(tmp_path)
@@ -162,7 +163,9 @@ def test_cli_post_install_no_extras_does_not_modify_pyproject(tmp_path):
 
 def test_cli_post_install_github_actions_creates_ci_yml(tmp_path):
     t = CLITemplate(framework="typer", extras=["github-actions"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     t.post_install(tmp_path)
     ci_path = tmp_path / ".github" / "workflows" / "ci.yml"
     assert ci_path.exists()
@@ -172,7 +175,9 @@ def test_cli_post_install_github_actions_creates_ci_yml(tmp_path):
 
 def test_cli_post_install_github_actions_with_ruff_and_pytest(tmp_path):
     t = CLITemplate(framework="typer", extras=["github-actions", "ruff", "pytest"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     t.post_install(tmp_path)
     ci_path = tmp_path / ".github" / "workflows" / "ci.yml"
     content = ci_path.read_text(encoding="utf-8")
@@ -182,7 +187,9 @@ def test_cli_post_install_github_actions_with_ruff_and_pytest(tmp_path):
 
 def test_cli_post_install_github_actions_without_ruff_step(tmp_path):
     t = CLITemplate(framework="typer", extras=["github-actions", "pytest"])
-    (tmp_path / "pyproject.toml").write_text("[project]\nname = \"demo\"\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
     t.post_install(tmp_path)
     ci_path = tmp_path / ".github" / "workflows" / "ci.yml"
     content = ci_path.read_text(encoding="utf-8")

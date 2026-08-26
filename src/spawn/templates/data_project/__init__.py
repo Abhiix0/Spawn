@@ -7,9 +7,9 @@ from spawn.templates.data_project.etl import ETLPipelineTemplate
 from spawn.templates.data_project.ml import MLProjectTemplate
 
 _SUBTEMPLATE_MAP = {
-    "Data Analysis":    DataAnalysisTemplate,
-    "Dashboard":        DashboardTemplate,
-    "ETL Pipeline":     ETLPipelineTemplate,
+    "Data Analysis": DataAnalysisTemplate,
+    "Dashboard": DashboardTemplate,
+    "ETL Pipeline": ETLPipelineTemplate,
     "Machine Learning": MLProjectTemplate,
 }
 
@@ -21,15 +21,8 @@ _GITIGNORE_RULES: dict[str, str] = {
         "reports/*.png\n"
         "notebooks/.ipynb_checkpoints/\n"
     ),
-    "Dashboard": (
-        "\n# Dashboard artifacts\n"
-        "data/*.csv\n"
-        "!data/sample.csv\n"
-    ),
-    "ETL Pipeline": (
-        "\n# ETL artifacts\n"
-        "data/cleaned.csv\n"
-    ),
+    "Dashboard": ("\n# Dashboard artifacts\ndata/*.csv\n!data/sample.csv\n"),
+    "ETL Pipeline": ("\n# ETL artifacts\ndata/cleaned.csv\n"),
     "Machine Learning": (
         "\n# ML artifacts\n"
         "models/*.joblib\n"

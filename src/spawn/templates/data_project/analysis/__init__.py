@@ -14,12 +14,12 @@ from spawn.templates.data_project.analysis.content import (
 FOLDERS = ["data", "notebooks", "reports", "src", "tests"]
 
 FILES = [
-    ("data/sample.csv",           SAMPLE_CSV),
-    ("notebooks/analysis.ipynb",  NOTEBOOK_CONTENT),
-    ("tests/test_analysis.py",    TEST_CONTENT),
-    ("tests/__init__.py",         ""),
-    ("reports/.gitkeep",          ""),
-    ("src/__init__.py",           ""),
+    ("data/sample.csv", SAMPLE_CSV),
+    ("notebooks/analysis.ipynb", NOTEBOOK_CONTENT),
+    ("tests/test_analysis.py", TEST_CONTENT),
+    ("tests/__init__.py", ""),
+    ("reports/.gitkeep", ""),
+    ("src/__init__.py", ""),
 ]
 
 DEPENDENCIES = ["pandas", "numpy", "jupyter", "matplotlib"]
@@ -71,4 +71,5 @@ class DataAnalysisTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         from spawn.templates.data_project import _DataProjectPostInstallMixin
+
         _DataProjectPostInstallMixin.post_install(self, project_path)  # type: ignore[arg-type]

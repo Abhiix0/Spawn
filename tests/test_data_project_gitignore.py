@@ -2,6 +2,7 @@
 Tests that each data_type appends the correct gitignore rules via post_install,
 and that the negation rules (keeping the sample data file) are present.
 """
+
 from contextlib import contextmanager
 from unittest.mock import patch
 
@@ -26,13 +27,16 @@ def _cfg(data_type: str, name: str = "test-proj") -> ProjectConfig:
 @contextmanager
 def _mock_uv(template_cls):
     """Mock initialize_uv to create pyproject.toml; let post_install run real."""
+
     def fake_uv(p):
         (p / "pyproject.toml").write_text(
             '[project]\nname="x"\nversion="0.1.0"\n', encoding="utf-8"
         )
 
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv", side_effect=fake_uv):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch("spawn.generators.project_generator.initialize_uv", side_effect=fake_uv),
+    ):
         yield
 
 
@@ -157,13 +161,17 @@ def test_github_actions_creates_ci_yml(tmp_path, monkeypatch):
         data_type="Machine Learning",
         extras=["github-actions", "pytest", "ruff"],
     )
-    with patch("spawn.generators.project_generator.install_packages"), \
-         patch("spawn.generators.project_generator.initialize_uv",
-               side_effect=lambda p: (p / "pyproject.toml").write_text(
-                   '[project]\nname="x"\nversion="0.1.0"\n', encoding="utf-8"
-               )):
+    with (
+        patch("spawn.generators.project_generator.install_packages"),
+        patch(
+            "spawn.generators.project_generator.initialize_uv",
+            side_effect=lambda p: (p / "pyproject.toml").write_text(
+                '[project]\nname="x"\nversion="0.1.0"\n', encoding="utf-8"
+            ),
+        ),
+    ):
         ProjectGenerator().generate(config)
-    ci = (tmp_path / "test-proj" / ".github" / "workflows" / "ci.yml")
+    ci = tmp_path / "test-proj" / ".github" / "workflows" / "ci.yml"
     assert ci.exists()
     content = ci.read_text(encoding="utf-8")
     assert "uv sync" in content

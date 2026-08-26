@@ -14,13 +14,13 @@ from spawn.templates.data_project.ml.content import (
 FOLDERS = ["data", "models", "experiments", "src", "tests"]
 
 FILES = [
-    ("data/dataset.csv",       ML_SAMPLE_CSV),
-    ("src/__init__.py",        ""),
-    ("src/train.py",           ML_TRAIN_CONTENT),
-    ("tests/test_ml.py",       ML_TEST_CONTENT),
-    ("tests/__init__.py",      ""),
-    ("models/.gitkeep",        ""),
-    ("experiments/.gitkeep",   ""),
+    ("data/dataset.csv", ML_SAMPLE_CSV),
+    ("src/__init__.py", ""),
+    ("src/train.py", ML_TRAIN_CONTENT),
+    ("tests/test_ml.py", ML_TEST_CONTENT),
+    ("tests/__init__.py", ""),
+    ("models/.gitkeep", ""),
+    ("experiments/.gitkeep", ""),
 ]
 
 DEPENDENCIES = ["pandas", "numpy", "scikit-learn", "joblib"]
@@ -59,4 +59,5 @@ class MLProjectTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         from spawn.templates.data_project import _DataProjectPostInstallMixin
+
         _DataProjectPostInstallMixin.post_install(self, project_path)  # type: ignore[arg-type]

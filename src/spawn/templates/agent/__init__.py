@@ -37,36 +37,36 @@ AGENT_FOLDERS = [
 
 # Maps (framework, provider) → agent run.py content
 _AGENT_MAP: dict[tuple[str, str], str] = {
-    ("pydantic-ai",   "openai"):     PYDANTIC_AI_AGENT_CONTENT,
-    ("pydantic-ai",   "anthropic"):  PYDANTIC_AI_AGENT_CONTENT,
-    ("pydantic-ai",   "gemini"):     PYDANTIC_AI_AGENT_CONTENT,
-    ("pydantic-ai",   "openrouter"): PYDANTIC_AI_AGENT_CONTENT,
-    ("pydantic-ai",   "ollama"):     PYDANTIC_AI_AGENT_CONTENT,
-    ("pydantic-ai",   "groq"):       PYDANTIC_AI_AGENT_CONTENT,
-    ("openai-agents", "openai"):     OPENAI_AGENTS_AGENT_CONTENT,
+    ("pydantic-ai", "openai"): PYDANTIC_AI_AGENT_CONTENT,
+    ("pydantic-ai", "anthropic"): PYDANTIC_AI_AGENT_CONTENT,
+    ("pydantic-ai", "gemini"): PYDANTIC_AI_AGENT_CONTENT,
+    ("pydantic-ai", "openrouter"): PYDANTIC_AI_AGENT_CONTENT,
+    ("pydantic-ai", "ollama"): PYDANTIC_AI_AGENT_CONTENT,
+    ("pydantic-ai", "groq"): PYDANTIC_AI_AGENT_CONTENT,
+    ("openai-agents", "openai"): OPENAI_AGENTS_AGENT_CONTENT,
     ("openai-agents", "openrouter"): OPENAI_AGENTS_AGENT_CONTENT,
 }
 
 # Maps (framework, provider) → env example
 _ENV_MAP: dict[tuple[str, str], str] = {
-    ("pydantic-ai",   "openai"):     ENV_PYDANTIC_OPENAI,
-    ("pydantic-ai",   "anthropic"):  ENV_PYDANTIC_ANTHROPIC,
-    ("pydantic-ai",   "gemini"):     ENV_PYDANTIC_GEMINI,
-    ("pydantic-ai",   "openrouter"): ENV_PYDANTIC_OPENROUTER,
-    ("pydantic-ai",   "ollama"):     ENV_PYDANTIC_OLLAMA,
-    ("pydantic-ai",   "groq"):       ENV_PYDANTIC_GROQ,
-    ("openai-agents", "openai"):     ENV_OPENAI_AGENTS_OPENAI,
+    ("pydantic-ai", "openai"): ENV_PYDANTIC_OPENAI,
+    ("pydantic-ai", "anthropic"): ENV_PYDANTIC_ANTHROPIC,
+    ("pydantic-ai", "gemini"): ENV_PYDANTIC_GEMINI,
+    ("pydantic-ai", "openrouter"): ENV_PYDANTIC_OPENROUTER,
+    ("pydantic-ai", "ollama"): ENV_PYDANTIC_OLLAMA,
+    ("pydantic-ai", "groq"): ENV_PYDANTIC_GROQ,
+    ("openai-agents", "openai"): ENV_OPENAI_AGENTS_OPENAI,
     ("openai-agents", "openrouter"): ENV_OPENAI_AGENTS_OPENROUTER,
 }
 
 # Maps framework → test content
 _TEST_MAP: dict[str, str] = {
-    "pydantic-ai":   PYDANTIC_AI_TEST_CONTENT,
+    "pydantic-ai": PYDANTIC_AI_TEST_CONTENT,
     "openai-agents": OPENAI_AGENTS_TEST_CONTENT,
 }
 
 AGENT_PROVIDER_MAP: dict[str, list[str]] = {
-    "pydantic-ai":   ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
+    "pydantic-ai": ["openai", "anthropic", "gemini", "openrouter", "ollama", "groq"],
     "openai-agents": ["openai", "openrouter"],
 }
 
@@ -81,20 +81,20 @@ def _build_files(
     env_content: str,
 ) -> list:
     return [
-        ("src/__init__.py",              INIT_CONTENT),
-        ("src/agent/__init__.py",        INIT_CONTENT),
-        ("src/agent/run.py",             agent_content),
-        ("src/tools/__init__.py",        INIT_CONTENT),
-        ("src/tools/calculator.py",      CALCULATOR_TOOL_CONTENT),
-        ("src/prompts/__init__.py",      INIT_CONTENT),
+        ("src/__init__.py", INIT_CONTENT),
+        ("src/agent/__init__.py", INIT_CONTENT),
+        ("src/agent/run.py", agent_content),
+        ("src/tools/__init__.py", INIT_CONTENT),
+        ("src/tools/calculator.py", CALCULATOR_TOOL_CONTENT),
+        ("src/prompts/__init__.py", INIT_CONTENT),
         ("src/prompts/agent_prompt.txt", AGENT_PROMPT_TXT_CONTENT),
-        ("src/config/__init__.py",       INIT_CONTENT),
-        ("src/config/settings.py",       SETTINGS_CONTENT),
-        ("src/main.py",                  MAIN_CONTENT),
-        ("tests/__init__.py",            INIT_CONTENT),
-        ("tests/conftest.py",            CONFTEST_CONTENT),
-        ("tests/test_agent.py",          test_content),
-        (".env.example",                 env_content),
+        ("src/config/__init__.py", INIT_CONTENT),
+        ("src/config/settings.py", SETTINGS_CONTENT),
+        ("src/main.py", MAIN_CONTENT),
+        ("tests/__init__.py", INIT_CONTENT),
+        ("tests/conftest.py", CONFTEST_CONTENT),
+        ("tests/test_agent.py", test_content),
+        (".env.example", env_content),
     ]
 
 
@@ -106,13 +106,13 @@ class AgentTemplate(BaseTemplate):
         extras: list[str] | None = None,
     ) -> None:
         self.framework = framework or "pydantic-ai"
-        self.provider  = provider  or "openai"
-        self.extras    = extras    or []
+        self.provider = provider or "openai"
+        self.extras = extras or []
 
         key = (self.framework, self.provider)
         agent_content = _AGENT_MAP.get(key, PYDANTIC_AI_AGENT_CONTENT)
-        env_content   = _ENV_MAP.get(key, ENV_PYDANTIC_OPENAI)
-        test_content  = _TEST_MAP.get(self.framework, PYDANTIC_AI_TEST_CONTENT)
+        env_content = _ENV_MAP.get(key, ENV_PYDANTIC_OPENAI)
+        test_content = _TEST_MAP.get(self.framework, PYDANTIC_AI_TEST_CONTENT)
 
         super().__init__(
             name="AI Agent",
@@ -135,20 +135,22 @@ class AgentTemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         dep_map: dict[tuple[str, str], list[str]] = {
-            ("pydantic-ai",   "openai"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",   "anthropic"):  ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",   "gemini"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",   "openrouter"): ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",   "ollama"):     ["pydantic-ai", "python-dotenv"],
-            ("pydantic-ai",   "groq"):       ["pydantic-ai[groq]", "python-dotenv"],
-            ("openai-agents", "openai"):     ["openai-agents", "python-dotenv"],
+            ("pydantic-ai", "openai"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "anthropic"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "gemini"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "openrouter"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "ollama"): ["pydantic-ai", "python-dotenv"],
+            ("pydantic-ai", "groq"): ["pydantic-ai[groq]", "python-dotenv"],
+            ("openai-agents", "openai"): ["openai-agents", "python-dotenv"],
             ("openai-agents", "openrouter"): ["openai-agents", "python-dotenv"],
         }
 
-        base = list(dep_map.get(
-            (self.framework, self.provider),
-            ["pydantic-ai", "python-dotenv"],
-        ))
+        base = list(
+            dep_map.get(
+                (self.framework, self.provider),
+                ["pydantic-ai", "python-dotenv"],
+            )
+        )
 
         if "pytest" in self.extras:
             base.append("pytest")
@@ -159,11 +161,11 @@ class AgentTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"
-        current   = pyproject.read_text(encoding="utf-8")
+        current = pyproject.read_text(encoding="utf-8")
         additions = ""
 
         if "pytest" in self.extras:
-            additions += "\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n"
+            additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"

@@ -22,16 +22,12 @@ class ProjectGenerator:
         template = instantiate_template(config)
 
         if template is None:
-            raise SpawnError(
-                f"Unknown template: {config.template}"
-            )
+            raise SpawnError(f"Unknown template: {config.template}")
 
         project_path = Path(config.name)
 
         if project_path.exists():
-            raise SpawnError(
-                f"Directory '{config.name}' already exists."
-            )
+            raise SpawnError(f"Directory '{config.name}' already exists.")
 
         try:
             project_path.mkdir()
@@ -65,18 +61,14 @@ class ProjectGenerator:
             )
 
             if config.use_git:
-                console.print(
-                    "[yellow]Initializing Git...[/yellow]"
-                )
+                console.print("[yellow]Initializing Git...[/yellow]")
                 initialize_git(project_path)
 
             initialize_uv(project_path)
 
             deps = template.get_dependencies()
             if deps:
-                console.print(
-                    "[yellow]Installing dependencies...[/yellow]"
-                )
+                console.print("[yellow]Installing dependencies...[/yellow]")
                 install_packages(project_path, deps)
 
             template.post_install(project_path)

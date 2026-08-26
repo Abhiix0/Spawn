@@ -44,9 +44,7 @@ def test_project_config_cli_type_defaults_none():
 def test_project_config_cli_type_set():
     from spawn.core.models import ProjectConfig
 
-    c = ProjectConfig(
-        name="x", template="cli", use_git=False, cli_type="interactive"
-    )
+    c = ProjectConfig(name="x", template="cli", use_git=False, cli_type="interactive")
     assert c.cli_type == "interactive"
 
 
@@ -66,5 +64,7 @@ def test_project_config_custom_entries_default_none():
 
 
 def test_project_config_custom_entries_can_be_set():
-    config = ProjectConfig(name="x", template="custom", use_git=False, custom_entries=[1, 2])
+    config = ProjectConfig(
+        name="x", template="custom", use_git=False, custom_entries=[1, 2]
+    )
     assert config.custom_entries == [1, 2]

@@ -16,14 +16,14 @@ from spawn.templates.data_project.etl.content import (
 FOLDERS = ["data", "pipelines", "src", "tests"]
 
 FILES = [
-    ("data/raw.csv",               ETL_RAW_CSV),
-    ("pipelines/__init__.py",      ""),
-    ("pipelines/clean_data.py",    ETL_CLEAN_CONTENT),
-    ("pipelines/run.py",           ETL_RUN_CONTENT),
-    ("tests/test_etl.py",          ETL_TEST_CONTENT),
-    ("tests/__init__.py",          ""),
-    ("src/__init__.py",            ""),
-    (".env.example",               ETL_ENV_CONTENT),
+    ("data/raw.csv", ETL_RAW_CSV),
+    ("pipelines/__init__.py", ""),
+    ("pipelines/clean_data.py", ETL_CLEAN_CONTENT),
+    ("pipelines/run.py", ETL_RUN_CONTENT),
+    ("tests/test_etl.py", ETL_TEST_CONTENT),
+    ("tests/__init__.py", ""),
+    ("src/__init__.py", ""),
+    (".env.example", ETL_ENV_CONTENT),
 ]
 
 DEPENDENCIES = ["pandas", "python-dotenv"]
@@ -63,4 +63,5 @@ class ETLPipelineTemplate(BaseTemplate):
 
     def post_install(self, project_path: Path) -> None:
         from spawn.templates.data_project import _DataProjectPostInstallMixin
+
         _DataProjectPostInstallMixin.post_install(self, project_path)  # type: ignore[arg-type]

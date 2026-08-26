@@ -31,12 +31,16 @@ def test_cli_defaults_cli_type_to_first_option():
 
 
 def test_cli_explicit_cli_type_passes_through():
-    config = build_config_from_args(name="my-cli", template="cli", cli_type="interactive")
+    config = build_config_from_args(
+        name="my-cli", template="cli", cli_type="interactive"
+    )
     assert config.cli_type == "interactive"
 
 
 def test_backend_api_explicit_framework_passes_through():
-    config = build_config_from_args(name="my-api", template="backend-api", framework="flask")
+    config = build_config_from_args(
+        name="my-api", template="backend-api", framework="flask"
+    )
     assert config.framework == "flask"
 
 
@@ -150,14 +154,16 @@ def test_json_file_all_optional_fields(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     cfg_file = tmp_path / "full.json"
     cfg_file.write_text(
-        json.dumps({
-            "name": "full-proj",
-            "template": "backend-api",
-            "framework": "flask",
-            "extras": ["ruff"],
-            "git": False,
-            "uv": False,
-        })
+        json.dumps(
+            {
+                "name": "full-proj",
+                "template": "backend-api",
+                "framework": "flask",
+                "extras": ["ruff"],
+                "git": False,
+                "uv": False,
+            }
+        )
     )
     config = build_config_from_file(cfg_file)
     assert config.framework == "flask"
@@ -206,6 +212,8 @@ def test_missing_template_raises(tmp_path):
 
 def test_extras_not_a_list_raises(tmp_path):
     f = tmp_path / "bad_extras.json"
-    f.write_text(json.dumps({"name": "demo", "template": "automation", "extras": "ruff"}))
+    f.write_text(
+        json.dumps({"name": "demo", "template": "automation", "extras": "ruff"})
+    )
     with pytest.raises(SpawnError, match="list of strings"):
         build_config_from_file(f)

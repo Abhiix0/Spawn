@@ -1,4 +1,5 @@
 """Tests for cli/prompts.py — get_project_config()."""
+
 from unittest.mock import patch, MagicMock
 import io
 
@@ -79,10 +80,12 @@ def test_multiselect_empty_selection_is_valid():
 
 
 def test_valid_name_and_template_returns_config():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-project"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=True), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-project"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=True),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         # Template → CLI Application; CLI type → utility; Framework → typer
         mock_sel.return_value.ask.side_effect = ["CLI Application", "utility", "typer"]
         mock_chk.return_value.ask.return_value = []  # no extras
@@ -95,10 +98,12 @@ def test_valid_name_and_template_returns_config():
 
 
 def test_git_false_reflected_in_config():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-project"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-project"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         # Template → Backend API; Framework → fastapi
         mock_sel.return_value.ask.side_effect = ["Backend API", "fastapi"]
         mock_chk.return_value.ask.return_value = []
@@ -110,10 +115,12 @@ def test_git_false_reflected_in_config():
 
 def test_generate_claude_md_true_reflected_in_config(monkeypatch):
     monkeypatch.setattr("spawn.cli.prompts.Confirm.ask", lambda *args, **kwargs: True)
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-project"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=True), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-project"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=True),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["CLI Application", "utility", "typer"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -128,10 +135,12 @@ def test_generate_claude_md_true_reflected_in_config(monkeypatch):
 
 def test_invalid_name_retried_until_valid():
     prompt_calls = ["--", "good-name"]  # first invalid, then valid
-    with patch("spawn.cli.prompts.typer.prompt", side_effect=prompt_calls), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", side_effect=prompt_calls),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["CLI Application", "utility", "typer"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -140,10 +149,14 @@ def test_invalid_name_retried_until_valid():
 
 
 def test_name_with_space_retried():
-    with patch("spawn.cli.prompts.typer.prompt", side_effect=["my project", "my-project"]), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch(
+            "spawn.cli.prompts.typer.prompt", side_effect=["my project", "my-project"]
+        ),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["CLI Application", "utility", "typer"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -160,10 +173,10 @@ def test_name_with_space_retried():
 @pytest.mark.parametrize(
     "display_name,expected_template",
     [
-        ("Backend API",    "backend-api"),
+        ("Backend API", "backend-api"),
         ("CLI Application", "cli"),
         ("Automation Tool", "automation"),
-        ("AI Chatbot",     "chatbot"),
+        ("AI Chatbot", "chatbot"),
     ],
 )
 def test_all_template_choices(display_name, expected_template):
@@ -180,15 +193,23 @@ def test_all_template_choices(display_name, expected_template):
     if meta and meta.available_providers:
         if meta.slug == "agent":
             from spawn.templates.agent import get_supported_providers
-            select_side_effects.append(get_supported_providers(meta.available_frameworks[0])[0])
+
+            select_side_effects.append(
+                get_supported_providers(meta.available_frameworks[0])[0]
+            )
         elif meta.slug == "chatbot":
             from spawn.templates.chatbot import get_supported_providers
-            select_side_effects.append(get_supported_providers(meta.available_frameworks[0])[0])
 
-    with patch("spawn.cli.prompts.typer.prompt", return_value="project"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+            select_side_effects.append(
+                get_supported_providers(meta.available_frameworks[0])[0]
+            )
+
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="project"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = select_side_effects
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -202,10 +223,12 @@ def test_all_template_choices(display_name, expected_template):
 
 
 def test_backend_api_with_framework_and_extras():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-api"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-api"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["Backend API", "fastapi"]
         mock_chk.return_value.ask.return_value = ["ruff", "pytest"]
         config = get_project_config()
@@ -218,10 +241,12 @@ def test_backend_api_with_framework_and_extras():
 
 
 def test_backend_api_with_no_extras():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-api"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=True), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-api"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=True),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["Backend API", "fastapi"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -232,10 +257,12 @@ def test_backend_api_with_no_extras():
 
 
 def test_backend_api_flask_framework_selected():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-api"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-api"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["Backend API", "flask"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -246,10 +273,12 @@ def test_backend_api_flask_framework_selected():
 
 
 def test_backend_api_django_framework_selected():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-api"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-api"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["Backend API", "django"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -259,10 +288,12 @@ def test_backend_api_django_framework_selected():
 
 
 def test_backend_api_docker_and_github_actions_extras():
-    with patch("spawn.cli.prompts.typer.prompt", return_value="my-api"), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", return_value="my-api"),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["Backend API", "fastapi"]
         mock_chk.return_value.ask.return_value = ["docker", "github-actions"]
         config = get_project_config()
@@ -280,10 +311,12 @@ def test_existing_directory_name_retried(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "taken").mkdir()
 
-    with patch("spawn.cli.prompts.typer.prompt", side_effect=["taken", "free"]), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", side_effect=["taken", "free"]),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["CLI Application", "utility", "typer"]
         mock_chk.return_value.ask.return_value = []
         config = get_project_config()
@@ -295,11 +328,13 @@ def test_existing_directory_shows_error_message(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "taken").mkdir()
 
-    with patch("spawn.cli.prompts.typer.prompt", side_effect=["taken", "free"]), \
-         patch("spawn.cli.prompts.typer.confirm", return_value=False), \
-         patch("spawn.cli.prompts.typer.secho") as mock_secho, \
-         patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.typer.prompt", side_effect=["taken", "free"]),
+        patch("spawn.cli.prompts.typer.confirm", return_value=False),
+        patch("spawn.cli.prompts.typer.secho") as mock_secho,
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.side_effect = ["CLI Application", "utility", "typer"]
         mock_chk.return_value.ask.return_value = []
         get_project_config()
@@ -334,10 +369,12 @@ def test_custom_structure_dependency_prompt_shown_when_uv_true(
     # typer.prompt: project_name, deps_raw, extra_ignores_raw
     mock_prompt.side_effect = ["my-proj", "requests, rich", ""]
 
-    with patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.return_value = "Custom Structure"
-        mock_chk.return_value.ask.return_value = []   # optional setup: skip
+        mock_chk.return_value.ask.return_value = []  # optional setup: skip
 
         config = get_project_config()
 
@@ -356,8 +393,10 @@ def test_custom_structure_dependency_prompt_skipped_when_uv_false(
     # typer.prompt: project_name, extra_ignores_raw (no deps prompt)
     mock_prompt.side_effect = ["my-proj", ""]
 
-    with patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.return_value = "Custom Structure"
         mock_chk.return_value.ask.return_value = []
 
@@ -376,8 +415,10 @@ def test_custom_structure_parses_comma_separated_deps(
     mock_confirm.side_effect = [True, True, True]  # Git, uv, Proceed
     mock_prompt.side_effect = ["my-proj", "fastapi, pydantic ,  sqlalchemy", ""]
 
-    with patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.return_value = "Custom Structure"
         mock_chk.return_value.ask.return_value = []
 
@@ -396,8 +437,10 @@ def test_custom_structure_empty_deps_input_yields_empty_list(
     mock_confirm.side_effect = [True, True, True]  # Git, uv, Proceed
     mock_prompt.side_effect = ["my-proj", "", ""]  # empty deps, skip extra ignores
 
-    with patch("spawn.cli.prompts.questionary.select") as mock_sel, \
-         patch("spawn.cli.prompts.questionary.checkbox") as mock_chk:
+    with (
+        patch("spawn.cli.prompts.questionary.select") as mock_sel,
+        patch("spawn.cli.prompts.questionary.checkbox") as mock_chk,
+    ):
         mock_sel.return_value.ask.return_value = "Custom Structure"
         mock_chk.return_value.ask.return_value = []
 
