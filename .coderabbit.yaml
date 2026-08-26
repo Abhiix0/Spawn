@@ -1,0 +1,102 @@
+# CodeRabbit configuration for spawnio
+# https://docs.coderabbit.ai/reference/configuration
+#
+# NOTE FOR MAINTAINERS: This file configures CodeRabbit's behavior once the
+# GitHub App is installed. To activate it, install CodeRabbit at:
+#   https://github.com/apps/coderabbitai
+# The YAML alone does nothing without the App being installed on the repo.
+
+language: "en-US"
+
+reviews:
+  profile: "chill"
+
+  # Auto-review settings
+  auto_review:
+    enabled: true
+    incremental: true
+    drafts: false
+    base_branches: []           # only the default branch (main)
+
+  # Walkthrough + summary in the PR comment
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true
+
+  # Do not auto-approve or request auto-merge — those are human decisions
+  # (auto_approve_reviews defaults to false — listed here for explicitness)
+  # auto_approve_reviews: false   # already the default; not setting to avoid confusion
+
+  # Restrict review to the files this project actually owns
+  path_filters:
+    - "src/spawn/**"
+    - "tests/**"
+    - "!**/__pycache__/**"
+    - "!**/*.pyc"
+    - "!dist/**"
+    - "!.venv/**"
+    - "!uv.lock"
+
+  # Path-specific review instructions
+  path_instructions:
+    - path: "src/spawn/templates/**"
+      instructions: >
+        Check for cross-platform path handling. This project targets Windows
+        as a first-class platform: prefer pathlib.Path over os.path string
+        operations, avoid hardcoded forward-slashes in file paths, and flag
+        any str() coercions of Path objects that could break on Windows.
+
+    - path: "src/spawn/github/**"
+      instructions: >
+        Flag input validation and URL parsing issues. GitHub URLs must be
+        validated before use — check that repository URLs are validated
+        against the existing validators.py patterns, that user-supplied
+        strings are never interpolated directly into subprocess commands, and
+        that GitHubPublishError is raised (not a raw exception) on all failure
+        paths.
+
+    - path: "src/spawn/cli/app.py"
+      instructions: >
+        Flag function length and complexity. The create() function is known to
+        be monolithic — flag any new logic added to its body that should
+        instead live in a helper or in noninteractive.py. Prefer raising
+        SpawnError over inline console.print()+return patterns for new error
+        paths.
+
+    - path: "src/spawn/cli/**"
+      instructions: >
+        Verify that every new prompt uses _select() or _multiselect() from
+        prompts.py (questionary-based, arrow-key driven) rather than
+        typer.prompt() with a numeric choice map. typer.prompt() is only
+        acceptable for free-text inputs (project name, dependency list, etc.).
+
+    - path: "tests/**"
+      instructions: >
+        Confirm that questionary.select and questionary.checkbox are mocked
+        via patch('spawn.cli.prompts.questionary.select') and
+        patch('spawn.cli.prompts.questionary.checkbox'), not via numeric
+        typer.prompt side effects. New generator tests should use the
+        _mock_uv_and_install() context manager pattern already established
+        in the file.
+
+# Enable the built-in Ruff tool integration (already in dev deps)
+tools:
+  ruff:
+    enabled: true
+  # Disable linters irrelevant to this pure-Python project
+  shellcheck:
+    enabled: false
+  biome:
+    enabled: false
+  hadolint:
+    enabled: false       # project has no Dockerfiles in src/
+  phpstan:
+    enabled: false
+  golangci-lint:
+    enabled: false
+  swiftlint:
+    enabled: false
+
+chat:
+  auto_reply: true
