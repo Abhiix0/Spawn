@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit configuration for spawnio
 # https://docs.coderabbit.ai/reference/configuration
 #
@@ -80,23 +81,25 @@ reviews:
         _mock_uv_and_install() context manager pattern already established
         in the file.
 
-# Enable the built-in Ruff tool integration (already in dev deps)
-tools:
-  ruff:
-    enabled: true
-  # Disable linters irrelevant to this pure-Python project
-  shellcheck:
-    enabled: false
-  biome:
-    enabled: false
-  hadolint:
-    enabled: false       # project has no Dockerfiles in src/
-  phpstan:
-    enabled: false
-  golangci-lint:
-    enabled: false
-  swiftlint:
-    enabled: false
+  # Enable the built-in Ruff tool integration (already in dev deps).
+  # NOTE: must live under reviews.tools, not top-level tools — a top-level
+  # `tools:` key is not part of the schema and is silently ignored.
+  tools:
+    ruff:
+      enabled: true
+    # Disable linters irrelevant to this pure-Python project
+    shellcheck:
+      enabled: false
+    biome:
+      enabled: false
+    hadolint:
+      enabled: false       # project has no Dockerfiles in src/
+    phpstan:
+      enabled: false
+    golangci-lint:
+      enabled: false
+    swiftlint:
+      enabled: false
 
 chat:
   auto_reply: true
