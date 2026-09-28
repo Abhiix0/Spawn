@@ -4,20 +4,40 @@ import shutil
 from pathlib import Path
 
 from spawn import __version__
-from spawn.templates.shared_content import (
-    README_CONTENT,
-    GITIGNORE_CONTENT,
-    AGENTS_MD_CONTENT,
-)
+from spawn.core.exceptions import SpawnError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import instantiate_template
-from spawn.utils.git import initialize_git
-from spawn.utils.uv import initialize_uv, install_packages
-from spawn.core.exceptions import SpawnError
+from spawn.generators.project_files import (
+    add_mypy_config,
+    write_changelog,
+    write_license,
+    write_precommit_config,
+)
+from spawn.templates.shared_content import (
+    AGENTS_MD_CONTENT,
+    GITIGNORE_CONTENT,
+    README_CONTENT,
+)
 from spawn.utils.console import console
+from spawn.utils.git import get_git_user_name, initialize_git
+from spawn.utils.uv import initialize_uv, install_packages
 
 
 class ProjectGenerator:
+    def _apply_quality_extras(self, project_path: Path, extras: list[str]) -> None:
+        dev_deps = []
+        if "mypy" in extras:
+            dev_deps.append("mypy")
+        if "pre-commit" in extras:
+            dev_deps.append("pre-commit")
+        if dev_deps:
+            console.print("[yellow]Installing dev tools...[/yellow]")
+            install_packages(project_path, dev_deps, dev=True)
+        if "mypy" in extras:
+            add_mypy_config(project_path)
+        if "pre-commit" in extras:
+            write_precommit_config(project_path)
+
     def generate(self, config: ProjectConfig) -> Path:
         template = instantiate_template(config)
 
@@ -53,6 +73,11 @@ class ProjectGenerator:
                 claude_md_path = project_path / "CLAUDE.md"
                 claude_md_path.write_text(agents_md_content, encoding="utf-8")
 
+            write_changelog(project_path)
+            if config.license != "none":
+                holder = get_git_user_name() or f"{config.name} contributors"
+                write_license(project_path, config.license, holder)
+
             gitignore_path = project_path / ".gitignore"
 
             gitignore_path.write_text(
@@ -72,6 +97,7 @@ class ProjectGenerator:
                 install_packages(project_path, deps)
 
             template.post_install(project_path)
+            self._apply_quality_extras(project_path, config.extras)
 
             meta_dir = project_path / ".spawn"
             meta_dir.mkdir()
@@ -84,7 +110,7 @@ class ProjectGenerator:
                         "provider": config.provider,
                         "spawn_version": __version__,
                         "created_at": datetime.datetime.now(
-                            datetime.timezone.utc
+                            datetime.UTC
                         ).isoformat(),
                         "generator": "blueprint",
                         "git": config.use_git,
@@ -105,3 +131,4 @@ class ProjectGenerator:
             raise
 
         return project_path
+

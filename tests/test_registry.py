@@ -1,7 +1,12 @@
-from spawn.core.registry import get_template, get_metadata, list_templates
+from unittest.mock import patch
+
+from spawn.core.models import ProjectConfig
+from spawn.core.registry import get_metadata, get_template, list_templates
+from spawn.generators.project_generator import ProjectGenerator
 
 
 def test_invalid_template_returns_none():
+
     assert get_template("banana") is None
 
 
@@ -157,8 +162,9 @@ def test_chatbot_in_list_templates():
 
 
 def test_agent_template_is_registered():
-    from spawn.templates.agent import AgentTemplate
     from spawn.core.registry import get_template
+    from spawn.templates.agent import AgentTemplate
+
 
     t = get_template("agent")
     assert t is not None
@@ -191,3 +197,48 @@ def test_rag_metadata():
     assert not meta.available_providers
     assert "ruff" in meta.available_extras
     assert "pytest" in meta.available_extras
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_generate_all_templates_with_full_available_extras(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+
+    def _create_pyproject(path):
+        (path / "pyproject.toml").write_text("[project]\nname = 'test'\n", encoding="utf-8")
+
+    mock_uv.side_effect = _create_pyproject
+
+    defaults = {
+        "backend-api": {"framework": "fastapi"},
+        "cli": {"framework": "typer", "cli_type": "utility"},
+        "automation": {},
+        "chatbot": {"framework": "pydantic-ai", "provider": "openai"},
+        "agent": {"framework": "pydantic-ai", "provider": "openai"},
+        "rag": {},
+        "data": {"data_type": "Data Analysis"},
+        "mcp": {},
+    }
+
+    for meta in list_templates():
+        assert "pre-commit" in meta.available_extras
+        assert "mypy" in meta.available_extras
+        slug = meta.slug
+        extra_kwargs = defaults.get(slug, {})
+        config = ProjectConfig(
+            name=f"proj-{slug}",
+            template=slug,
+            use_git=False,
+            extras=list(meta.available_extras),
+            **extra_kwargs,
+        )
+        gen = ProjectGenerator()
+        path = gen.generate(config)
+        assert path.exists()
+        assert (path / "LICENSE").exists()
+        assert (path / "CHANGELOG.md").exists()
+        assert (path / ".pre-commit-config.yaml").exists()
+        assert "[tool.mypy]" in (path / "pyproject.toml").read_text(encoding="utf-8")
+
