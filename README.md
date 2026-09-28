@@ -77,6 +77,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **Arrow-key menus** | Every prompt in `spawn create` is arrow-key/spacebar driven, not typed numbers |
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
 | **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
+| **spawn doctor --fix** | Fixes missing files and config automatically — never overwrites, never installs packages |
 
 ---
 
@@ -132,7 +133,7 @@ Running `spawn` with no arguments shows the banner, the installed version, and t
 
 ```
 SPAWN — scaffold your next project
-v1.0.6
+v1.0.8
 
 Commands
   create    Scaffold a new project
@@ -179,7 +180,15 @@ Use the arrow keys to move, Enter to select — the same pattern every prompt in
 
 **Step 3 — Additional prompts** *(template-dependent — framework, provider, project type, and/or extras, depending on what you picked. See [Project Templates](#project-templates) below for each one's exact flow.)*
 
-**Step 4 — Git**
+**Step 4 — License**
+
+```
+? Choose a license (Use arrow keys)
+ » MIT
+   None
+```
+
+**Step 5 — Git**
 
 ```
 Initialize Git? [Y/n]: Y
@@ -242,9 +251,11 @@ my-api/
  ● pytest
  ○ docker
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
-**Available extras:** `ruff` `pytest` `docker` `github-actions`
+**Available extras:** `ruff` `pytest` `docker` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -295,9 +306,11 @@ my-cli/
  ● ruff
  ● pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
-**Available extras:** `ruff` `pytest` `github-actions`
+**Available extras:** `ruff` `pytest` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -334,9 +347,11 @@ my-automation/
  ● ruff
  ● pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
-**Available extras:** `ruff` `pytest` `github-actions`
+**Available extras:** `ruff` `pytest` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -386,9 +401,11 @@ my-chatbot/
  ● pytest
  ○ rich
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
-**Available extras:** `ruff` `pytest` `rich` `github-actions`
+**Available extras:** `ruff` `pytest` `rich` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -436,11 +453,13 @@ my-agent/
  ● ruff
  ● pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 > If you pick `openai-agents`, only `openai` and `openrouter` appear as provider choices — the list is filtered per framework.
 
-**Available extras:** `ruff` `pytest` `github-actions`
+**Available extras:** `ruff` `pytest` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -481,11 +500,13 @@ my-rag/
  ● ruff
  ● pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 RAG System uses a fixed stack — **LlamaIndex + ChromaDB + OpenAI** — so there's no framework or provider prompt, unlike Chatbot and Agent. On first run, it automatically ingests documents from `data/` into a local ChromaDB index, then lets you ask questions against them. Requires an `OPENAI_API_KEY` (used for both the LLM and embeddings).
 
-**Available extras:** `ruff` `pytest` `github-actions`
+**Available extras:** `ruff` `pytest` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -529,9 +550,11 @@ my-data-project/
  ● ruff
  ● pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
-**Available extras:** `ruff` `pytest` `github-actions`
+**Available extras:** `ruff` `pytest` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -575,11 +598,13 @@ my-mcp-server/
  ● ruff
  ● pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 MCP Server uses a fixed stack — the official `mcp` Python SDK's `FastMCP` — so there's no framework or provider prompt, the same as RAG System.
 
-**Available extras:** `ruff` `pytest` `github-actions`
+**Available extras:** `ruff` `pytest` `github-actions` `pre-commit` `mypy`
 
 **Run it:**
 
@@ -630,6 +655,7 @@ Dependencies (comma separated, optional): fastapi, uvicorn
  ● Pytest
  ○ Pre-commit
  ○ Dockerfile
+ ○ Mypy
 
 Additional ignore patterns (optional, comma separated): data/, *.csv
 
@@ -643,7 +669,7 @@ Proceed? [Y/n]: Y
 
 **The Dependencies prompt** (shown only when uv is enabled) installs packages immediately via `uv add`.
 
-**The Optional Setup menu** installs dev tools via `uv add --dev` and generates their config files: `ruff.toml`, `tests/__init__.py`, `.pre-commit-config.yaml`, and/or `Dockerfile`.
+**The Optional Setup menu** installs dev tools via `uv add --dev` and generates their config files: `ruff.toml`, `tests/__init__.py`, `.pre-commit-config.yaml`, `Dockerfile`, and/or `[tool.mypy]` in `pyproject.toml`.
 
 ### Non-Interactive Mode
 
@@ -652,7 +678,7 @@ Skip all prompts by passing flags directly or pointing to a JSON config file.
 **Using flags:**
 
 ```bash
-spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --git
+spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --license mit --git
 ```
 
 **Using a config file:**
@@ -663,6 +689,7 @@ spawn create --name my-api --template backend-api --framework fastapi --extras r
   "template": "backend-api",
   "framework": "fastapi",
   "extras": ["ruff", "pytest"],
+  "license": "mit",
   "git": true,
   "uv": true
 }
@@ -730,11 +757,30 @@ spawn doctor ./path/to/project
 
 Checks span six categories — Documentation, Version Control, Configuration, Testing, Automation, and Code Quality (Ruff, type checking, pre-commit) — all filesystem-based, nothing is executed or sent over the network.
 
+#### Automatic Remediation with `--fix`
+
+`spawn doctor --fix` creates missing files and config automatically. It **never overwrites** pre-existing files and **never installs packages** directly (instead printing `uv add` commands for optional tools).
+
+```bash
+# Automatically create missing files and config
+spawn doctor --fix
+spawn doctor ./path/to/project --fix
+
+# Preview what would be created without touching disk
+spawn doctor --fix --dry-run
+
+# Run non-interactively without the confirmation prompt
+spawn doctor --fix --yes
+
+# Also add an MIT license if missing
+spawn doctor --fix --license mit
+```
+
 ### `spawn version`
 
 ```bash
 spawn version
-# → Spawn v1.0.7
+# → Spawn v1.0.8
 ```
 
 ### Publish to GitHub
@@ -768,6 +814,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 | Version | Highlight |
 |---|---|
+| **v1.0.8** | `spawn doctor --fix` (`--dry-run`, `--yes`, `--license`), `--license` flag and prompt on `create`, `CHANGELOG.md` generated for every project, `pre-commit` and `mypy` extras across all templates, Custom Structure Mypy option |
 | **v1.0.7** | Fixed UTF-8 console crash on Windows when stdout is redirected/piped, added Windows reserved device name validation (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`9`, `LPT1`–`9`), clarified Python 3.12 requirement |
 | **v1.0.6** | Removed duplicate banner from `spawn create`; `spawn` alone now shows the banner and command overview |
 | **v1.0.5** | Published to PyPI as `spawnio`; arrow-key selection menus, no-args banner, consistent Ctrl+C handling |

@@ -3,6 +3,20 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.8 — 2026
+
+### Added
+
+- **`spawn doctor --fix`** — `spawn doctor <dir> --fix [--dry-run] [--yes] [--license mit]` creates missing files and config, never overwrites, never installs packages.
+- **`--license` selection on `spawn create`** — added `--license (mit/none)` CLI option and an interactive license prompt (MIT default).
+- **`CHANGELOG.md` generation** — generated for every new project.
+- **`pre-commit` and `mypy` extras** — available across all 8 project templates.
+- **Custom Structure Mypy option** — added Mypy to optional setup choices in Custom Structure.
+
+### Fixed
+
+- **`--template` help text** — now lists all 8 supported template slugs including `mcp`.
+
 ## v1.0.7 — 2026
 
 ### Fixed

@@ -17,7 +17,7 @@ Running `spawn` with no arguments prints the banner, the installed version, and 
 
 ```
 SPAWN — scaffold your next project
-v1.0.6
+v1.0.8
 
 Commands
   create    Scaffold a new project
@@ -52,11 +52,12 @@ spawn create
 | 5 | `Choose Framework` | Backend API, CLI Application, AI Chatbot, AI Agent |
 | 6 | `Choose Provider` | AI Chatbot, AI Agent (filtered by framework) |
 | 7 | `Select extras` | Templates with available extras |
-| 8 | `Initialize Git? [Y/n]` | Always |
-| 9 | `Also generate CLAUDE.md for Claude Code? [y/N]` | Always |
-| 10 | `Publish to GitHub? [y/N]` | Only when Git was enabled and not in non-interactive mode |
+| 8 | `Choose a license` | Always (`MIT`, `None`) |
+| 9 | `Initialize Git? [Y/n]` | Always |
+| 10 | `Also generate CLAUDE.md for Claude Code? [y/N]` | Always |
+| 11 | `Publish to GitHub? [y/N]` | Only when Git was enabled and not in non-interactive mode |
 
-Every menu (steps 2–7) is **arrow-key / spacebar** driven — no typed numbers.
+Every menu (steps 2–8) is **arrow-key / spacebar** driven — no typed numbers.
 
 **Template list**
 
@@ -81,6 +82,8 @@ Every menu (steps 2–7) is **arrow-key / spacebar** driven — no typed numbers
  ● pytest
  ○ docker
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 Space toggles, Enter confirms. Empty selection is valid (skip all extras).
@@ -100,7 +103,7 @@ Space toggles, Enter confirms. Empty selection is valid (skip all extras).
 Pass `--name` to skip all prompts. `--template` is required when using `--name`.
 
 ```bash
-spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest
+spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --license mit
 ```
 
 Pass `--config` to read settings from a JSON file instead of flags:
@@ -120,6 +123,7 @@ spawn create --config spawn.json
   "cli_type": null,
   "data_type": null,
   "extras": ["ruff", "pytest"],
+  "license": "mit",
   "git": true,
   "uv": true,
   "claude_md": false
@@ -137,6 +141,7 @@ spawn create --config spawn.json
 | `--cli-type` | `utility` | `utility` or `interactive` (CLI Application only) |
 | `--data-type` | `Data Analysis` | Sub-type for Data Project |
 | `--extras` | none | Comma-separated extras, e.g. `ruff,pytest` |
+| `--license` | `mit` | Project license (`mit` or `none`) |
 | `--git` / `--no-git` | `--git` | Initialize a Git repository |
 | `--uv` / `--no-uv` | `--uv` | Initialize uv and install dependencies |
 | `--claude-md` / `--no-claude-md` | `--no-claude-md` | Also write `CLAUDE.md` alongside `AGENTS.md` |
@@ -148,14 +153,14 @@ spawn create --config spawn.json
 
 | Slug | Display name | Frameworks | Providers | CLI types | Project types | Extras |
 |---|---|---|---|---|---|---|
-| `backend-api` | Backend API | fastapi, flask, django | — | — | — | ruff, pytest, docker, github-actions |
-| `cli` | CLI Application | typer, click, argparse | — | utility, interactive | — | ruff, pytest, github-actions |
-| `automation` | Automation Tool | — | — | — | — | ruff, pytest, github-actions |
-| `chatbot` | AI Chatbot | pydantic-ai, openai-sdk, litellm | openai, anthropic, gemini, openrouter, ollama, groq | — | — | ruff, pytest, rich, github-actions |
-| `agent` | AI Agent | pydantic-ai, openai-agents | openai, anthropic, gemini, openrouter, ollama, groq | — | — | ruff, pytest, github-actions |
-| `rag` | RAG System | — | — | — | — | ruff, pytest, github-actions |
-| `data` | Data Project | — | — | — | Data Analysis, Dashboard, ETL Pipeline, Machine Learning | ruff, pytest, github-actions |
-| `mcp` | MCP Server | — | — | — | — | ruff, pytest, github-actions |
+| `backend-api` | Backend API | fastapi, flask, django | — | — | — | ruff, pytest, docker, github-actions, pre-commit, mypy |
+| `cli` | CLI Application | typer, click, argparse | — | utility, interactive | — | ruff, pytest, github-actions, pre-commit, mypy |
+| `automation` | Automation Tool | — | — | — | — | ruff, pytest, github-actions, pre-commit, mypy |
+| `chatbot` | AI Chatbot | pydantic-ai, openai-sdk, litellm | openai, anthropic, gemini, openrouter, ollama, groq | — | — | ruff, pytest, rich, github-actions, pre-commit, mypy |
+| `agent` | AI Agent | pydantic-ai, openai-agents | openai, anthropic, gemini, openrouter, ollama, groq | — | — | ruff, pytest, github-actions, pre-commit, mypy |
+| `rag` | RAG System | — | — | — | — | ruff, pytest, github-actions, pre-commit, mypy |
+| `data` | Data Project | — | — | — | Data Analysis, Dashboard, ETL Pipeline, Machine Learning | ruff, pytest, github-actions, pre-commit, mypy |
+| `mcp` | MCP Server | — | — | — | — | ruff, pytest, github-actions, pre-commit, mypy |
 
 > `openai-agents` only supports `openai` and `openrouter` as providers — the list is filtered per framework.
 
@@ -178,6 +183,8 @@ spawn create --config spawn.json
  ○ pytest
  ○ docker
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 | Framework | Run command |
@@ -204,6 +211,8 @@ spawn create --config spawn.json
  ○ ruff
  ○ pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 | CLI type | Run command |
@@ -220,6 +229,8 @@ spawn create --config spawn.json
  ○ ruff
  ○ pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 Run: `uv run python -m src.main`
@@ -247,6 +258,8 @@ Run: `uv run python -m src.main`
  ○ pytest
  ○ rich
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 Run: add provider API key to `.env`, then `uv run python -m src.main`
@@ -269,6 +282,8 @@ Run: add provider API key to `.env`, then `uv run python -m src.main`
  ○ ruff
  ○ pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 Run: add provider API key to `.env`, then `uv run python -m src.main`
@@ -284,6 +299,8 @@ No framework or provider prompt. Requires `OPENAI_API_KEY` in `.env`.
  ○ ruff
  ○ pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 Run: `uv run python -m src.main` (auto-ingests `data/` on first run)
@@ -303,6 +320,8 @@ Run: `uv run python -m src.main` (auto-ingests `data/` on first run)
  ○ ruff
  ○ pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 | Type | Run command |
@@ -323,6 +342,8 @@ No framework or provider prompt.
  ○ ruff
  ○ pytest
  ○ github-actions
+ ○ pre-commit
+ ○ mypy
 ```
 
 Run: `uv run python -m src.server` (waits on stdio for an MCP client to connect)
@@ -339,7 +360,7 @@ The last option in the template picker. After selecting it, Spawn switches to a 
 4. `Also generate CLAUDE.md for Claude Code? [y/N]`
 5. `Initialize uv? [Y/n]`
 6. *(if uv)* `Dependencies (comma separated, optional):`
-7. *(if uv)* Optional Setup checkbox — `Ruff`, `Pytest`, `Pre-commit`, `Dockerfile`
+7. *(if uv)* Optional Setup checkbox — `Ruff`, `Pytest`, `Pre-commit`, `Dockerfile`, `Mypy`
 8. `Additional ignore patterns (optional, comma separated):`
 9. `Proceed? [Y/n]`
 
@@ -355,6 +376,8 @@ Every generated project includes:
 |---|---|
 | `README.md` | Template-specific content with project name, structure, setup, and run instructions |
 | `AGENTS.md` | Agent context file with project structure, setup, and conventions |
+| `CHANGELOG.md` | Keep a Changelog starter documenting the initial release |
+| `LICENSE` | MIT license (when `--license mit`, the default) |
 | `.gitignore` | Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, etc.) |
 | `.spawn/meta.json` | `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `git`, `uv` |
 
@@ -367,7 +390,7 @@ If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAU
   "intent": "backend-api",
   "framework": "fastapi",
   "provider": null,
-  "spawn_version": "1.0.6",
+  "spawn_version": "1.0.8",
   "created_at": "2026-01-01T00:00:00+00:00",
   "generator": "blueprint",
   "git": true,
@@ -419,6 +442,40 @@ spawn doctor
 spawn doctor ./path/to/project
 ```
 
+### Remediation with `--fix`
+
+`spawn doctor --fix` scans the project and automatically creates missing standard files and configuration.
+
+```bash
+# Automatically create missing files and config
+spawn doctor --fix
+spawn doctor ./path/to/project --fix
+
+# Preview what would change without writing to disk
+spawn doctor --fix --dry-run
+
+# Run non-interactively without the confirmation prompt
+spawn doctor --fix --yes
+
+# Also add an MIT license if missing
+spawn doctor --fix --license mit
+```
+
+**Doctor flags**
+
+| Flag | Default | Description |
+|---|---|---|
+| `path` | `.` | Path to the project directory to check |
+| `--fix` | false | Create missing files and config. Never overwrites, never installs packages |
+| `--dry-run` | false | With `--fix`: show what would change without writing |
+| `--yes` / `-y` | false | With `--fix`: skip the confirmation prompt |
+| `--license` | — | With `--fix`: also add a LICENSE (`mit`) |
+
+**Guarantees**
+
+- **Never overwrites**: If a file or configuration already exists, `doctor --fix` never touches or replaces it. Only missing items are created.
+- **Never installs packages**: `doctor --fix` will write standard configuration (such as `ruff.toml`, `[tool.mypy]`, or `.pre-commit-config.yaml`), but will never run package managers or install dependencies into your environment. Instead, it prints helpful `uv add --dev ...` commands so you remain in control.
+
 **All checks**
 
 | Check | Category | Weight |
@@ -458,7 +515,7 @@ Prints the installed version.
 
 ```bash
 spawn version
-# Spawn v1.0.6
+# Spawn v1.0.8
 ```
 
 ---
@@ -469,5 +526,5 @@ spawn version
 |---|---|
 | Any command succeeds | 0 |
 | `spawn doctor` — path does not exist or is not a directory | 1 |
-| Non-interactive validation error | 1 |
+| Non-interactive validation error / flag error | 1 |
 | Ctrl+C / EOF at any point | 130 |
