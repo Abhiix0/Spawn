@@ -142,4 +142,3 @@ def get_git_user_name() -> str | None:
 
     except (FileNotFoundError, subprocess.CalledProcessError):
         return None
-

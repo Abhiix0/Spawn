@@ -266,10 +266,16 @@ description = "An awesome application."
 
     assert write_readme_from_project(tmp_path) is True
     readme = tmp_path / "README.md"
-    assert readme.read_text(encoding="utf-8") == "# awesome-app\n\nAn awesome application.\n"
+    assert (
+        readme.read_text(encoding="utf-8")
+        == "# awesome-app\n\nAn awesome application.\n"
+    )
 
     assert write_readme_from_project(tmp_path) is False
-    assert readme.read_text(encoding="utf-8") == "# awesome-app\n\nAn awesome application.\n"
+    assert (
+        readme.read_text(encoding="utf-8")
+        == "# awesome-app\n\nAn awesome application.\n"
+    )
 
 
 def test_write_readme_from_project_without_pyproject(tmp_path):

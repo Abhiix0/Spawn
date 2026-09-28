@@ -130,7 +130,9 @@ PRECOMMIT_CONFIG_CONTENT = (
 )
 
 RUFF_PYPROJECT_SECTION = "\n[tool.ruff]\nline-length = 88\n"
-MYPY_PYPROJECT_SECTION = '\n[tool.mypy]\npython_version = "3.12"\nignore_missing_imports = true\n'
+MYPY_PYPROJECT_SECTION = (
+    '\n[tool.mypy]\npython_version = "3.12"\nignore_missing_imports = true\n'
+)
 PYTEST_PYPROJECT_SECTION = '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 MYPY_INI_CONTENT = "[mypy]\npython_version = 3.12\nignore_missing_imports = True\n"
 
@@ -180,4 +182,3 @@ GITHUB_ACTIONS_CI_PYTEST_STEP = """\
       - name: Test
         run: uv run pytest
 """
-

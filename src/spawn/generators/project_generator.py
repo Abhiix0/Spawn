@@ -109,9 +109,7 @@ class ProjectGenerator:
                         "framework": config.framework,
                         "provider": config.provider,
                         "spawn_version": __version__,
-                        "created_at": datetime.datetime.now(
-                            datetime.UTC
-                        ).isoformat(),
+                        "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
                         "generator": "blueprint",
                         "git": config.use_git,
                         "uv": True,
@@ -131,4 +129,3 @@ class ProjectGenerator:
             raise
 
         return project_path
-

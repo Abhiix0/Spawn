@@ -146,7 +146,9 @@ def test_invalid_project_name_raises():
 
 
 def test_invalid_license_raises():
-    with pytest.raises(SpawnError, match="Invalid license: 'bogus'. Valid options: mit, none"):
+    with pytest.raises(
+        SpawnError, match="Invalid license: 'bogus'. Valid options: mit, none"
+    ):
         build_config_from_args(name="my-tool", template="automation", license="bogus")
 
 

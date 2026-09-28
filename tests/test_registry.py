@@ -165,7 +165,6 @@ def test_agent_template_is_registered():
     from spawn.core.registry import get_template
     from spawn.templates.agent import AgentTemplate
 
-
     t = get_template("agent")
     assert t is not None
     assert isinstance(t, AgentTemplate)
@@ -207,7 +206,9 @@ def test_generate_all_templates_with_full_available_extras(
     monkeypatch.chdir(tmp_path)
 
     def _create_pyproject(path):
-        (path / "pyproject.toml").write_text("[project]\nname = 'test'\n", encoding="utf-8")
+        (path / "pyproject.toml").write_text(
+            "[project]\nname = 'test'\n", encoding="utf-8"
+        )
 
     mock_uv.side_effect = _create_pyproject
 
@@ -241,4 +242,3 @@ def test_generate_all_templates_with_full_available_extras(
         assert (path / "CHANGELOG.md").exists()
         assert (path / ".pre-commit-config.yaml").exists()
         assert "[tool.mypy]" in (path / "pyproject.toml").read_text(encoding="utf-8")
-

@@ -62,7 +62,6 @@ _OPTIONAL_SETUP_KEY = {
 }
 
 
-
 def _prompt_optional_setup() -> list[str]:
     """Checkbox multi-select for optional dev tooling (Custom Structure flow)."""
     chosen = _multiselect("Optional Setup (space to toggle)", _OPTIONAL_SETUP_CHOICES)
@@ -179,7 +178,6 @@ def get_project_config() -> ProjectConfig:
         data_type=selected_data_type,
         provider=selected_provider,
     )
-
 
 
 def _get_custom_structure_config(project_name: str) -> ProjectConfig:

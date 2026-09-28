@@ -56,13 +56,14 @@ def write_license(
     raise SpawnError(f"Unsupported license: '{kind}'.")
 
 
-
 def write_changelog(project_path: Path) -> bool:
     return _write_new(project_path / "CHANGELOG.md", CHANGELOG_CONTENT)
 
 
 def write_precommit_config(project_path: Path) -> bool:
-    return _write_new(project_path / ".pre-commit-config.yaml", PRECOMMIT_CONFIG_CONTENT)
+    return _write_new(
+        project_path / ".pre-commit-config.yaml", PRECOMMIT_CONFIG_CONTENT
+    )
 
 
 def write_gitignore(project_path: Path) -> bool:

@@ -248,7 +248,10 @@ def test_write_text_failure_raises_spawn_error_and_cleans_up(
 
     monkeypatch.setattr(Path, "write_text", _failing_write_text)
 
-    with _patch_post_install(), pytest.raises(SpawnError, match="No space left on device"):
+    with (
+        _patch_post_install(),
+        pytest.raises(SpawnError, match="No space left on device"),
+    ):
         ProjectGenerator().generate(_cli_config())
 
     assert not (tmp_path / "demo").exists()
@@ -795,9 +798,7 @@ def test_default_generation_creates_license_and_changelog(
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_license_none_produces_no_license(
-    mock_uv, mock_install, tmp_path, monkeypatch
-):
+def test_license_none_produces_no_license(mock_uv, mock_install, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config(license="none"))
@@ -805,7 +806,10 @@ def test_license_none_produces_no_license(
     assert (tmp_path / "demo" / "CHANGELOG.md").is_file()
 
 
-@patch("spawn.generators.project_generator.get_git_user_name", return_value="Alice Developer")
+@patch(
+    "spawn.generators.project_generator.get_git_user_name",
+    return_value="Alice Developer",
+)
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
 def test_license_holder_from_git_user_name(
@@ -839,7 +843,9 @@ def test_extras_mypy_installs_and_configures(
     monkeypatch.chdir(tmp_path)
 
     def _create_pyproject(path):
-        (path / "pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+        (path / "pyproject.toml").write_text(
+            "[project]\nname = 'demo'\n", encoding="utf-8"
+        )
 
     mock_uv.side_effect = _create_pyproject
     with _patch_post_install():
@@ -863,4 +869,3 @@ def test_extras_precommit_installs_and_writes_config(
     cfg_file = tmp_path / "demo" / ".pre-commit-config.yaml"
     assert cfg_file.is_file()
     assert RUFF_PRECOMMIT_REV in cfg_file.read_text(encoding="utf-8")
-
