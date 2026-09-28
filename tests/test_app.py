@@ -7,6 +7,7 @@ instantly without touching the real system.
 from pathlib import Path
 from unittest.mock import patch
 
+import typer
 from typer.testing import CliRunner
 
 from spawn.cli.app import app
@@ -191,6 +192,103 @@ def test_doctor_path_is_file_not_directory(tmp_path):
     result = runner.invoke(app, ["doctor", str(f)])
     assert result.exit_code == 1
     assert "Path is not a directory" in result.output
+
+
+# ---------------------------------------------------------------------------
+# spawn doctor — --fix, --dry-run, --yes, --license
+# ---------------------------------------------------------------------------
+
+
+def test_doctor_without_flags_unchanged(tmp_path):
+    result = runner.invoke(app, ["doctor", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "Project Health Report" in result.output
+    assert "→" not in result.output
+    assert "Planned fixes" not in result.output
+
+
+def test_doctor_dry_run_alone_exits_1(tmp_path):
+    result = runner.invoke(app, ["doctor", str(tmp_path), "--dry-run"])
+    assert result.exit_code == 1
+    assert "--dry-run requires --fix" in result.output
+
+
+def test_doctor_fix_dry_run_writes_nothing(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+    files_before = set(tmp_path.iterdir())
+    result = runner.invoke(app, ["doctor", str(tmp_path), "--fix", "--dry-run"])
+    assert result.exit_code == 0
+    assert "Planned fixes" in result.output
+    assert set(tmp_path.iterdir()) == files_before
+
+
+def test_doctor_fix_yes_creates_files_and_score_improves(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+
+    def fake_git(p):
+        (p / ".git").mkdir()
+
+    with patch("spawn.utils.doctor_fix.initialize_git", side_effect=fake_git):
+        result = runner.invoke(app, ["doctor", str(tmp_path), "--fix", "--yes"])
+    assert result.exit_code == 0
+    assert (tmp_path / "README.md").is_file()
+    assert (tmp_path / ".gitignore").is_file()
+    assert "Score:" in result.output
+    assert "→" in result.output
+
+
+def test_doctor_second_run_prints_nothing_to_fix_or_manual_items(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+
+    def fake_git(p):
+        (p / ".git").mkdir()
+
+    with patch("spawn.utils.doctor_fix.initialize_git", side_effect=fake_git):
+        runner.invoke(app, ["doctor", str(tmp_path), "--fix", "--yes"])
+        result = runner.invoke(app, ["doctor", str(tmp_path), "--fix", "--yes"])
+    assert result.exit_code == 0
+    assert "Nothing to fix" in result.output or "Needs manual action" in result.output
+    assert "Planned fixes" not in result.output
+
+
+def test_doctor_fix_yes_license_mit_writes_license(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+    with patch("spawn.utils.doctor_fix.initialize_git"):
+        result = runner.invoke(
+            app, ["doctor", str(tmp_path), "--fix", "--yes", "--license", "mit"]
+        )
+    assert result.exit_code == 0
+    assert (tmp_path / "LICENSE").is_file()
+    assert "MIT License" in (tmp_path / "LICENSE").read_text(encoding="utf-8")
+
+
+def test_doctor_fix_with_input_n_applies_nothing(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+    files_before = set(tmp_path.iterdir())
+    result = runner.invoke(app, ["doctor", str(tmp_path), "--fix"], input="n\n")
+    assert result.exit_code == 0
+    assert "Cancelled." in result.output
+    assert set(tmp_path.iterdir()) == files_before
+
+
+def test_doctor_typer_abort_exits_130_with_cancelled(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n', encoding="utf-8"
+    )
+    with patch("spawn.cli.app.typer.confirm", side_effect=typer.Abort):
+        result = runner.invoke(app, ["doctor", str(tmp_path), "--fix"])
+    assert result.exit_code == 130
+    assert "Cancelled." in result.output
 
 
 # ---------------------------------------------------------------------------

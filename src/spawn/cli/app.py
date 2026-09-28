@@ -243,20 +243,123 @@ def doctor(
         default=".",
         help="Path to the project directory to check. Defaults to current directory.",
     ),
+    fix: bool = typer.Option(
+        False,
+        "--fix",
+        help="Create missing files and config. Never overwrites, never installs packages",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="With --fix: show what would change without writing",
+    ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="With --fix: skip the confirmation prompt",
+    ),
+    license_kind: str = typer.Option(
+        None,
+        "--license",
+        help="With --fix: also add a LICENSE (mit)",
+    ),
 ) -> None:
     """Check the health of a project directory."""
-    from pathlib import Path
+    try:
+        if not fix:
+            if dry_run:
+                console.print("[red]❌ --dry-run requires --fix.[/red]")
+                raise typer.Exit(1)
+            if yes:
+                console.print("[red]❌ --yes requires --fix.[/red]")
+                raise typer.Exit(1)
+            if license_kind is not None:
+                console.print("[red]❌ --license requires --fix.[/red]")
+                raise typer.Exit(1)
 
-    from spawn.utils.doctor import run_health_check
+        if license_kind is not None and license_kind != "mit":
+            console.print(
+                f"[red]❌ Unsupported license: '{license_kind}'. Valid options: mit[/red]"
+            )
+            raise typer.Exit(1)
 
-    project_path = Path(path).resolve()
-    if not project_path.exists():
-        console.print(f"[red]❌ Path does not exist: {project_path}[/red]")
-        raise typer.Exit(1)
-    if not project_path.is_dir():
-        console.print(f"[red]❌ Path is not a directory: {project_path}[/red]")
-        raise typer.Exit(1)
-    run_health_check(project_path)
+        project_path = Path(path).resolve()
+        if not project_path.exists():
+            console.print(f"[red]❌ Path does not exist: {project_path}[/red]")
+            raise typer.Exit(1)
+        if not project_path.is_dir():
+            console.print(f"[red]❌ Path is not a directory: {project_path}[/red]")
+            raise typer.Exit(1)
+
+        from spawn.utils.doctor import ProjectHealthChecker, run_health_check
+
+        if not fix:
+            run_health_check(project_path)
+            return
+
+        from spawn.utils.doctor_fix import apply_fixes, plan_fixes, tool_hints
+
+        checker = ProjectHealthChecker(project_path)
+        checks = checker.run_all_checks()
+        checker.format_report(checks)
+
+        actions, manual = plan_fixes(project_path, checks, license_kind=license_kind)
+
+        if not actions and not manual:
+            console.print("[green]✓ Nothing to fix.[/green]")
+            return
+
+        if actions:
+            console.print("[bold]Planned fixes:[/bold]")
+            for a in actions:
+                console.print(f"  • {a.description}")
+
+        if manual:
+            if actions:
+                console.print()
+            console.print("[bold]Needs manual action:[/bold]")
+            for check_name, reason in manual:
+                console.print(f"  • {check_name}: {reason}")
+
+        if dry_run:
+            return
+
+        if not actions:
+            return
+
+        if not yes and not typer.confirm(f"Apply {len(actions)} fixes?", default=True):
+            console.print("[yellow]Cancelled.[/yellow]")
+            return
+
+        score_before, max_before = checker.calculate_score(checks)
+        pct_before = int((score_before / max_before * 100) if max_before > 0 else 0)
+
+        results = apply_fixes(actions)
+        console.print()
+        for r in results:
+            if r.status == "applied":
+                console.print(f"[green]✓[/green] {r.action.description}")
+            elif r.status == "skipped":
+                detail_msg = f" ({r.detail})" if r.detail else ""
+                console.print(f"[yellow]○[/yellow] {r.action.description}{detail_msg}")
+            else:
+                console.print(f"[red]✗[/red] {r.action.description}: {r.detail}")
+
+        hints = tool_hints(results)
+        if hints:
+            console.print()
+            for hint in hints:
+                console.print(hint)
+
+        new_checks = checker.run_all_checks()
+        score_after, max_after = checker.calculate_score(new_checks)
+        pct_after = int((score_after / max_after * 100) if max_after > 0 else 0)
+        console.print(f"\n[bold]Score: {pct_before}% → {pct_after}%[/bold]")
+
+    except (KeyboardInterrupt, EOFError, typer.Abort):
+        console.print("\n[yellow]Cancelled.[/yellow]")
+        raise typer.Exit(130)
 
 
 def main():
