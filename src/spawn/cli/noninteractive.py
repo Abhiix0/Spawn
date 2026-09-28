@@ -15,6 +15,7 @@ from pathlib import Path
 from spawn.core.exceptions import SpawnError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import get_metadata, list_templates
+from spawn.generators.project_files import SUPPORTED_LICENSES
 from spawn.templates.agent import get_supported_providers as get_agent_providers
 from spawn.templates.chatbot import get_supported_providers as get_chatbot_providers
 from spawn.utils.validators import validate_project_name
@@ -31,6 +32,7 @@ def build_config_from_args(
     use_git: bool = True,
     use_uv: bool = True,
     use_claude_md: bool = False,
+    license: str = "mit",
 ) -> ProjectConfig:
     """
     Build and return a validated ProjectConfig from explicit arguments.
@@ -131,10 +133,14 @@ def build_config_from_args(
                 validated_extras.append(item)
                 seen.add(item)
 
+    if license not in SUPPORTED_LICENSES:
+        raise SpawnError(f"Invalid license: '{license}'. Valid options: mit, none")
+
     return ProjectConfig(
         name=name,
         template=template,
         use_git=use_git,
+        license=license,
         framework=framework,
         extras=validated_extras,
         cli_type=cli_type,
@@ -145,7 +151,11 @@ def build_config_from_args(
     )
 
 
-def build_config_from_file(path: Path, use_claude_md: bool = False) -> ProjectConfig:
+def build_config_from_file(
+    path: Path,
+    use_claude_md: bool = False,
+    license_kind: str = "mit",
+) -> ProjectConfig:
     """
     Build and return a validated ProjectConfig from a JSON config file.
 
@@ -188,6 +198,9 @@ def build_config_from_file(path: Path, use_claude_md: bool = False) -> ProjectCo
     git: bool = data.get("git", True)
     uv: bool = data.get("uv", True)
     claude_md: bool = data.get("claude_md", use_claude_md)
+    license_val = data.get("license", license_kind)
+    if not isinstance(license_val, str):
+        raise SpawnError("'license' in config file must be a string.")
 
     return build_config_from_args(
         name=name,
@@ -200,4 +213,5 @@ def build_config_from_file(path: Path, use_claude_md: bool = False) -> ProjectCo
         use_git=git,
         use_uv=uv,
         use_claude_md=claude_md,
+        license=license_val,
     )

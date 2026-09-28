@@ -8,14 +8,14 @@ from rich.prompt import Confirm, Prompt
 from spawn import __version__
 from spawn.cli.noninteractive import build_config_from_args, build_config_from_file
 from spawn.cli.prompts import get_project_config
-from spawn.generators.project_generator import ProjectGenerator
-from spawn.github.publisher import GitHubPublisher
-from spawn.github.exceptions import GitHubPublishError
-from spawn.utils.banner import show_banner
-from spawn.utils.success import show_success
-from spawn.utils.console import console
 from spawn.core.exceptions import SpawnError
 from spawn.core.registry import instantiate_template
+from spawn.generators.project_generator import ProjectGenerator
+from spawn.github.exceptions import GitHubPublishError
+from spawn.github.publisher import GitHubPublisher
+from spawn.utils.banner import show_banner
+from spawn.utils.console import console
+from spawn.utils.success import show_success
 
 app = typer.Typer()
 
@@ -46,7 +46,7 @@ def _write_custom_metadata(project_path, config) -> None:
                 "framework": None,
                 "provider": None,
                 "spawn_version": __version__,
-                "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
                 "generator": "custom",
                 "git": config.use_git,
                 "uv": config.use_uv,
@@ -66,7 +66,7 @@ def create(
     template: str = typer.Option(
         None,
         "--template",
-        help="Template slug: backend-api, cli, automation, chatbot, agent, rag, data",
+        help="Template slug: backend-api, cli, automation, chatbot, agent, rag, data, mcp",
     ),
     framework: str = typer.Option(
         None, "--framework", help="Framework choice for templates that support it"
@@ -96,6 +96,11 @@ def create(
         "--claude-md/--no-claude-md",
         help="Also generate CLAUDE.md alongside AGENTS.md",
     ),
+    license_kind: str = typer.Option(
+        "mit",
+        "--license",
+        help="License for the new project: mit or none",
+    ),
     config_file: str = typer.Option(
         None, "--config", help="Path to a JSON config file (overrides other flags)"
     ),
@@ -115,7 +120,9 @@ def create(
             try:
                 if config_file is not None:
                     config = build_config_from_file(
-                        Path(config_file), use_claude_md=claude_md
+                        Path(config_file),
+                        use_claude_md=claude_md,
+                        license_kind=license_kind,
                     )
                 else:
                     if template is None:
@@ -138,7 +145,9 @@ def create(
                         use_git=git,
                         use_uv=uv,
                         use_claude_md=claude_md,
+                        license=license_kind,
                     )
+
             except SpawnError as e:
                 console.print(f"[red]❌ {e}[/red]")
                 raise typer.Exit(1)

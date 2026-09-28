@@ -7,7 +7,6 @@ import pytest
 from spawn.cli.noninteractive import build_config_from_args, build_config_from_file
 from spawn.core.exceptions import SpawnError
 
-
 # ---------------------------------------------------------------------------
 # build_config_from_args — valid paths
 # ---------------------------------------------------------------------------
@@ -77,6 +76,18 @@ def test_use_git_and_use_uv_forwarded():
     assert config.use_uv is False
 
 
+def test_license_defaults_to_mit():
+    config = build_config_from_args(name="my-tool", template="automation")
+    assert config.license == "mit"
+
+
+def test_license_none_passes():
+    config = build_config_from_args(
+        name="my-tool", template="automation", license="none"
+    )
+    assert config.license == "none"
+
+
 # ---------------------------------------------------------------------------
 # build_config_from_args — validation errors
 # ---------------------------------------------------------------------------
@@ -134,6 +145,11 @@ def test_invalid_project_name_raises():
         build_config_from_args(name="has spaces", template="automation")
 
 
+def test_invalid_license_raises():
+    with pytest.raises(SpawnError, match="Invalid license: 'bogus'. Valid options: mit, none"):
+        build_config_from_args(name="my-tool", template="automation", license="bogus")
+
+
 # ---------------------------------------------------------------------------
 # build_config_from_file — valid paths
 # ---------------------------------------------------------------------------
@@ -170,6 +186,17 @@ def test_json_file_all_optional_fields(tmp_path, monkeypatch):
     assert config.extras == ["ruff"]
     assert config.use_git is False
     assert config.use_uv is False
+
+
+def test_json_file_license_read(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    cfg_file = tmp_path / "spawn.json"
+    cfg_file.write_text(
+        json.dumps({"name": "demo", "template": "automation", "license": "none"}),
+        encoding="utf-8",
+    )
+    config = build_config_from_file(cfg_file)
+    assert config.license == "none"
 
 
 # ---------------------------------------------------------------------------
@@ -216,4 +243,14 @@ def test_extras_not_a_list_raises(tmp_path):
         json.dumps({"name": "demo", "template": "automation", "extras": "ruff"})
     )
     with pytest.raises(SpawnError, match="list of strings"):
+        build_config_from_file(f)
+
+
+def test_license_not_a_string_raises(tmp_path):
+    f = tmp_path / "bad_license.json"
+    f.write_text(
+        json.dumps({"name": "demo", "template": "automation", "license": 123}),
+        encoding="utf-8",
+    )
+    with pytest.raises(SpawnError, match="'license' in config file must be a string."):
         build_config_from_file(f)

@@ -6,6 +6,7 @@ instantly without touching the real system.
 
 from pathlib import Path
 from unittest.mock import patch
+
 from typer.testing import CliRunner
 
 from spawn.cli.app import app
@@ -420,6 +421,33 @@ def test_no_claude_md_flag_defaults_false(
 
     assert result.exit_code == 0
     assert captured["config"].generate_claude_md is False
+
+
+@patch("spawn.cli.app.get_project_config")
+@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.cli.app.show_success")
+@patch("spawn.cli.app.instantiate_template")
+def test_license_none_reaches_generator_config(
+    mock_instantiate, mock_show_success, mock_generator_cls, mock_get_config
+):
+    """--license none must result in license='none' on the config passed to generate()."""
+    captured = {}
+
+    def capture_generate(config):
+        captured["config"] = config
+        return Path("demo")
+
+    mock_generator_cls.return_value.generate.side_effect = capture_generate
+    mock_instantiate.return_value = None
+
+    result = runner.invoke(
+        app,
+        ["create", "--name", "demo", "--template", "automation", "--license", "none"],
+    )
+
+    assert result.exit_code == 0
+    assert "config" in captured
+    assert captured["config"].license == "none"
 
 
 # ---------------------------------------------------------------------------

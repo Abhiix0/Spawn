@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from spawn.core.exceptions import SpawnError, StructureParseError
+from spawn.generators.project_files import write_mypy_ini
+from spawn.templates.shared_content import PRECOMMIT_CONFIG_CONTENT
 from spawn.utils.console import console
 from spawn.utils.git import initialize_git
 from spawn.utils.uv import initialize_uv, install_packages
@@ -67,9 +69,7 @@ def _is_file_entry(name: str) -> bool:
         return True
     if "." in segment:
         return True
-    if segment.lower() in _KNOWN_EXTENSIONLESS_FILES:
-        return True
-    return False
+    return segment.lower() in _KNOWN_EXTENSIONLESS_FILES
 
 
 def _strip_name(name: str) -> str:
@@ -468,6 +468,8 @@ class CustomStructureGenerator:
             dev_deps.append("pytest")
         if "precommit" in dev_setup:
             dev_deps.append("pre-commit")
+        if "mypy" in dev_setup:
+            dev_deps.append("mypy")
 
         if dev_deps:
             console.print("[yellow]Installing dev tools...[/yellow]")
@@ -486,13 +488,12 @@ class CustomStructureGenerator:
 
         if "precommit" in dev_setup:
             (project_path / ".pre-commit-config.yaml").write_text(
-                "repos:\n"
-                "  - repo: https://github.com/astral-sh/ruff-pre-commit\n"
-                "    rev: v0.15.16\n"
-                "    hooks:\n"
-                "      - id: ruff\n",
+                PRECOMMIT_CONFIG_CONTENT,
                 encoding="utf-8",
             )
+
+        if "mypy" in dev_setup:
+            write_mypy_ini(project_path)
 
         if "dockerfile" in dev_setup:
             (project_path / "Dockerfile").write_text(
