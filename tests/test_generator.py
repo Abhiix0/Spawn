@@ -1,13 +1,15 @@
-import pytest
-
+from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from spawn.core.exceptions import SpawnError
 from spawn.core.models import ProjectConfig
 from spawn.generators.project_generator import ProjectGenerator
-
+from spawn.templates.shared_content import RUFF_PRECOMMIT_REV
 
 # ---------------------------------------------------------------------------
+
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -122,9 +124,8 @@ def test_existing_directory_raises_error(mock_uv, mock_install, tmp_path, monkey
 def test_uv_failure_cleans_up_directory(mock_uv, mock_install, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     mock_uv.side_effect = SpawnError("uv not found")
-    with _patch_post_install():
-        with pytest.raises(SpawnError):
-            ProjectGenerator().generate(_cli_config())
+    with _patch_post_install(), pytest.raises(SpawnError):
+        ProjectGenerator().generate(_cli_config())
     assert not (tmp_path / "demo").exists()
 
 
@@ -134,10 +135,12 @@ def test_git_failure_cleans_up_directory(mock_git, mock_uv, tmp_path, monkeypatc
     monkeypatch.chdir(tmp_path)
     mock_git.side_effect = SpawnError("Git is not installed or not available in PATH.")
     config = ProjectConfig(name="demo", template="cli", use_git=True)
-    with _patch_post_install():
-        with patch("spawn.generators.project_generator.install_packages"):
-            with pytest.raises(SpawnError):
-                ProjectGenerator().generate(config)
+    with (
+        _patch_post_install(),
+        patch("spawn.generators.project_generator.install_packages"),
+        pytest.raises(SpawnError),
+    ):
+        ProjectGenerator().generate(config)
     assert not (tmp_path / "demo").exists()
 
 
@@ -245,9 +248,11 @@ def test_write_text_failure_raises_spawn_error_and_cleans_up(
 
     monkeypatch.setattr(Path, "write_text", _failing_write_text)
 
-    with _patch_post_install():
-        with pytest.raises(SpawnError, match="No space left on device"):
-            ProjectGenerator().generate(_cli_config())
+    with (
+        _patch_post_install(),
+        pytest.raises(SpawnError, match="No space left on device"),
+    ):
+        ProjectGenerator().generate(_cli_config())
 
     assert not (tmp_path / "demo").exists()
 
@@ -457,9 +462,8 @@ def test_meta_json_rollback_on_failure(mock_uv, mock_install, tmp_path, monkeypa
 
     monkeypatch.setattr(Path, "mkdir", failing_mkdir)
 
-    with _patch_post_install():
-        with pytest.raises(SpawnError):
-            ProjectGenerator().generate(_cli_config())
+    with _patch_post_install(), pytest.raises(SpawnError):
+        ProjectGenerator().generate(_cli_config())
 
     assert not (tmp_path / "demo").exists()
 
@@ -778,3 +782,90 @@ def test_claude_md_created_when_flag_set(mock_uv, mock_install, tmp_path, monkey
     agents = (tmp_path / "demo" / "AGENTS.md").read_text(encoding="utf-8")
     claude = (tmp_path / "demo" / "CLAUDE.md").read_text(encoding="utf-8")
     assert claude == agents
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_default_generation_creates_license_and_changelog(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config())
+    assert (tmp_path / "demo" / "LICENSE").is_file()
+    assert (tmp_path / "demo" / "CHANGELOG.md").is_file()
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_license_none_produces_no_license(mock_uv, mock_install, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config(license="none"))
+    assert not (tmp_path / "demo" / "LICENSE").exists()
+    assert (tmp_path / "demo" / "CHANGELOG.md").is_file()
+
+
+@patch(
+    "spawn.generators.project_generator.get_git_user_name",
+    return_value="Alice Developer",
+)
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_license_holder_from_git_user_name(
+    mock_uv, mock_install, mock_git_user, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config())
+    content = (tmp_path / "demo" / "LICENSE").read_text(encoding="utf-8")
+    assert "Alice Developer" in content
+
+
+@patch("spawn.generators.project_generator.get_git_user_name", return_value=None)
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_license_holder_fallback_when_git_user_name_none(
+    mock_uv, mock_install, mock_git_user, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config(name="my-app"))
+    content = (tmp_path / "my-app" / "LICENSE").read_text(encoding="utf-8")
+    assert "my-app contributors" in content
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_extras_mypy_installs_and_configures(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+
+    def _create_pyproject(path):
+        (path / "pyproject.toml").write_text(
+            "[project]\nname = 'demo'\n", encoding="utf-8"
+        )
+
+    mock_uv.side_effect = _create_pyproject
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config(extras=["mypy"]))
+
+    mock_install.assert_any_call(Path("demo"), ["mypy"], dev=True)
+    content = (tmp_path / "demo" / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.mypy]" in content
+
+
+@patch("spawn.generators.project_generator.install_packages")
+@patch("spawn.generators.project_generator.initialize_uv")
+def test_extras_precommit_installs_and_writes_config(
+    mock_uv, mock_install, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    with _patch_post_install():
+        ProjectGenerator().generate(_cli_config(extras=["pre-commit"]))
+
+    mock_install.assert_any_call(Path("demo"), ["pre-commit"], dev=True)
+    cfg_file = tmp_path / "demo" / ".pre-commit-config.yaml"
+    assert cfg_file.is_file()
+    assert RUFF_PRECOMMIT_REV in cfg_file.read_text(encoding="utf-8")

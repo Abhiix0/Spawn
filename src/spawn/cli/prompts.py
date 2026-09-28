@@ -1,16 +1,16 @@
-import typer
-import questionary
 from pathlib import Path
+
+import questionary
+import typer
 from rich.prompt import Confirm
 
-from spawn.utils.console import console
-from spawn.core.models import ProjectConfig
-from spawn.core.registry import list_templates, get_metadata
-from spawn.templates.chatbot import get_supported_providers as get_chatbot_providers
-from spawn.templates.agent import get_supported_providers as get_agent_providers
-from spawn.utils.validators import validate_project_name
 from spawn.core.exceptions import SpawnError
-
+from spawn.core.models import ProjectConfig
+from spawn.core.registry import get_metadata, list_templates
+from spawn.templates.agent import get_supported_providers as get_agent_providers
+from spawn.templates.chatbot import get_supported_providers as get_chatbot_providers
+from spawn.utils.console import console
+from spawn.utils.validators import validate_project_name
 
 # ---------------------------------------------------------------------------
 # Questionary helpers
@@ -52,11 +52,12 @@ def _multiselect(message: str, choices: list[str]) -> list[str]:
 # Custom Structure optional-setup multi-select
 # ---------------------------------------------------------------------------
 
-_OPTIONAL_SETUP_CHOICES = ["Ruff", "Pytest", "Pre-commit", "Dockerfile"]
+_OPTIONAL_SETUP_CHOICES = ["Ruff", "Pytest", "Pre-commit", "Mypy", "Dockerfile"]
 _OPTIONAL_SETUP_KEY = {
     "Ruff": "ruff",
     "Pytest": "pytest",
     "Pre-commit": "precommit",
+    "Mypy": "mypy",
     "Dockerfile": "dockerfile",
 }
 
@@ -153,6 +154,9 @@ def get_project_config() -> ProjectConfig:
             meta.available_extras,
         )
 
+    license_choice = _select("Choose a license", ["MIT", "None"], default="MIT")
+    license_mapped = {"MIT": "mit", "None": "none"}[license_choice]
+
     # --- Git ---
     use_git = typer.confirm(
         typer.style("Initialize Git?", fg=typer.colors.CYAN),
@@ -167,6 +171,7 @@ def get_project_config() -> ProjectConfig:
         template=template,
         use_git=use_git,
         generate_claude_md=generate_claude_md,
+        license=license_mapped,
         framework=selected_framework,
         extras=selected_extras,
         cli_type=selected_cli_type,
@@ -189,7 +194,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     import sys
 
     from spawn.core.exceptions import StructureParseError
-    from spawn.generators.custom_structure import parse_structure, detect_format
+    from spawn.generators.custom_structure import detect_format, parse_structure
 
     console.print()
     console.print(

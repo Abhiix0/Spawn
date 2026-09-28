@@ -2,15 +2,15 @@ import inspect
 from dataclasses import dataclass, field
 
 from spawn.core.models import ProjectConfig
-from spawn.templates.backend_api import BackendAPITemplate
-from spawn.templates.cli_application import CLITemplate
-from spawn.templates.automation import AutomationTemplate
-from spawn.templates.chatbot import ChatbotTemplate
 from spawn.templates.agent import AgentTemplate
-from spawn.templates.rag import RAGTemplate
+from spawn.templates.automation import AutomationTemplate
+from spawn.templates.backend_api import BackendAPITemplate
+from spawn.templates.base import BaseTemplate
+from spawn.templates.chatbot import ChatbotTemplate
+from spawn.templates.cli_application import CLITemplate
 from spawn.templates.data_project import DataProjectTemplate
 from spawn.templates.mcp_server import MCPServerTemplate
-from spawn.templates.base import BaseTemplate
+from spawn.templates.rag import RAGTemplate
 
 
 @dataclass
@@ -38,7 +38,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         description="Production-ready backend with FastAPI, Flask, or Django",
         template_class=BackendAPITemplate,
         available_frameworks=["fastapi", "flask", "django"],
-        available_extras=["ruff", "pytest", "docker", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "docker",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
     ),
     "cli": TemplateMetadata(
         slug="cli",
@@ -46,7 +53,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         description="Command-line application with Typer, Click, or Argparse",
         template_class=CLITemplate,
         available_frameworks=["typer", "click", "argparse"],
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
         available_cli_types=["utility", "interactive"],
     ),
     "automation": TemplateMetadata(
@@ -54,7 +67,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="Automation Tool",
         description="Workflow-based automation with logging, tasks, and integrations",
         template_class=AutomationTemplate,
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
     ),
     "chatbot": TemplateMetadata(
         slug="chatbot",
@@ -70,7 +89,14 @@ TEMPLATES: dict[str, TemplateMetadata] = {
             "ollama",
             "groq",
         ],
-        available_extras=["ruff", "pytest", "rich", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "rich",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
     ),
     "agent": TemplateMetadata(
         slug="agent",
@@ -86,21 +112,39 @@ TEMPLATES: dict[str, TemplateMetadata] = {
             "ollama",
             "groq",
         ],
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
     ),
     "rag": TemplateMetadata(
         slug="rag",
         display_name="RAG System",
         description="Retrieval-Augmented Generation with LlamaIndex and ChromaDB",
         template_class=RAGTemplate,
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
     ),
     "data": TemplateMetadata(
         slug="data",
         display_name="Data Project",
         description="Data Analysis, Dashboard, ETL Pipeline, or Machine Learning project",
         template_class=DataProjectTemplate,
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
         available_data_types=[
             "Data Analysis",
             "Dashboard",
@@ -113,7 +157,13 @@ TEMPLATES: dict[str, TemplateMetadata] = {
         display_name="MCP Server",
         description="Model Context Protocol server with the official Python SDK",
         template_class=MCPServerTemplate,
-        available_extras=["ruff", "pytest", "github-actions"],
+        available_extras=[
+            "ruff",
+            "pytest",
+            "github-actions",
+            "pre-commit",
+            "mypy",
+        ],
     ),
 }
 

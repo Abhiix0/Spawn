@@ -367,11 +367,13 @@ def test_generator_rolls_back_on_failure(tmp_path, monkeypatch):
             raise OSError("simulated disk error")
         return original_mkdir(self, *args, **kwargs)
 
-    with patch.object(Path, "mkdir", patched_mkdir):
-        with pytest.raises((SpawnError, OSError)):
-            CustomStructureGenerator().generate(
-                "my-project", entries, use_git=False, use_uv=False
-            )
+    with (
+        patch.object(Path, "mkdir", patched_mkdir),
+        pytest.raises((SpawnError, OSError)),
+    ):
+        CustomStructureGenerator().generate(
+            "my-project", entries, use_git=False, use_uv=False
+        )
 
     assert not (tmp_path / "my-project").exists(), (
         "rollback failed — directory still exists"
@@ -507,6 +509,25 @@ def test_dockerfile_selected_creates_dockerfile(tmp_path, monkeypatch):
     assert "python:3.12-slim" in df.read_text(encoding="utf-8")
 
 
+def test_mypy_selected_creates_mypy_ini(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    project_path = _generate_with_dev_setup(tmp_path, ["mypy"])
+    cfg = project_path / "mypy.ini"
+    assert cfg.is_file()
+    assert "[mypy]" in cfg.read_text(encoding="utf-8")
+
+
+def test_mypy_in_optional_setup_menu():
+    from spawn.cli.prompts import _OPTIONAL_SETUP_CHOICES, _OPTIONAL_SETUP_KEY
+
+    assert "Mypy" in _OPTIONAL_SETUP_CHOICES
+    assert (
+        _OPTIONAL_SETUP_CHOICES.index("Mypy")
+        == _OPTIONAL_SETUP_CHOICES.index("Pre-commit") + 1
+    )
+    assert _OPTIONAL_SETUP_KEY["Mypy"] == "mypy"
+
+
 def test_dev_setup_skipped_when_use_uv_false(tmp_path, monkeypatch):
     """Even with dev_setup=['ruff'], nothing is created when use_uv=False."""
     monkeypatch.chdir(tmp_path)
@@ -530,6 +551,24 @@ def test_install_packages_called_with_dev_flag(tmp_path, monkeypatch):
     mock_install.assert_called_once_with(
         Path("dev-project"),
         ["ruff", "pytest", "pre-commit"],
+        dev=True,
+    )
+
+
+def test_install_packages_called_with_mypy(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    entries = parse_structure(_TREE_RAW)
+    with patch(_PATCH_UV), patch(_PATCH_GIT), patch(_PATCH_INST) as mock_install:
+        CustomStructureGenerator().generate(
+            "dev-project",
+            entries,
+            use_git=False,
+            use_uv=True,
+            dev_setup=["mypy"],
+        )
+    mock_install.assert_called_once_with(
+        Path("dev-project"),
+        ["mypy"],
         dev=True,
     )
 
@@ -588,7 +627,7 @@ def test_readme_populated_when_present(tmp_path, monkeypatch):
 
 def test_readme_contains_structure_tree(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    project_path, entries = _gen_with_readme(tmp_path, _README_RAW)
+    project_path, _entries = _gen_with_readme(tmp_path, _README_RAW)
     content = (project_path / "README.md").read_text(encoding="utf-8")
     # names from the parsed entries should appear in the tree section
     assert "app/" in content

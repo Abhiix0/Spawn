@@ -49,14 +49,14 @@ After installation, `spawn` is available anywhere on your machine.
 
 ```bash
 spawn version
-# Spawn v1.0.7
+# Spawn v1.0.8
 ```
 
 Or just run `spawn` with no arguments to see the command overview:
 
 ```
 SPAWN — scaffold your next project
-v1.0.6
+v1.0.8
 
 Commands
   create    Scaffold a new project
@@ -94,6 +94,10 @@ Project Name: my-api
  ○ pytest
  ○ docker
  ○ github-actions
+
+? Choose a license (Use arrow keys)
+ » MIT
+   None
 
 Initialize Git? [Y/n]: Y
 Also generate CLAUDE.md for Claude Code? [y/N]: N
@@ -151,6 +155,10 @@ Project Name: my-cli
  ○ pytest
  ○ github-actions
 
+? Choose a license (Use arrow keys)
+ » MIT
+   None
+
 Initialize Git? [Y/n]: Y
 Also generate CLAUDE.md for Claude Code? [y/N]: N
 ```
@@ -165,7 +173,7 @@ uv run python -m src.main hello
 ### Option C — Non-interactive (zero prompts)
 
 ```bash
-spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --no-git
+spawn create --name my-api --template backend-api --framework fastapi --extras ruff,pytest --license mit --no-git
 ```
 
 Or from a JSON config file:
@@ -176,6 +184,7 @@ Or from a JSON config file:
   "template": "backend-api",
   "framework": "fastapi",
   "extras": ["ruff", "pytest"],
+  "license": "mit",
   "git": false,
   "uv": true
 }
@@ -203,6 +212,8 @@ Every generated project includes:
 |---|---|
 | `README.md` | Project README with setup and run instructions |
 | `AGENTS.md` | Agent context file (structure, setup, conventions) |
+| `CHANGELOG.md` | Keep a Changelog starter documenting project history |
+| `LICENSE` | MIT license (default) |
 | `.gitignore` | Python defaults |
 | `.spawn/meta.json` | Spawn metadata (intent, framework, version, timestamps) |
 | `pyproject.toml` | Project config + installed dependencies |
@@ -223,6 +234,8 @@ my-api/
 │   └── test_health.py
 ├── .env.example
 ├── AGENTS.md
+├── CHANGELOG.md
+├── LICENSE
 ├── README.md
 ├── .gitignore
 └── pyproject.toml
@@ -257,6 +270,14 @@ spawn doctor
 ```
 
 Spawn scores the project out of 135 across Documentation, Version Control, Configuration, Testing, Automation, and Code Quality, and shows a prioritized recommendation for the most impactful next improvement.
+
+You can also run `spawn doctor --fix` (with optional `--dry-run`, `--yes`, or `--license mit`) to automatically create missing standard files and baseline configuration:
+
+```bash
+spawn doctor --fix
+```
+
+It **never overwrites** existing files and **never installs packages** into your environment directly.
 
 ---
 

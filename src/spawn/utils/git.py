@@ -127,3 +127,18 @@ def is_git_repository(
 ) -> bool:
     """Check if the given path is inside a Git repository."""
     return (project_path / ".git").is_dir()
+
+
+def get_git_user_name() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "config", "user.name"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        name = result.stdout.strip()
+        return name if name else None
+
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return None

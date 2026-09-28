@@ -23,16 +23,19 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.6"
+├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.8"
 ├── cli/
 │   ├── app.py          # Typer app: create, version, doctor commands
+│   ├── noninteractive.py # Build config from CLI flags or JSON config file
 │   └── prompts.py      # Interactive prompts; derives menu from registry
 ├── core/
 │   ├── exceptions.py   # SpawnError — base exception
-│   ├── models.py       # ProjectConfig dataclass (name, template, use_git, framework, extras)
+│   ├── models.py       # ProjectConfig dataclass (name, template, use_git, framework, extras, license)
 │   └── registry.py     # TemplateMetadata, TEMPLATES dict, get_template(),
 │                       # instantiate_template(), get_metadata(), list_templates()
 ├── generators/
+│   ├── custom_structure.py   # Custom structure parser and generator
+│   ├── project_files.py      # Standalone file writers for LICENSE, README, configs, CI
 │   └── project_generator.py  # Orchestrates generation, dependency install, meta.json write
 ├── github/
 │   ├── exceptions.py   # GitHubPublishError
@@ -40,7 +43,7 @@ src/spawn/
 │   └── validators.py   # GitHub URL validation
 ├── templates/
 │   ├── base.py         # BaseTemplate dataclass
-│   ├── shared_content.py     # README_CONTENT, GITIGNORE_CONTENT
+│   ├── shared_content.py     # README_CONTENT, GITIGNORE_CONTENT, CI, and tool configs
 │   ├── backend_api/
 │   │   ├── __init__.py       # BackendAPITemplate (dispatches by framework)
 │   │   └── content.py        # All FastAPI/Flask/Django/Docker/CI content strings
@@ -60,8 +63,10 @@ src/spawn/
     ├── banner.py       # show_banner() — ASCII wordmark with ice-fade colours
     ├── console.py      # Shared Rich Console instance
     ├── doctor.py       # ProjectHealthChecker, run_health_check()
+    ├── doctor_fix.py   # FixAction, FixResult, plan_fixes(), apply_fixes(), tool_hints()
     ├── git.py          # initialize_git(), run_git_command(), add_all(), commit() etc.
     ├── success.py      # show_success() — renders the success panel
+    ├── theme.py        # UI theme colors and styles
     ├── uv.py           # initialize_uv(), install_packages()
     └── validators.py   # validate_project_name()
 ```
@@ -137,14 +142,14 @@ Each template lives in its own subdirectory with an `__init__.py` (class) and `c
 
 | Key | Template class | Frameworks | Extras |
 |---|---|---|---|
-| `backend-api` | `BackendAPITemplate` | fastapi, flask, django | ruff, pytest, docker, github-actions |
-| `cli` | `CLITemplate` | typer, click, argparse | ruff, pytest, github-actions |
-| `automation` | `AutomationTemplate` | none | ruff, pytest, github-actions |
-| `chatbot` | `ChatbotTemplate` | pydantic-ai, openai-sdk | ruff, pytest, github-actions |
-| `agent` | `AgentTemplate` | pydantic-ai, openai-agents | ruff, pytest, github-actions |
-| `rag` | `RAGTemplate` | none | ruff, pytest, github-actions |
-| `data` | `DataProjectTemplate` | none | ruff, pytest, github-actions |
-| `mcp` | `MCPServerTemplate` | none | ruff, pytest, github-actions |
+| `backend-api` | `BackendAPITemplate` | fastapi, flask, django | ruff, pytest, docker, github-actions, pre-commit, mypy |
+| `cli` | `CLITemplate` | typer, click, argparse | ruff, pytest, github-actions, pre-commit, mypy |
+| `automation` | `AutomationTemplate` | none | ruff, pytest, github-actions, pre-commit, mypy |
+| `chatbot` | `ChatbotTemplate` | pydantic-ai, openai-sdk, litellm | ruff, pytest, rich, github-actions, pre-commit, mypy |
+| `agent` | `AgentTemplate` | pydantic-ai, openai-agents | ruff, pytest, github-actions, pre-commit, mypy |
+| `rag` | `RAGTemplate` | none | ruff, pytest, github-actions, pre-commit, mypy |
+| `data` | `DataProjectTemplate` | none | ruff, pytest, github-actions, pre-commit, mypy |
+| `mcp` | `MCPServerTemplate` | none | ruff, pytest, github-actions, pre-commit, mypy |
 
 `get_template(slug)` returns a default-constructed instance. `instantiate_template(config)` forwards `framework`, `extras`, and `cli_type` from `ProjectConfig` to templates whose constructors accept them, using signature introspection.
 
