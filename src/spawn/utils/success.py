@@ -12,18 +12,24 @@ def show_success(
     template_name: str,
     use_git: bool,
     next_steps: list[str],
+    use_uv: bool = True,
 ) -> None:
 
     git_status = (
         "[green]✓ Enabled[/green]" if use_git else "[yellow]○ Disabled[/yellow]"
     )
 
+    uv_status = (
+        "[green]✓ Initialized[/green]" if use_uv else "[yellow]○ Skipped[/yellow]"
+    )
+    venv_status = "[green]✓ Created[/green]" if use_uv else "[yellow]○ Skipped[/yellow]"
+
     table = Table.grid(padding=(0, 2))
     table.add_row("[bold cyan]Project[/bold cyan]", project_name)
     table.add_row("[bold cyan]Template[/bold cyan]", template_name)
     table.add_row("[bold cyan]Git[/bold cyan]", git_status)
-    table.add_row("[bold cyan]UV[/bold cyan]", "[green]✓ Initialized[/green]")
-    table.add_row("[bold cyan]Virtual Env[/bold cyan]", "[green]✓ Created[/green]")
+    table.add_row("[bold cyan]UV[/bold cyan]", uv_status)
+    table.add_row("[bold cyan]Virtual Env[/bold cyan]", venv_status)
 
     formatted = [step.format(project_name=project_name) for step in next_steps]
     next_steps_content = "\n".join(formatted)

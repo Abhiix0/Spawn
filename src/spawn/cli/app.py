@@ -1,5 +1,3 @@
-import datetime
-import json
 from pathlib import Path
 
 import typer
@@ -10,7 +8,7 @@ from spawn.cli.noninteractive import build_config_from_args, build_config_from_f
 from spawn.cli.prompts import get_project_config
 from spawn.core.exceptions import SpawnError
 from spawn.core.registry import instantiate_template
-from spawn.generators.project_generator import ProjectGenerator
+from spawn.generators.pipeline import generate_project
 from spawn.github.exceptions import GitHubPublishError
 from spawn.github.publisher import GitHubPublisher
 from spawn.utils.banner import show_banner
@@ -36,26 +34,13 @@ def main_callback(ctx: typer.Context) -> None:
     )
 
 
-def _write_custom_metadata(project_path, config) -> None:
-    meta_dir = project_path / ".spawn"
-    meta_dir.mkdir(exist_ok=True)
-    (meta_dir / "meta.json").write_text(
-        json.dumps(
-            {
-                "intent": "custom",
-                "framework": None,
-                "provider": None,
-                "spawn_version": __version__,
-                "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
-                "generator": "custom",
-                "git": config.use_git,
-                "uv": config.use_uv,
-                "source": config.custom_source_format or "tree",
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
+def _display_info(config) -> tuple[str, list[str]] | None:
+    if config.template == "custom":
+        return "Custom Structure", [f"cd {config.name}", "Start building your project"]
+    template_obj = instantiate_template(config)
+    if template_obj is None:
+        return None
+    return template_obj.name, template_obj.next_steps
 
 
 @app.command()
@@ -160,40 +145,17 @@ def create(
             config = get_project_config()
 
         try:
-            if config.template == "custom":
-                from spawn.generators.custom_structure import CustomStructureGenerator
-
-                project_path = CustomStructureGenerator().generate(
-                    project_name=config.name,
-                    entries=config.custom_entries or [],
-                    use_git=config.use_git,
-                    use_uv=config.use_uv,
-                    dependencies=config.custom_dependencies,
-                    dev_setup=config.custom_dev_setup,
-                    gitignore_extra=config.custom_gitignore_extra,
-                    generate_claude_md=config.generate_claude_md,
-                )
-                _write_custom_metadata(project_path, config)
-                next_steps = [
-                    f"cd {config.name}",
-                    "Start building your project",
-                ]
+            project_path = generate_project(config)
+            info = _display_info(config)
+            if info is not None:
+                template_name, next_steps = info
                 show_success(
                     project_name=config.name,
-                    template_name="Custom Structure",
+                    template_name=template_name,
                     use_git=config.use_git,
                     next_steps=next_steps,
+                    use_uv=config.use_uv,
                 )
-            else:
-                project_path = ProjectGenerator().generate(config)
-                template_obj = instantiate_template(config)
-                if template_obj is not None:
-                    show_success(
-                        project_name=config.name,
-                        template_name=template_obj.name,
-                        use_git=config.use_git,
-                        next_steps=template_obj.next_steps,
-                    )
 
         except SpawnError as e:
             console.print(f"[red]❌ {e}[/red]")

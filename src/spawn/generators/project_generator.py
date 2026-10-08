@@ -1,12 +1,10 @@
-import datetime
-import json
 import shutil
 from pathlib import Path
 
-from spawn import __version__
 from spawn.core.exceptions import SpawnError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import instantiate_template
+from spawn.generators.metadata import write_project_meta
 from spawn.generators.project_files import (
     add_mypy_config,
     write_changelog,
@@ -89,36 +87,20 @@ class ProjectGenerator:
                 console.print("[yellow]Initializing Git...[/yellow]")
                 initialize_git(project_path)
 
-            initialize_uv(project_path)
+            # Without uv there is no pyproject.toml, which post_install and the
+            # quality extras rely on; skip them as CustomStructureGenerator does.
+            if config.use_uv:
+                initialize_uv(project_path)
 
-            deps = template.get_dependencies()
-            if deps:
-                console.print("[yellow]Installing dependencies...[/yellow]")
-                install_packages(project_path, deps)
+                deps = template.get_dependencies()
+                if deps:
+                    console.print("[yellow]Installing dependencies...[/yellow]")
+                    install_packages(project_path, deps)
 
-            template.post_install(project_path)
-            self._apply_quality_extras(project_path, config.extras)
+                template.post_install(project_path)
+                self._apply_quality_extras(project_path, config.extras)
 
-            meta_dir = project_path / ".spawn"
-            meta_dir.mkdir()
-            meta_file = meta_dir / "meta.json"
-            meta_file.write_text(
-                json.dumps(
-                    {
-                        "intent": config.template,
-                        "framework": config.framework,
-                        "provider": config.provider,
-                        "spawn_version": __version__,
-                        "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
-                        "generator": "blueprint",
-                        "git": config.use_git,
-                        "uv": True,
-                        "source": None,
-                    },
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
+            write_project_meta(project_path, config, generator="blueprint")
 
         except OSError as e:
             shutil.rmtree(project_path, ignore_errors=True)
