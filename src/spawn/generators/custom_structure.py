@@ -11,11 +11,16 @@ Supported input formats:
 from __future__ import annotations
 
 import re
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
 from spawn.core.exceptions import SpawnError, StructureParseError
+from spawn.generators.destination import (
+    assert_available,
+    cleanup_created,
+    resolve_destination,
+    safe_join,
+)
 from spawn.generators.project_files import write_mypy_ini
 from spawn.templates.shared_content import PRECOMMIT_CONFIG_CONTENT
 from spawn.utils.console import console
@@ -224,6 +229,20 @@ def _parse_indented_lines(lines: list[str]) -> list[tuple[int, str]]:
     return result
 
 
+def _check_entry_safe(name: str, full_path: str) -> None:
+    if (
+        "\\" in name
+        or "\0" in name
+        or name.startswith("/")
+        or re.match(r"^[A-Za-z]:", name)
+        or ".." in full_path.split("/")
+    ):
+        raise StructureParseError(
+            f"Unsafe entry '{name}': absolute paths, '..' and backslashes "
+            "are not allowed."
+        )
+
+
 def _build_entries(
     depth_name_pairs: list[tuple[int, str]],
 ) -> list[ParsedEntry]:
@@ -251,6 +270,7 @@ def _build_entries(
 
         parent = stack[depth] if depth < len(stack) else stack[-1]
         full_path = f"{parent}/{name}".lstrip("/") if parent else name
+        _check_entry_safe(name, full_path)
 
         is_file = _is_file_entry(name)
 
@@ -353,6 +373,7 @@ class CustomStructureGenerator:
         dev_setup: list[str] | None = None,
         gitignore_extra: list[str] | None = None,
         generate_claude_md: bool = False,
+        destination: Path | None = None,
     ) -> Path:
         """
         Create the folder/file structure described by *entries* under a new
@@ -361,20 +382,20 @@ class CustomStructureGenerator:
         Raises SpawnError if the directory already exists or an OS error
         occurs.  Rolls back on any failure.
         """
-        project_path = Path(project_name)
+        project_path = resolve_destination(project_name, destination)
+        assert_available(project_path, f"Directory '{project_name}' already exists.")
 
-        if project_path.exists():
-            raise SpawnError(f"Directory '{project_name}' already exists.")
-
+        created = False
         try:
             project_path.mkdir()
+            created = True
 
             for entry in entries:
                 if entry.path == "pyproject.toml" and use_uv:
                     continue  # uv init --bare will create this
                 if entry.path == ".git" or entry.path.startswith(".git/"):
                     continue  # git init will create/manage this
-                full_path = project_path / entry.path
+                full_path = safe_join(project_path, entry.path)
                 if entry.is_file:
                     full_path.parent.mkdir(parents=True, exist_ok=True)
                     full_path.touch()
@@ -390,7 +411,7 @@ class CustomStructureGenerator:
                 None,
             )
             if readme_entry is not None:
-                readme_path = project_path / readme_entry.path
+                readme_path = safe_join(project_path, readme_entry.path)
                 readme_path.write_text(
                     _build_readme_content(project_name, entries, use_uv),
                     encoding="utf-8",
@@ -405,15 +426,15 @@ class CustomStructureGenerator:
                 None,
             )
             if agents_md_entry is not None:
-                agents_md_path = project_path / agents_md_entry.path
+                agents_md_path = safe_join(project_path, agents_md_entry.path)
                 agents_md_path.write_text(
                     _build_agents_md_content(project_name, entries),
                     encoding="utf-8",
                 )
 
             if generate_claude_md and agents_md_entry is not None:
-                claude_md_path = project_path / agents_md_entry.path.replace(
-                    "AGENTS.md", "CLAUDE.md"
+                claude_md_path = safe_join(
+                    project_path, agents_md_entry.path.replace("AGENTS.md", "CLAUDE.md")
                 )
                 claude_md_path.write_text(
                     _build_agents_md_content(project_name, entries),
@@ -429,7 +450,7 @@ class CustomStructureGenerator:
                 None,
             )
             if gitignore_entry is not None:
-                gitignore_path = project_path / gitignore_entry.path
+                gitignore_path = safe_join(project_path, gitignore_entry.path)
                 gitignore_path.write_text(
                     _build_gitignore_content(gitignore_extra or []),
                     encoding="utf-8",
@@ -450,11 +471,13 @@ class CustomStructureGenerator:
                 self._apply_dev_setup(project_path, dev_setup)
 
         except OSError as e:
-            shutil.rmtree(project_path, ignore_errors=True)
+            if created:
+                cleanup_created(project_path)
             raise SpawnError(str(e)) from e
 
         except BaseException:
-            shutil.rmtree(project_path, ignore_errors=True)
+            if created:
+                cleanup_created(project_path)
             raise
 
         return project_path

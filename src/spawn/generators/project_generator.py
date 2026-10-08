@@ -1,9 +1,13 @@
-import shutil
 from pathlib import Path
 
 from spawn.core.exceptions import SpawnError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import instantiate_template
+from spawn.generators.destination import (
+    assert_available,
+    cleanup_created,
+    resolve_destination,
+)
 from spawn.generators.metadata import write_project_meta
 from spawn.generators.project_files import (
     add_mypy_config,
@@ -42,13 +46,13 @@ class ProjectGenerator:
         if template is None:
             raise SpawnError(f"Unknown template: {config.template}")
 
-        project_path = Path(config.name)
+        project_path = resolve_destination(config.name, config.destination)
+        assert_available(project_path, f"Directory '{config.name}' already exists.")
 
-        if project_path.exists():
-            raise SpawnError(f"Directory '{config.name}' already exists.")
-
+        created = False
         try:
             project_path.mkdir()
+            created = True
 
             context = {"project_name": config.name}
             template.generate(project_path, context)
@@ -103,11 +107,13 @@ class ProjectGenerator:
             write_project_meta(project_path, config, generator="blueprint")
 
         except OSError as e:
-            shutil.rmtree(project_path, ignore_errors=True)
+            if created:
+                cleanup_created(project_path)
             raise SpawnError(str(e)) from e
 
         except BaseException:
-            shutil.rmtree(project_path, ignore_errors=True)
+            if created:
+                cleanup_created(project_path)
             raise
 
         return project_path

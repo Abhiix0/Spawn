@@ -12,6 +12,7 @@ from pathlib import Path
 from spawn.core.exceptions import SpawnError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import get_metadata, list_templates
+from spawn.generators.destination import assert_available
 from spawn.generators.project_files import SUPPORTED_LICENSES
 from spawn.templates.agent import get_supported_providers as get_agent_providers
 from spawn.templates.chatbot import get_supported_providers as get_chatbot_providers
@@ -52,8 +53,7 @@ def plan_project(
     validate_project_name(name)
 
     # 2. Directory existence.
-    if Path(name).exists():
-        raise SpawnError(f"A directory named '{name}' already exists.")
+    assert_available(Path(name), f"A directory named '{name}' already exists.")
 
     # 3. Template.
     metadata = get_metadata(template)
