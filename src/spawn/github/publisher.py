@@ -7,6 +7,7 @@ from spawn.github.exceptions import (
     GitHubPublishError,
 )
 from spawn.core.exceptions import SpawnError
+from spawn.utils.redact import redact_url
 
 from spawn.utils.git import (
     add_all,
@@ -56,4 +57,4 @@ class GitHubPublisher:
             push_origin_main(project_path)
 
         except SpawnError as exc:
-            raise GitHubPublishError(str(exc)) from exc
+            raise GitHubPublishError(redact_url(str(exc))) from exc

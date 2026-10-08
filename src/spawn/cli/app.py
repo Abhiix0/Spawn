@@ -6,7 +6,8 @@ from rich.prompt import Confirm, Prompt
 from spawn import __version__
 from spawn.cli.noninteractive import build_config_from_args, build_config_from_file
 from spawn.cli.prompts import get_project_config
-from spawn.core.exceptions import SpawnError
+from spawn.cli.errors import fail, report_unexpected
+from spawn.core.exceptions import InvalidInputError, SpawnError
 from spawn.core.registry import instantiate_template
 from spawn.generators.pipeline import generate_project
 from spawn.github.exceptions import GitHubPublishError
@@ -111,7 +112,7 @@ def create(
                     )
                 else:
                     if template is None:
-                        raise SpawnError(
+                        raise InvalidInputError(
                             "--template is required when using --name without --config."
                         )
                     extras_list = (
@@ -134,15 +135,17 @@ def create(
                     )
 
             except SpawnError as e:
-                console.print(f"[red]❌ {e}[/red]")
-                raise typer.Exit(1)
+                fail(e)
 
             if dry_run:
                 console.print("[green]✓ Config valid[/green]")
                 console.print(config)
                 return
         else:
-            config = get_project_config()
+            try:
+                config = get_project_config()
+            except SpawnError as e:
+                fail(e)
 
         try:
             project_path = generate_project(config)
@@ -158,8 +161,7 @@ def create(
                 )
 
         except SpawnError as e:
-            console.print(f"[red]❌ {e}[/red]")
-            return
+            fail(e)
 
         if not config.use_git:
             console.print(
@@ -187,10 +189,14 @@ def create(
             console.print("[green]🚀 Published successfully![/green]")
 
         except GitHubPublishError as e:
-            console.print(f"[red]❌ {e}[/red]")
+            fail(e)
     except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]Cancelled.[/yellow]")
         raise typer.Exit(130)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        report_unexpected(e)
 
 
 @app.command()
@@ -322,6 +328,10 @@ def doctor(
     except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]Cancelled.[/yellow]")
         raise typer.Exit(130)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        report_unexpected(e)
 
 
 def main():

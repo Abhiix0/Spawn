@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import FilesystemError, TemplateError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import instantiate_template
 from spawn.generators.destination import (
@@ -44,7 +44,7 @@ class ProjectGenerator:
         template = instantiate_template(config)
 
         if template is None:
-            raise SpawnError(f"Unknown template: {config.template}")
+            raise TemplateError(f"Unknown template: {config.template}")
 
         project_path = resolve_destination(config.name, config.destination)
         assert_available(project_path, f"Directory '{config.name}' already exists.")
@@ -109,7 +109,7 @@ class ProjectGenerator:
         except OSError as e:
             if created:
                 cleanup_created(project_path)
-            raise SpawnError(str(e)) from e
+            raise FilesystemError(str(e)) from e
 
         except BaseException:
             if created:

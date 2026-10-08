@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import InvalidInputError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import get_metadata, list_templates
 from spawn.generators.destination import assert_available
@@ -59,7 +59,9 @@ def plan_project(
     metadata = get_metadata(template)
     if metadata is None:
         valid = ", ".join(m.slug for m in list_templates())
-        raise SpawnError(f"Unknown template: '{template}'. Valid templates: {valid}")
+        raise InvalidInputError(
+            f"Unknown template: '{template}'. Valid templates: {valid}"
+        )
 
     # 4. cli_type.
     if metadata.available_cli_types:
@@ -67,7 +69,7 @@ def plan_project(
             cli_type = metadata.available_cli_types[0]
         elif cli_type not in metadata.available_cli_types:
             valid = ", ".join(metadata.available_cli_types)
-            raise SpawnError(
+            raise InvalidInputError(
                 f"Invalid cli_type: '{cli_type}'. "
                 f"Valid options for '{template}': {valid}"
             )
@@ -80,7 +82,7 @@ def plan_project(
             data_type = metadata.available_data_types[0]
         elif data_type not in metadata.available_data_types:
             valid = ", ".join(metadata.available_data_types)
-            raise SpawnError(
+            raise InvalidInputError(
                 f"Invalid data_type: '{data_type}'. "
                 f"Valid options for '{template}': {valid}"
             )
@@ -93,7 +95,7 @@ def plan_project(
             framework = metadata.available_frameworks[0]
         elif framework not in metadata.available_frameworks:
             valid = ", ".join(metadata.available_frameworks)
-            raise SpawnError(
+            raise InvalidInputError(
                 f"Invalid framework: '{framework}'. "
                 f"Valid options for '{template}': {valid}"
             )
@@ -110,7 +112,7 @@ def plan_project(
             provider = valid_providers[0]
         elif provider not in valid_providers:
             valid = ", ".join(valid_providers)
-            raise SpawnError(
+            raise InvalidInputError(
                 f"Invalid provider: '{provider}'. "
                 f"Valid options for '{template}' with framework '{framework}': {valid}"
             )
@@ -126,7 +128,7 @@ def plan_project(
         for item in input_extras:
             if item not in metadata.available_extras:
                 valid = ", ".join(metadata.available_extras)
-                raise SpawnError(
+                raise InvalidInputError(
                     f"Invalid extra: '{item}'. Valid options for '{template}': {valid}"
                 )
         # Build de-duplicated result preserving input order.
@@ -138,7 +140,9 @@ def plan_project(
                 seen.add(item)
 
     if license not in SUPPORTED_LICENSES:
-        raise SpawnError(f"Invalid license: '{license}'. Valid options: mit, none")
+        raise InvalidInputError(
+            f"Invalid license: '{license}'. Valid options: mit, none"
+        )
 
     return ProjectConfig(
         name=name,

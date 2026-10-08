@@ -3,7 +3,7 @@ import re
 import tomllib
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import InvalidInputError
 from spawn.templates.shared_content import (
     AGENTS_MD_FIX_CONTENT,
     CHANGELOG_CONTENT,
@@ -53,7 +53,7 @@ def write_license(
         target_year = year or datetime.datetime.now(datetime.UTC).year
         content = MIT_LICENSE_CONTENT.format(year=target_year, holder=holder)
         return _write_new(project_path / "LICENSE", content)
-    raise SpawnError(f"Unsupported license: '{kind}'.")
+    raise InvalidInputError(f"Unsupported license: '{kind}'.")
 
 
 def write_changelog(project_path: Path) -> bool:

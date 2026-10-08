@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import ConfigError
 from spawn.core.models import ProjectConfig
 from spawn.core.planning import plan_project
 from spawn.core.registry import get_metadata, list_templates  # noqa: F401
@@ -73,23 +73,23 @@ def build_config_from_file(
     Raises SpawnError for missing file, invalid JSON, or any field errors.
     """
     if not path.exists():
-        raise SpawnError(f"Config file not found: {path}")
+        raise ConfigError(f"Config file not found: {path}")
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
-        raise SpawnError(f"Invalid JSON in config file: {e}") from e
+        raise ConfigError(f"Invalid JSON in config file: {e}") from e
 
     if not isinstance(data, dict):
-        raise SpawnError("Config file must contain a JSON object.")
+        raise ConfigError("Config file must contain a JSON object.")
 
     name = data.get("name", "")
     if not name:
-        raise SpawnError("Config file must include a 'name' field.")
+        raise ConfigError("Config file must include a 'name' field.")
 
     template = data.get("template", "")
     if not template:
-        raise SpawnError("Config file must include a 'template' field.")
+        raise ConfigError("Config file must include a 'template' field.")
 
     framework: str | None = data.get("framework", None)
     provider: str | None = data.get("provider", None)
@@ -100,7 +100,7 @@ def build_config_from_file(
     if not isinstance(extras_raw, list) or not all(
         isinstance(e, str) for e in extras_raw
     ):
-        raise SpawnError("'extras' in config file must be a list of strings.")
+        raise ConfigError("'extras' in config file must be a list of strings.")
     extras: list[str] = extras_raw
 
     git: bool = data.get("git", True)
@@ -108,7 +108,7 @@ def build_config_from_file(
     claude_md: bool = data.get("claude_md", use_claude_md)
     license_val = data.get("license", license_kind)
     if not isinstance(license_val, str):
-        raise SpawnError("'license' in config file must be a string.")
+        raise ConfigError("'license' in config file must be a string.")
 
     return build_config_from_args(
         name=name,

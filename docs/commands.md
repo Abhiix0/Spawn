@@ -522,9 +522,19 @@ spawn version
 
 ## Exit codes
 
-| Situation | Exit code |
+| Code | Meaning |
 |---|---|
-| Any command succeeds | 0 |
-| `spawn doctor` — path does not exist or is not a directory | 1 |
-| Non-interactive validation error / flag error | 1 |
-| Ctrl+C / EOF at any point | 130 |
+| 0 | Success (including a valid `--dry-run`, and GitHub publishing skipped) |
+| 1 | Invalid input or config (bad name, option value, config file, unknown template; `spawn doctor` bad path/flags) |
+| 2 | CLI usage error (unknown option, reported by Click) |
+| 3 | Filesystem error (directory already exists, OS error while writing) |
+| 4 | Toolchain error (`git` or `uv` missing or failed) |
+| 5 | Generation / template error |
+| 6 | Publish error (GitHub publishing failed) |
+| 10 | Unexpected error (re-run with `SPAWN_DEBUG=1` for a traceback) |
+| 130 | Cancelled (Ctrl+C, EOF, or declining the final prompt) |
+
+Failures that happen after the project was created (for example a failed
+GitHub publish) exit non-zero while the generated project remains on disk.
+`spawn doctor --fix` action failures are reported in the output and do not
+change the exit code.

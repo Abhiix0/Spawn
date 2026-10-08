@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError, StructureParseError
+from spawn.core.exceptions import FilesystemError, StructureParseError
 from spawn.generators.destination import (
     assert_available,
     cleanup_created,
@@ -473,7 +473,7 @@ class CustomStructureGenerator:
         except OSError as e:
             if created:
                 cleanup_created(project_path)
-            raise SpawnError(str(e)) from e
+            raise FilesystemError(str(e)) from e
 
         except BaseException:
             if created:

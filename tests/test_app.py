@@ -97,7 +97,7 @@ def test_create_generation_error_prints_message(mock_generator_cls, mock_config)
 
     result = runner.invoke(app, ["create"])
 
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert "❌" in result.output
     assert "disk full" in result.output
 
@@ -169,7 +169,7 @@ def test_create_github_publish_error_prints_message(
 
     result = runner.invoke(app, ["create"])
 
-    assert result.exit_code == 0
+    assert result.exit_code == 6
     assert "❌" in result.output
     assert "push rejected" in result.output
 

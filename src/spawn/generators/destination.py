@@ -7,7 +7,7 @@ import re
 import shutil
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import FilesystemError, InvalidInputError
 
 _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 
@@ -15,7 +15,7 @@ _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 def resolve_destination(name: str, destination: Path | None = None) -> Path:
     """Return the absolute project path for *name* (cwd/name by default)."""
     if not name or name in {".", ".."} or "/" in name or "\\" in name or "\0" in name:
-        raise SpawnError(
+        raise InvalidInputError(
             f"Invalid project name '{name}': must be a single directory name."
         )
     base = Path.cwd() / name if destination is None else Path(destination)
@@ -23,9 +23,9 @@ def resolve_destination(name: str, destination: Path | None = None) -> Path:
 
 
 def assert_available(path: Path, message: str) -> None:
-    """Raise SpawnError(message) if *path* exists in any form (incl. symlinks)."""
+    """Raise FilesystemError(message) if *path* exists in any form (incl. symlinks)."""
     if os.path.lexists(path):
-        raise SpawnError(message)
+        raise FilesystemError(message)
 
 
 def safe_join(root: Path, relative: str) -> Path:
@@ -38,11 +38,11 @@ def safe_join(root: Path, relative: str) -> Path:
         or _DRIVE_RE.match(relative)
         or ".." in relative.split("/")
     ):
-        raise SpawnError(f"Unsafe path in project structure: {relative!r}")
+        raise FilesystemError(f"Unsafe path in project structure: {relative!r}")
     root_resolved = root.resolve()
     joined = (root / relative).resolve()
     if not joined.is_relative_to(root_resolved):
-        raise SpawnError(f"Path escapes the project directory: {relative!r}")
+        raise FilesystemError(f"Path escapes the project directory: {relative!r}")
     return root / relative
 
 

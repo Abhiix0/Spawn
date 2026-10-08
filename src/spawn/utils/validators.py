@@ -1,6 +1,6 @@
 import re
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import InvalidInputError
 
 _WINDOWS_RESERVED = {
     "CON",
@@ -17,14 +17,16 @@ def validate_project_name(name: str) -> None:
     # extension so e.g. "NUL.txt" is caught too).
     stem = name.split(".")[0].upper()
     if stem in _WINDOWS_RESERVED:
-        raise SpawnError(
+        raise InvalidInputError(
             f"'{name}' is a reserved Windows device name and can't be used as a project name."
         )
 
     if not re.search(r"[a-zA-Z0-9]", name):
-        raise SpawnError("Project name must contain at least one letter or number.")
+        raise InvalidInputError(
+            "Project name must contain at least one letter or number."
+        )
 
     if not re.match(r"^[a-zA-Z0-9_-]+$", name):
-        raise SpawnError(
+        raise InvalidInputError(
             "Project name can only contain letters, numbers, hyphens (-), and underscores (_)."
         )

@@ -3,6 +3,12 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.9 — Unreleased
+
+### Changed
+
+- **Error and exit-code contract** — generation, toolchain (git/uv) and publish failures now exit non-zero (3–6) instead of 0; unexpected errors exit 10 with a short message (`SPAWN_DEBUG=1` shows the traceback). Declining the final custom-structure prompt now cancels cleanly (130) instead of raising a traceback. Git/GitHub error text no longer includes URL credentials. See the Exit codes table in `docs/commands.md`.
+
 ## v1.0.8 — 2026
 
 ### Added
