@@ -197,3 +197,54 @@ uv run pytest -v
 uv run pytest tests/test_generator.py
 uv run ruff check .
 ```
+
+## 7. Pipeline
+
+```
+input -> plan_project -> ProjectConfig -> generate_project -> filesystem -> meta -> publish (optional)
+```
+
+| Step | Owner |
+|---|---|
+| Input (flags, `--config` JSON, prompts) | `cli/noninteractive.py`, `cli/prompts.py` |
+| Plan: validate and resolve options | `core/planning.py::plan_project` |
+| Canonical model | `core/models.py::ProjectConfig` |
+| Generate: folders, files, git, uv, rollback | `generators/pipeline.py::generate_project` |
+| Meta: `.spawn/meta.json` | `generators/metadata.py::write_project_meta` |
+| Publish | `github/publisher.py::GitHubPublisher` (called from `cli/app.py`) |
+
+## 8. Canonical model
+
+`ProjectConfig` is the single model passed between stages.
+
+| Field | Meaning |
+|---|---|
+| `name`, `template` | Project name; template slug (`"custom"` for pasted structures) |
+| `framework`, `provider`, `cli_type`, `data_type` | Template options |
+| `extras`, `license`, `generate_claude_md` | Optional tooling, license (`mit`/`none`), also write `CLAUDE.md` |
+| `use_git`, `use_uv` | Toolchain steps |
+| `custom_*` | Custom-structure entries, dependencies, dev setup, gitignore extras, source format |
+| `destination` | Target directory (`Path` or `None`); excluded from equality |
+
+`to_dict()` returns a JSON-serializable dict of every field (`destination` as a string).
+
+`.spawn/meta.json` is **lossy**: it stores `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `generator`, `git`, `uv` and `source` only. It does not record `name`, `cli_type`, `data_type`, `extras`, `license` or `generate_claude_md`.
+
+## 9. Extension boundary
+
+Code that analyses existing projects must not depend on the CLI. It obtains state through `core/`, `generators/` and `templates/`:
+
+| Need | Use |
+|---|---|
+| State of an existing project | `core.project.load_project(path)`: a lossy `ProjectConfig`, or `None` if there is no `.spawn/meta.json`; raises `ConfigError` if the file is unreadable or invalid. Read-only; does not validate the intent against the registry |
+| Resolve options into a config | `core.planning.plan_project(...)` |
+| Template catalogue | `core.registry.get_metadata()`, `list_templates()` |
+| Create a project | `generators.pipeline.generate_project(config)` |
+
+**Rule:** no module under `core/`, `generators/`, `templates/`, `utils/` or `github/` may import `spawn.cli`. `tests/test_boundaries.py` enforces this.
+
+To add a template: subclass `BaseTemplate` in `templates/<slug>/` and add a `TemplateMetadata` entry to `TEMPLATES` (see section 5).
+
+## 10. Error model
+
+All Spawn errors derive from `SpawnError` (`core/exceptions.py`); each class carries the CLI `exit_code`. The CLI prints `❌ message` and exits with that code. See [Exit codes](commands.md#exit-codes).

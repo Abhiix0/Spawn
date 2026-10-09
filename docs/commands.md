@@ -13,10 +13,11 @@
 
 ## `spawn` (no arguments)
 
-Running `spawn` with no arguments prints the banner, the installed version, and the command list.
+Running `spawn` with no arguments prints the ASCII banner, the installed version, and the command list. It takes no arguments and no options other than `--help`, `--install-completion` and `--show-completion`, exits 0, and writes nothing.
 
 ```
-SPAWN — scaffold your next project
+<ASCII SPAWN banner — "scaffold your next project">
+
 v1.0.8
 
 Commands
@@ -32,6 +33,13 @@ Run spawn COMMAND --help for details on a command.
 ## `spawn create`
 
 Creates a new project directory, writes starter files, installs dependencies, and optionally runs `git init` and `uv init`.
+
+**Contract**
+
+- **Arguments:** none. Options and defaults are in the flag table under *Non-interactive mode* (`--git`, `--uv`, `--no-claude-md`, `--license mit`).
+- **Success:** the project is created in `./<name>`, a success panel is shown, exit code 0. `--dry-run` validates and prints the resolved config, writes nothing, exit code 0.
+- **Failure:** `❌ message` is printed and the command exits non-zero (see [Exit codes](#exit-codes)). A partially written project directory is removed.
+- **Filesystem:** writes only a new directory `./<name>`. It fails if that directory already exists (exit 3) and never modifies existing files.
 
 ### Interactive mode
 
@@ -379,7 +387,7 @@ Every generated project includes:
 | `CHANGELOG.md` | Keep a Changelog starter documenting the initial release |
 | `LICENSE` | MIT license (when `--license mit`, the default) |
 | `.gitignore` | Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, etc.) |
-| `.spawn/meta.json` | `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `git`, `uv` |
+| `.spawn/meta.json` | `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `generator`, `git`, `uv`, `source` |
 
 If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAUDE.md` file identical to `AGENTS.md` is also written.
 
@@ -422,10 +430,9 @@ In non-interactive mode or when `--yes` / `-y` is passed, the publish prompt is 
 
 ### Error cases
 
-All errors print `❌ message` in red. Any partial directory is deleted on failure.
+All errors print `❌ message` in red and exit with the code for their error class; any partial directory is deleted on failure. See [Exit codes](#exit-codes) for the full table (for example: invalid input 1, usage error 2, existing destination 3, missing `git`/`uv` 4, generation error 5, Ctrl+C 130).
 
-| Situation | Exit code |
-|---|---|
+---|---|
 | Successful creation | 0 |
 | SpawnError (bad name, unknown template, etc.) | 0 (error printed) |
 | Non-interactive validation error | 1 |
@@ -436,6 +443,14 @@ All errors print `❌ message` in red. Any partial directory is deleted on failu
 ## `spawn doctor`
 
 Scores the current directory (or a given path) for project health. All checks are filesystem-based — nothing is executed or sent over the network.
+
+**Contract**
+
+- **Arguments:** `[PATH]`, default `.`.
+- **Options:** `--fix`, `--dry-run`, `--yes` / `-y`, `--license TEXT`; all off/unset by default, and the last three only apply with `--fix`.
+- **Success:** prints the health report (score out of 135, rating, recommendations), exit code 0. A low score is not a failure.
+- **Failure:** a path that does not exist or is not a directory prints `❌ message`, exit code 1. Declining the `--fix` confirmation exits 130.
+- **Filesystem:** plain `spawn doctor` is read-only. `spawn doctor --fix` only creates missing files and config; it never overwrites and never installs packages. `--fix --dry-run` writes nothing.
 
 ```bash
 spawn doctor
@@ -511,7 +526,7 @@ spawn doctor --fix --license mit
 
 ## `spawn version`
 
-Prints the installed version.
+Prints the installed version. No arguments or options; exit code 0; writes nothing.
 
 ```bash
 spawn version

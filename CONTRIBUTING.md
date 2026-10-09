@@ -35,6 +35,15 @@ uv run pytest --cov=src/spawn --cov-report=term-missing
 
 ---
 
+## Testing and fixtures
+
+- **Factory:** the `spawn_project` fixture in `tests/conftest.py` generates a project offline: `spawn_project("backend-api", framework="fastapi")` returns its `Path`. The `no_toolchain` fixture stubs git, uv and package installs.
+- **Golden trees:** `tests/fixtures/trees/<archetype>.txt` lists every file of a generated archetype. After an intentional output change, regenerate with `SPAWN_UPDATE_TREES=1 uv run pytest tests/test_fixtures.py` and review the diff.
+- **Offline rule:** tests must not use the network, real `git` or real `uv`; use `no_toolchain`.
+- **Adding an archetype:** add an entry to `tests/fixtures/archetypes.py`, run once with `SPAWN_UPDATE_TREES=1` to create its golden tree, and review it.
+
+---
+
 ## Linting and formatting
 
 ```bash
