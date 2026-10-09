@@ -23,7 +23,7 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.8"
+├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.9"
 ├── cli/
 │   ├── app.py          # Typer app: create, version, doctor commands
 │   ├── noninteractive.py # Build config from CLI flags or JSON config file
