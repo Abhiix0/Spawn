@@ -236,7 +236,7 @@ Code that analyses existing projects must not depend on the CLI. It obtains stat
 
 | Need | Use |
 |---|---|
-| State of an existing project | `core.project.load_project(path)`: a lossy `ProjectConfig`, or `None` if there is no `.spawn/meta.json`; raises `ConfigError` if the file is unreadable or invalid. Read-only; does not validate the intent against the registry |
+| State of an existing project | `core.project.read_project_metadata(path)`: a `ProjectMetadata`, or `None` if there is no `.spawn/meta.json`; raises `ConfigError` if the file is unreadable or invalid. Read-only; does not validate the intent against the registry |
 | Resolve options into a config | `core.planning.plan_project(...)` |
 | Template catalogue | `core.registry.get_metadata()`, `list_templates()` |
 | Create a project | `generators.pipeline.generate_project(config)` |

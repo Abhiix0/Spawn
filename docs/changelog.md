@@ -8,7 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Canonical `ProjectConfig`** — gains `destination` and `to_dict()`; `core/planning.py::plan_project` resolves options into a config and `generators/pipeline.py::generate_project` builds it.
-- **`core/project.py::load_project`** — CLI-free, read-only, best-effort `ProjectConfig` from `.spawn/meta.json` (`None` if absent, `ConfigError` if invalid).
+- **`core/project.py::read_project_metadata`** — CLI-free, read-only `ProjectMetadata` from `.spawn/meta.json` (`None` if absent, `ConfigError` if invalid).
 - **Fixtures and regression tests** — archetype factory, golden file trees (`SPAWN_UPDATE_TREES=1`), and an import-boundary test (nothing outside `cli/` imports `spawn.cli`).
 
 ### Changed
