@@ -699,7 +699,7 @@ spawn create --name my-api --template backend-api --framework fastapi --extras r
 spawn create --config spawn.json
 ```
 
-`--config` takes precedence over individual flags. Add `--dry-run` to either form to validate the config and print it without creating any files.
+`--config` takes precedence over individual flags (an explicit `--no-git`/`--no-uv` is ignored with a warning). Add `--dry-run` to either form to validate the config and print it without creating any files.
 
 > Custom Structure is interactive-only in this version.
 
@@ -814,7 +814,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 | Version | Highlight |
 |---|---|
-| **v1.0.9** | Core hardening: documented exit-code contract (generation, toolchain and publish failures exit non-zero), `--no-uv` honored for templates, path-traversal protection for custom structures, `read_project_metadata` extension boundary |
+| **v1.0.9** | Core hardening: documented exit-code contract (generation, toolchain and publish failures exit non-zero), `--no-uv` honored for templates (file-only extras still written), path-traversal protection for custom structures, `read_project_metadata` extension boundary |
 | **v1.0.8** | `spawn doctor --fix` (`--dry-run`, `--yes`, `--license`), `--license` flag and prompt on `create`, `CHANGELOG.md` generated for every project, `pre-commit` and `mypy` extras across all templates, Custom Structure Mypy option |
 | **v1.0.7** | Fixed UTF-8 console crash on Windows when stdout is redirected/piped, added Windows reserved device name validation (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`9`, `LPT1`–`9`), clarified Python 3.12 requirement |
 | **v1.0.6** | Removed duplicate banner from `spawn create`; `spawn` alone now shows the banner and command overview |

@@ -151,9 +151,9 @@ spawn create --config spawn.json
 | `--extras` | none | Comma-separated extras, e.g. `ruff,pytest` |
 | `--license` | `mit` | Project license (`mit` or `none`) |
 | `--git` / `--no-git` | `--git` | Initialize a Git repository |
-| `--uv` / `--no-uv` | `--uv` | Initialize uv and install dependencies |
+| `--uv` / `--no-uv` | `--uv` | Initialize uv and install dependencies. With `--no-uv`, extras that need `pyproject.toml` are skipped (one yellow "Skipped without uv" line lists them); file-only extras such as `pre-commit` are still written |
 | `--claude-md` / `--no-claude-md` | `--no-claude-md` | Also write `CLAUDE.md` alongside `AGENTS.md` |
-| `--config` | — | Path to a JSON config file |
+| `--config` | — | Path to a JSON config file. Takes precedence over other flags; an explicit `--no-git`/`--no-uv` is ignored with a yellow warning |
 | `--yes` / `-y` | false | Skip the GitHub publish prompt |
 | `--dry-run` | false | Validate and print the config without creating anything |
 
@@ -431,12 +431,6 @@ In non-interactive mode or when `--yes` / `-y` is passed, the publish prompt is 
 ### Error cases
 
 All errors print `❌ message` in red and exit with the code for their error class; any partial directory is deleted on failure. See [Exit codes](#exit-codes) for the full table (for example: invalid input 1, usage error 2, existing destination 3, missing `git`/`uv` 4, generation error 5, Ctrl+C 130).
-
----|---|
-| Successful creation | 0 |
-| SpawnError (bad name, unknown template, etc.) | 0 (error printed) |
-| Non-interactive validation error | 1 |
-| Ctrl+C at any prompt | 130 |
 
 ---
 

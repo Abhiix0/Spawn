@@ -135,7 +135,7 @@ Add two test files mirroring the existing pattern:
 | File | What to test |
 |---|---|
 | `tests/test_<slug>_template.py` | Template constants, `get_dependencies()`, `get_readme_content()`, `py_compile` on each Python starter file, no unescaped braces |
-| `tests/test_<slug>_generator.py` | `ProjectGenerator().generate()` with mocked uv/git/install, directory structure, README content, `.spawn/meta.json` fields |
+| `tests/test_<slug>_generator.py` | `generate_project(config)` (or `ProjectGenerator().generate()`) with mocked uv/git/install, directory structure, README content, `.spawn/meta.json` fields |
 
 See `tests/test_mcp_server_template.py` and `tests/test_mcp_server_generator.py` for the exact mock patterns (`_mock_uv_and_install()` context manager, `_cfg()` helper, `patch.object(MyTemplate, "post_install")`).
 
