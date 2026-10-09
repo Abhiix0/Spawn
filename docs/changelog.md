@@ -3,6 +3,26 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.0.9 — Unreleased
+
+### Added
+
+- **Canonical `ProjectConfig`** — gains `destination` and `to_dict()`; `core/planning.py::plan_project` resolves options into a config and `generators/pipeline.py::generate_project` builds it.
+- **`core/project.py::read_project_metadata`** — CLI-free, read-only `ProjectMetadata` from `.spawn/meta.json` (`None` if absent, `ConfigError` if invalid). Metadata is historical, not authoritative; `ProjectConfig` is generation intent only.
+- **Fixtures and regression tests** — archetype factory, golden file trees (`SPAWN_UPDATE_TREES=1`), and an import-boundary test (nothing outside `cli/` imports `spawn.cli`).
+
+### Changed
+
+- `--no-uv` is now honored for template projects: uv init, `uv add` and extras that need `pyproject.toml` are skipped (one yellow "Skipped without uv: ..." line lists them); file-only extras such as `pre-commit` are still written.
+- Interactive `spawn create --dry-run` now validates and prints the config without writing anything.
+- `--config` combined with an explicit `--no-git`/`--no-uv` prints a warning that the config file takes precedence.
+- **Error and exit-code contract** — generation, toolchain (git/uv) and publish failures now exit non-zero (3–6) instead of 0; unexpected errors exit 10 with a short message (`SPAWN_DEBUG=1` shows the traceback). Declining the final custom-structure prompt now cancels cleanly (130) instead of raising a traceback. Git/GitHub error text no longer includes URL credentials. See the Exit codes table in `docs/commands.md`.
+
+### Security
+
+- Custom-structure paths that escape the project directory (path traversal) are rejected.
+- Failure cleanup only removes directories created by the current run.
+
 ## v1.0.8 — 2026
 
 ### Added

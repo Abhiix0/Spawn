@@ -1,5 +1,5 @@
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import PublishError
 
 
-class GitHubPublishError(SpawnError):
+class GitHubPublishError(PublishError):
     """Raised when GitHub publishing fails."""

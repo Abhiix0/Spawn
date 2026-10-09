@@ -68,3 +68,47 @@ def test_project_config_custom_entries_can_be_set():
         name="x", template="custom", use_git=False, custom_entries=[1, 2]
     )
     assert config.custom_entries == [1, 2]
+
+
+# --- v1.0.9: destination + to_dict ---------------------------------------
+
+
+def test_to_dict_is_json_serializable_with_custom_entries(tmp_path):
+    import json
+
+    from spawn.core.models import ProjectConfig
+    from spawn.generators.custom_structure import ParsedEntry
+
+    cfg = ProjectConfig(
+        name="p",
+        template="custom",
+        use_git=False,
+        custom_entries=[ParsedEntry("src", False), ParsedEntry("src/a.py", True)],
+        destination=tmp_path / "p",
+    )
+    d = cfg.to_dict()
+    json.dumps(d)
+    assert d["custom_entries"] == [
+        {"path": "src", "is_file": False},
+        {"path": "src/a.py", "is_file": True},
+    ]
+    assert d["destination"] == str(tmp_path / "p")
+    assert ProjectConfig("p", "cli", True).to_dict()["destination"] is None
+
+
+def test_destination_excluded_from_equality(tmp_path):
+    from spawn.core.models import ProjectConfig
+
+    a = ProjectConfig("p", "cli", True)
+    b = ProjectConfig("p", "cli", True, destination=tmp_path)
+    assert a == b
+
+
+def test_positional_construction_still_works():
+    from spawn.core.models import ProjectConfig
+
+    cfg = ProjectConfig("p", "cli", True, "typer", ["ruff"], "utility")
+    assert cfg.framework == "typer"
+    assert cfg.extras == ["ruff"]
+    assert cfg.cli_type == "utility"
+    assert cfg.destination is None

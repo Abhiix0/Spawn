@@ -1,7 +1,8 @@
 import subprocess
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import ToolchainError
+from spawn.utils.redact import redact_url
 
 
 def initialize_git(project_path: Path) -> None:
@@ -15,10 +16,10 @@ def initialize_git(project_path: Path) -> None:
         )
 
     except FileNotFoundError:
-        raise SpawnError("Git is not installed or not available in PATH.")
+        raise ToolchainError("Git is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError:
-        raise SpawnError("Failed to initialize Git repository.")
+        raise ToolchainError("Failed to initialize Git repository.")
 
 
 def run_git_command(
@@ -39,10 +40,12 @@ def run_git_command(
         )
 
     except FileNotFoundError:
-        raise SpawnError("Git is not installed or not available in PATH.")
+        raise ToolchainError("Git is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError as exc:
-        raise SpawnError(exc.stderr.strip() or "Git command failed.") from exc
+        raise ToolchainError(
+            redact_url(exc.stderr.strip()) or "Git command failed."
+        ) from exc
 
 
 def add_all(project_path: Path) -> None:
@@ -116,7 +119,7 @@ def remote_exists(
         return "origin" in result.stdout.splitlines()
 
     except FileNotFoundError:
-        raise SpawnError("Git is not installed or not available in PATH.")
+        raise ToolchainError("Git is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError:
         return False

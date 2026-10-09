@@ -1,0 +1,12 @@
+.gitignore
+.spawn/meta.json
+AGENTS.md
+CHANGELOG.md
+LICENSE
+README.md
+src/__init__.py
+src/commands/__init__.py
+src/main.py
+src/utils/__init__.py
+tests/__init__.py
+tests/test_cli.py

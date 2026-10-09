@@ -1,5 +1,3 @@
-import datetime
-import json
 from pathlib import Path
 
 import typer
@@ -8,9 +6,10 @@ from rich.prompt import Confirm, Prompt
 from spawn import __version__
 from spawn.cli.noninteractive import build_config_from_args, build_config_from_file
 from spawn.cli.prompts import get_project_config
-from spawn.core.exceptions import SpawnError
+from spawn.cli.errors import fail, report_unexpected
+from spawn.core.exceptions import InvalidInputError, SpawnError
 from spawn.core.registry import instantiate_template
-from spawn.generators.project_generator import ProjectGenerator
+from spawn.generators.pipeline import generate_project
 from spawn.github.exceptions import GitHubPublishError
 from spawn.github.publisher import GitHubPublisher
 from spawn.utils.banner import show_banner
@@ -36,30 +35,23 @@ def main_callback(ctx: typer.Context) -> None:
     )
 
 
-def _write_custom_metadata(project_path, config) -> None:
-    meta_dir = project_path / ".spawn"
-    meta_dir.mkdir(exist_ok=True)
-    (meta_dir / "meta.json").write_text(
-        json.dumps(
-            {
-                "intent": "custom",
-                "framework": None,
-                "provider": None,
-                "spawn_version": __version__,
-                "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
-                "generator": "custom",
-                "git": config.use_git,
-                "uv": config.use_uv,
-                "source": config.custom_source_format or "tree",
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
+def _given_on_command_line(ctx: typer.Context, param: str) -> bool:
+    source = ctx.get_parameter_source(param)
+    return getattr(source, "name", None) == "COMMANDLINE"
+
+
+def _display_info(config) -> tuple[str, list[str]] | None:
+    if config.template == "custom":
+        return "Custom Structure", [f"cd {config.name}", "Start building your project"]
+    template_obj = instantiate_template(config)
+    if template_obj is None:
+        return None
+    return template_obj.name, template_obj.next_steps
 
 
 @app.command()
 def create(
+    ctx: typer.Context,
     name: str = typer.Option(
         None, "--name", help="Project name (enables non-interactive mode)"
     ),
@@ -126,7 +118,7 @@ def create(
                     )
                 else:
                     if template is None:
-                        raise SpawnError(
+                        raise InvalidInputError(
                             "--template is required when using --name without --config."
                         )
                     extras_list = (
@@ -149,55 +141,43 @@ def create(
                     )
 
             except SpawnError as e:
-                console.print(f"[red]❌ {e}[/red]")
-                raise typer.Exit(1)
+                fail(e)
 
-            if dry_run:
-                console.print("[green]✓ Config valid[/green]")
-                console.print(config)
-                return
+            if config_file is not None:
+                for param, value, flag in (
+                    ("git", git, "--no-git"),
+                    ("uv", uv, "--no-uv"),
+                ):
+                    if not value and _given_on_command_line(ctx, param):
+                        console.print(
+                            f"[yellow]{flag} ignored: --config takes precedence[/yellow]"
+                        )
         else:
-            config = get_project_config()
+            try:
+                config = get_project_config()
+            except SpawnError as e:
+                fail(e)
+
+        if dry_run:
+            console.print("[green]✓ Config valid[/green]")
+            console.print(config)
+            return
 
         try:
-            if config.template == "custom":
-                from spawn.generators.custom_structure import CustomStructureGenerator
-
-                project_path = CustomStructureGenerator().generate(
-                    project_name=config.name,
-                    entries=config.custom_entries or [],
-                    use_git=config.use_git,
-                    use_uv=config.use_uv,
-                    dependencies=config.custom_dependencies,
-                    dev_setup=config.custom_dev_setup,
-                    gitignore_extra=config.custom_gitignore_extra,
-                    generate_claude_md=config.generate_claude_md,
-                )
-                _write_custom_metadata(project_path, config)
-                next_steps = [
-                    f"cd {config.name}",
-                    "Start building your project",
-                ]
+            project_path = generate_project(config)
+            info = _display_info(config)
+            if info is not None:
+                template_name, next_steps = info
                 show_success(
                     project_name=config.name,
-                    template_name="Custom Structure",
+                    template_name=template_name,
                     use_git=config.use_git,
                     next_steps=next_steps,
+                    use_uv=config.use_uv,
                 )
-            else:
-                project_path = ProjectGenerator().generate(config)
-                template_obj = instantiate_template(config)
-                if template_obj is not None:
-                    show_success(
-                        project_name=config.name,
-                        template_name=template_obj.name,
-                        use_git=config.use_git,
-                        next_steps=template_obj.next_steps,
-                    )
 
         except SpawnError as e:
-            console.print(f"[red]❌ {e}[/red]")
-            return
+            fail(e)
 
         if not config.use_git:
             console.print(
@@ -225,10 +205,14 @@ def create(
             console.print("[green]🚀 Published successfully![/green]")
 
         except GitHubPublishError as e:
-            console.print(f"[red]❌ {e}[/red]")
+            fail(e)
     except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]Cancelled.[/yellow]")
         raise typer.Exit(130)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        report_unexpected(e)
 
 
 @app.command()
@@ -360,6 +344,10 @@ def doctor(
     except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]Cancelled.[/yellow]")
         raise typer.Exit(130)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        report_unexpected(e)
 
 
 def main():

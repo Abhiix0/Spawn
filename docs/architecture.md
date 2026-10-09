@@ -23,7 +23,7 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.8"
+├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.9"
 ├── cli/
 │   ├── app.py          # Typer app: create, version, doctor commands
 │   ├── noninteractive.py # Build config from CLI flags or JSON config file
@@ -76,14 +76,18 @@ src/spawn/
 ### 4a. Project Creation Flow
 
 1. User runs `spawn create`
-2. `app.create()` calls `show_banner()`
-3. `get_project_config()` collects name, template, framework, extras, and Git preference
-4. `ProjectGenerator.generate()` resolves the template via `instantiate_template(config)`,
-   creates directories, writes starter files, writes README and `.gitignore`, runs
-   `initialize_git()` (if enabled), `initialize_uv()`, `install_packages()`, `post_install()`,
-   and writes `.spawn/meta.json`
-5. `show_success()` renders the success panel using `template_obj.next_steps`
-6. If Git was enabled, optionally `GitHubPublisher.publish()` stages, commits, and pushes
+2. `app.create()` builds a `ProjectConfig`:
+   - non-interactive (`--name` or `--config`): `cli/noninteractive.py` calls `core/planning.py::plan_project`, which validates the name, rejects an existing destination, and resolves template options, extras and license. Config-file mode ignores explicit `--no-git`/`--no-uv` with a warning.
+   - interactive: `cli/prompts.py::get_project_config()` collects the answers (menus derived from the registry) and builds the config directly
+3. `--dry-run` prints the resolved config and stops; nothing is written
+4. `generators/pipeline.py::generate_project(config)` dispatches on `config.template`:
+   `ProjectGenerator.generate()` for registry templates, `CustomStructureGenerator.generate()` for `"custom"`
+5. Both generators call `generators/destination.py`: `resolve_destination` (single-directory name check), `assert_available` (fails with `FilesystemError` if the path exists in any form, including symlinks) and, for custom structures, `safe_join` (rejects traversal and absolute paths)
+6. `ProjectGenerator` resolves the template via `instantiate_template(config)`, creates directories, writes starter files, README and `.gitignore`, runs `initialize_git()`, `initialize_uv()`, `install_packages()` and `post_install()` (the uv steps are skipped with `--no-uv`; file-only extras are still written and the rest are reported in one "Skipped without uv" warning), then `generators/metadata.py::write_project_meta`
+7. `show_success()` renders the success panel
+8. If Git was enabled and not in non-interactive/`--yes` mode, optionally `GitHubPublisher.publish()` stages, commits, and pushes
+
+**Cleanup rule:** on any failure a generator removes the project directory only if that run created it (`destination.cleanup_created`, which also refuses symlinks, the cwd and its parents, the home directory and filesystem roots). A pre-existing directory is never touched.
 
 ```
 spawn create
@@ -92,26 +96,23 @@ spawn create
 show_banner()                 banner.py
     │
     ▼
-get_project_config()          prompts.py
-    │  → ProjectConfig (name, template, framework, extras, use_git)
+plan_project()                planning.py    (flags / --config)
+get_project_config()          prompts.py     (interactive)
+    │  → ProjectConfig
     ▼
-ProjectGenerator.generate()   project_generator.py
-    ├── instantiate_template()  registry.py  (forwards framework + extras)
-    ├── mkdir + write files     templates/
-    ├── write README.md         shared_content.py
-    ├── write .gitignore        shared_content.py
-    ├── initialize_git()        git.py         (if use_git)
-    ├── initialize_uv()         uv.py
-    ├── install_packages()      uv.py          (if deps non-empty)
-    ├── post_install()          template       (ruff/pytest config, Docker, CI)
-    └── write .spawn/meta.json
+generate_project()            pipeline.py
+    ├── ProjectGenerator / CustomStructureGenerator
+    │     ├── resolve_destination + assert_available   destination.py
+    │     ├── instantiate_template()  registry.py  (forwards framework + extras)
+    │     ├── mkdir + write files, README, .gitignore
+    │     ├── initialize_git()        git.py         (if use_git)
+    │     ├── initialize_uv() / install_packages()   (if use_uv)
+    │     └── post_install()          template       (ruff/pytest config, Docker, CI)
+    └── write_project_meta()    metadata.py  → .spawn/meta.json
+                                (called by ProjectGenerator, or by generate_project for custom)
     │
     ▼
 show_success()                success.py
-    └── template_obj.next_steps (formatted with project_name)
-    │
-    ▼
-GitHubPublisher.publish()     publisher.py    (optional)
 ```
 
 ### 4b. Template System
@@ -173,13 +174,19 @@ and/or `.github/workflows/ci.yml` depending on `self.extras`.
 ### 4d. Error Handling
 
 ```
-SpawnError                    # core/exceptions.py
-└── GitHubPublishError        # github/exceptions.py
+SpawnError                      exit 1   core/exceptions.py
+├── InvalidInputError           exit 1
+│   └── StructureParseError     exit 1
+├── ConfigError                 exit 1
+├── FilesystemError             exit 3
+├── ToolchainError              exit 4
+├── GenerationError             exit 5
+│   └── TemplateError           exit 5
+└── PublishError                exit 6
+    └── GitHubPublishError      exit 6   github/exceptions.py
 ```
 
-`ProjectGenerator.generate()` wraps its body in try/except. Any `OSError` is converted to
-`SpawnError`; any `BaseException` (including `SpawnError`) triggers `shutil.rmtree()` rollback
-before re-raising. The CLI catches both exception types and prints `❌ {message}` in red.
+Generators convert `OSError` to `FilesystemError`, remove only the directory the current run created, and re-raise. `cli/errors.py` owns the CLI handlers: `fail(e)` prints `❌ message` in red and exits with `e.exit_code`; `report_unexpected(e)` handles any other exception, printing a short message and exiting 10 (`UNEXPECTED_EXIT_CODE`), or re-raising for a full traceback when `SPAWN_DEBUG` is set to anything other than empty/`0`/`false`/`no`. Ctrl+C, EOF and declined prompts exit 130; Click usage errors exit 2. See [Exit codes](commands.md#exit-codes).
 
 ## 5. Adding a New Template
 
@@ -197,3 +204,54 @@ uv run pytest -v
 uv run pytest tests/test_generator.py
 uv run ruff check .
 ```
+
+## 7. Pipeline
+
+```
+input -> plan_project -> ProjectConfig -> generate_project -> filesystem -> meta -> publish (optional)
+```
+
+| Step | Owner |
+|---|---|
+| Input (flags, `--config` JSON, prompts) | `cli/noninteractive.py`, `cli/prompts.py` |
+| Plan: validate and resolve options | `core/planning.py::plan_project` |
+| Canonical model | `core/models.py::ProjectConfig` |
+| Generate: folders, files, git, uv, rollback | `generators/pipeline.py::generate_project` |
+| Meta: `.spawn/meta.json` | `generators/metadata.py::write_project_meta` |
+| Publish | `github/publisher.py::GitHubPublisher` (called from `cli/app.py`) |
+
+## 8. Canonical model
+
+`ProjectConfig` is the single model passed between stages.
+
+| Field | Meaning |
+|---|---|
+| `name`, `template` | Project name; template slug (`"custom"` for pasted structures) |
+| `framework`, `provider`, `cli_type`, `data_type` | Template options |
+| `extras`, `license`, `generate_claude_md` | Optional tooling, license (`mit`/`none`), also write `CLAUDE.md` |
+| `use_git`, `use_uv` | Toolchain steps |
+| `custom_*` | Custom-structure entries, dependencies, dev setup, gitignore extras, source format |
+| `destination` | Target directory (`Path` or `None`); excluded from equality |
+
+`to_dict()` returns a JSON-serializable dict of every field (`destination` as a string).
+
+`.spawn/meta.json` is a **historical record, not authoritative**: it stores `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `generator`, `git`, `uv` and `source` only. It does not record `name`, `cli_type`, `data_type`, `extras`, `license` or `generate_claude_md`, and the project may have changed since. `ProjectConfig` is generation intent only; it cannot be reconstructed from metadata.
+
+## 9. Extension boundary
+
+Code that analyses existing projects must not depend on the CLI. It obtains state through `core/`, `generators/` and `templates/`:
+
+| Need | Use |
+|---|---|
+| State of an existing project | `core.project.read_project_metadata(path)`: a `ProjectMetadata`, or `None` if there is no `.spawn/meta.json`; raises `ConfigError` if the file is unreadable or invalid. Read-only; does not validate the intent against the registry |
+| Resolve options into a config | `core.planning.plan_project(...)` |
+| Template catalogue | `core.registry.get_metadata()`, `list_templates()` |
+| Create a project | `generators.pipeline.generate_project(config)` |
+
+**Rule:** no module under `core/`, `generators/`, `templates/`, `utils/` or `github/` may import `spawn.cli`. `tests/test_boundaries.py` enforces this.
+
+To add a template: subclass `BaseTemplate` in `templates/<slug>/` and add a `TemplateMetadata` entry to `TEMPLATES` (see section 5).
+
+## 10. Error model
+
+All Spawn errors derive from `SpawnError` (`core/exceptions.py`); each class carries the CLI `exit_code`. The CLI prints `❌ message` and exits with that code. See [Exit codes](commands.md#exit-codes).

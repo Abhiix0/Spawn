@@ -1,0 +1,16 @@
+.env.example
+.gitignore
+.spawn/meta.json
+AGENTS.md
+CHANGELOG.md
+LICENSE
+README.md
+app/__init__.py
+app/api/__init__.py
+app/api/routes/__init__.py
+app/api/routes/health.py
+app/core/__init__.py
+app/core/config.py
+app/main.py
+tests/__init__.py
+tests/test_health.py

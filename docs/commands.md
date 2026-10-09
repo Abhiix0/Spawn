@@ -13,11 +13,12 @@
 
 ## `spawn` (no arguments)
 
-Running `spawn` with no arguments prints the banner, the installed version, and the command list.
+Running `spawn` with no arguments prints the ASCII banner, the installed version, and the command list. It takes no arguments and no options other than `--help`, `--install-completion` and `--show-completion`, exits 0, and writes nothing.
 
 ```
-SPAWN — scaffold your next project
-v1.0.8
+<ASCII SPAWN banner — "scaffold your next project">
+
+v1.0.9
 
 Commands
   create    Scaffold a new project
@@ -32,6 +33,13 @@ Run spawn COMMAND --help for details on a command.
 ## `spawn create`
 
 Creates a new project directory, writes starter files, installs dependencies, and optionally runs `git init` and `uv init`.
+
+**Contract**
+
+- **Arguments:** none. Options and defaults are in the flag table under *Non-interactive mode* (`--git`, `--uv`, `--no-claude-md`, `--license mit`).
+- **Success:** the project is created in `./<name>`, a success panel is shown, exit code 0. `--dry-run` validates and prints the resolved config, writes nothing, exit code 0.
+- **Failure:** `❌ message` is printed and the command exits non-zero (see [Exit codes](#exit-codes)). A partially written project directory is removed.
+- **Filesystem:** writes only a new directory `./<name>`. It fails if that directory already exists (exit 3) and never modifies existing files.
 
 ### Interactive mode
 
@@ -143,9 +151,9 @@ spawn create --config spawn.json
 | `--extras` | none | Comma-separated extras, e.g. `ruff,pytest` |
 | `--license` | `mit` | Project license (`mit` or `none`) |
 | `--git` / `--no-git` | `--git` | Initialize a Git repository |
-| `--uv` / `--no-uv` | `--uv` | Initialize uv and install dependencies |
+| `--uv` / `--no-uv` | `--uv` | Initialize uv and install dependencies. With `--no-uv`, extras that need `pyproject.toml` are skipped (one yellow "Skipped without uv" line lists them); file-only extras such as `pre-commit` are still written |
 | `--claude-md` / `--no-claude-md` | `--no-claude-md` | Also write `CLAUDE.md` alongside `AGENTS.md` |
-| `--config` | — | Path to a JSON config file |
+| `--config` | — | Path to a JSON config file. Takes precedence over other flags; an explicit `--no-git`/`--no-uv` is ignored with a yellow warning |
 | `--yes` / `-y` | false | Skip the GitHub publish prompt |
 | `--dry-run` | false | Validate and print the config without creating anything |
 
@@ -379,7 +387,7 @@ Every generated project includes:
 | `CHANGELOG.md` | Keep a Changelog starter documenting the initial release |
 | `LICENSE` | MIT license (when `--license mit`, the default) |
 | `.gitignore` | Python defaults (`.venv/`, `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, etc.) |
-| `.spawn/meta.json` | `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `git`, `uv` |
+| `.spawn/meta.json` | `intent`, `framework`, `provider`, `spawn_version`, `created_at`, `generator`, `git`, `uv`, `source` |
 
 If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAUDE.md` file identical to `AGENTS.md` is also written.
 
@@ -390,7 +398,7 @@ If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAU
   "intent": "backend-api",
   "framework": "fastapi",
   "provider": null,
-  "spawn_version": "1.0.8",
+  "spawn_version": "1.0.9",
   "created_at": "2026-01-01T00:00:00+00:00",
   "generator": "blueprint",
   "git": true,
@@ -422,20 +430,21 @@ In non-interactive mode or when `--yes` / `-y` is passed, the publish prompt is 
 
 ### Error cases
 
-All errors print `❌ message` in red. Any partial directory is deleted on failure.
-
-| Situation | Exit code |
-|---|---|
-| Successful creation | 0 |
-| SpawnError (bad name, unknown template, etc.) | 0 (error printed) |
-| Non-interactive validation error | 1 |
-| Ctrl+C at any prompt | 130 |
+All errors print `❌ message` in red and exit with the code for their error class; any partial directory is deleted on failure. See [Exit codes](#exit-codes) for the full table (for example: invalid input 1, usage error 2, existing destination 3, missing `git`/`uv` 4, generation error 5, Ctrl+C 130).
 
 ---
 
 ## `spawn doctor`
 
 Scores the current directory (or a given path) for project health. All checks are filesystem-based — nothing is executed or sent over the network.
+
+**Contract**
+
+- **Arguments:** `[PATH]`, default `.`.
+- **Options:** `--fix`, `--dry-run`, `--yes` / `-y`, `--license TEXT`; all off/unset by default, and the last three only apply with `--fix`.
+- **Success:** prints the health report (score out of 135, rating, recommendations), exit code 0. A low score is not a failure.
+- **Failure:** a path that does not exist or is not a directory prints `❌ message`, exit code 1. Declining the `--fix` confirmation exits 130.
+- **Filesystem:** plain `spawn doctor` is read-only. `spawn doctor --fix` only creates missing files and config; it never overwrites and never installs packages. `--fix --dry-run` writes nothing.
 
 ```bash
 spawn doctor
@@ -511,20 +520,30 @@ spawn doctor --fix --license mit
 
 ## `spawn version`
 
-Prints the installed version.
+Prints the installed version. No arguments or options; exit code 0; writes nothing.
 
 ```bash
 spawn version
-# Spawn v1.0.8
+# Spawn v1.0.9
 ```
 
 ---
 
 ## Exit codes
 
-| Situation | Exit code |
+| Code | Meaning |
 |---|---|
-| Any command succeeds | 0 |
-| `spawn doctor` — path does not exist or is not a directory | 1 |
-| Non-interactive validation error / flag error | 1 |
-| Ctrl+C / EOF at any point | 130 |
+| 0 | Success (including a valid `--dry-run`, and GitHub publishing skipped) |
+| 1 | Invalid input or config (bad name, option value, config file, unknown template; `spawn doctor` bad path/flags) |
+| 2 | CLI usage error (unknown option, reported by Click) |
+| 3 | Filesystem error (directory already exists, OS error while writing) |
+| 4 | Toolchain error (`git` or `uv` missing or failed) |
+| 5 | Generation / template error |
+| 6 | Publish error (GitHub publishing failed) |
+| 10 | Unexpected error (re-run with `SPAWN_DEBUG=1` for a traceback) |
+| 130 | Cancelled (Ctrl+C, EOF, or declining the final prompt) |
+
+Failures that happen after the project was created (for example a failed
+GitHub publish) exit non-zero while the generated project remains on disk.
+`spawn doctor --fix` action failures are reported in the output and do not
+change the exit code.

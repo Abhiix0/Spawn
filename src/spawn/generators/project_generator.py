@@ -1,12 +1,14 @@
-import datetime
-import json
-import shutil
 from pathlib import Path
 
-from spawn import __version__
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import FilesystemError, TemplateError
 from spawn.core.models import ProjectConfig
 from spawn.core.registry import instantiate_template
+from spawn.generators.destination import (
+    assert_available,
+    cleanup_created,
+    resolve_destination,
+)
+from spawn.generators.metadata import write_project_meta
 from spawn.generators.project_files import (
     add_mypy_config,
     write_changelog,
@@ -38,19 +40,29 @@ class ProjectGenerator:
         if "pre-commit" in extras:
             write_precommit_config(project_path)
 
+    def _apply_file_only_extras(self, project_path: Path, extras: list[str]) -> None:
+        if "pre-commit" in extras:
+            write_precommit_config(project_path)
+        skipped = [e for e in extras if e != "pre-commit"]
+        if skipped:
+            console.print(
+                f"[yellow]Skipped without uv: {', '.join(skipped)} "
+                "(need pyproject.toml)[/yellow]"
+            )
+
     def generate(self, config: ProjectConfig) -> Path:
         template = instantiate_template(config)
 
         if template is None:
-            raise SpawnError(f"Unknown template: {config.template}")
+            raise TemplateError(f"Unknown template: {config.template}")
 
-        project_path = Path(config.name)
+        project_path = resolve_destination(config.name, config.destination)
+        assert_available(project_path, f"Directory '{config.name}' already exists.")
 
-        if project_path.exists():
-            raise SpawnError(f"Directory '{config.name}' already exists.")
-
+        created = False
         try:
             project_path.mkdir()
+            created = True
 
             context = {"project_name": config.name}
             template.generate(project_path, context)
@@ -89,43 +101,32 @@ class ProjectGenerator:
                 console.print("[yellow]Initializing Git...[/yellow]")
                 initialize_git(project_path)
 
-            initialize_uv(project_path)
+            # Without uv there is no pyproject.toml, which post_install and the
+            # quality extras rely on (generated Dockerfiles and CI workflows also
+            # run `uv sync` against it). Only the pre-commit config is file-only.
+            if not config.use_uv:
+                self._apply_file_only_extras(project_path, config.extras)
+            else:
+                initialize_uv(project_path)
 
-            deps = template.get_dependencies()
-            if deps:
-                console.print("[yellow]Installing dependencies...[/yellow]")
-                install_packages(project_path, deps)
+                deps = template.get_dependencies()
+                if deps:
+                    console.print("[yellow]Installing dependencies...[/yellow]")
+                    install_packages(project_path, deps)
 
-            template.post_install(project_path)
-            self._apply_quality_extras(project_path, config.extras)
+                template.post_install(project_path)
+                self._apply_quality_extras(project_path, config.extras)
 
-            meta_dir = project_path / ".spawn"
-            meta_dir.mkdir()
-            meta_file = meta_dir / "meta.json"
-            meta_file.write_text(
-                json.dumps(
-                    {
-                        "intent": config.template,
-                        "framework": config.framework,
-                        "provider": config.provider,
-                        "spawn_version": __version__,
-                        "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
-                        "generator": "blueprint",
-                        "git": config.use_git,
-                        "uv": True,
-                        "source": None,
-                    },
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
+            write_project_meta(project_path, config, generator="blueprint")
 
         except OSError as e:
-            shutil.rmtree(project_path, ignore_errors=True)
-            raise SpawnError(str(e)) from e
+            if created:
+                cleanup_created(project_path)
+            raise FilesystemError(str(e)) from e
 
         except BaseException:
-            shutil.rmtree(project_path, ignore_errors=True)
+            if created:
+                cleanup_created(project_path)
             raise
 
         return project_path

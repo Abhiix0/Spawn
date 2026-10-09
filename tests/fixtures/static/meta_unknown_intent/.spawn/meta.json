@@ -1,0 +1,11 @@
+{
+  "intent": "nope",
+  "framework": null,
+  "provider": null,
+  "spawn_version": "1.0.8",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "generator": "blueprint",
+  "git": false,
+  "uv": false,
+  "source": null
+}

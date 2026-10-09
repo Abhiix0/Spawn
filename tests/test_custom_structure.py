@@ -398,7 +398,9 @@ def test_generate_installs_dependencies_when_uv_and_deps_present(tmp_path, monke
             use_uv=True,
             dependencies=["requests", "rich"],
         )
-    mock_install.assert_called_once_with(Path("my-project"), ["requests", "rich"])
+    mock_install.assert_called_once_with(
+        (Path.cwd() / "my-project").resolve(), ["requests", "rich"]
+    )
 
 
 def test_generate_skips_install_when_use_uv_false(tmp_path, monkeypatch):
@@ -549,7 +551,7 @@ def test_install_packages_called_with_dev_flag(tmp_path, monkeypatch):
             dev_setup=["ruff", "pytest", "precommit"],
         )
     mock_install.assert_called_once_with(
-        Path("dev-project"),
+        (Path.cwd() / "dev-project").resolve(),
         ["ruff", "pytest", "pre-commit"],
         dev=True,
     )
@@ -567,7 +569,7 @@ def test_install_packages_called_with_mypy(tmp_path, monkeypatch):
             dev_setup=["mypy"],
         )
     mock_install.assert_called_once_with(
-        Path("dev-project"),
+        (Path.cwd() / "dev-project").resolve(),
         ["mypy"],
         dev=True,
     )

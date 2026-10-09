@@ -47,7 +47,7 @@ def test_version_prints_version_string():
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_CONFIG)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.Confirm.ask", return_value=False)
 def test_create_happy_path_declines_github(
@@ -69,7 +69,7 @@ def test_create_happy_path_declines_github(
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_CONFIG_NO_GIT)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.Confirm.ask")
 def test_create_no_git_skips_publish_prompt(
@@ -91,19 +91,19 @@ def test_create_no_git_skips_publish_prompt(
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_CONFIG)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 def test_create_generation_error_prints_message(mock_generator_cls, mock_config):
     mock_generator_cls.return_value.generate.side_effect = SpawnError("disk full")
 
     result = runner.invoke(app, ["create"])
 
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert "❌" in result.output
     assert "disk full" in result.output
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_CONFIG)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.GitHubPublisher")
 def test_create_generation_error_does_not_attempt_publish(
     mock_publisher_cls, mock_generator_cls, mock_config
@@ -121,7 +121,7 @@ def test_create_generation_error_does_not_attempt_publish(
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_CONFIG)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.Confirm.ask", return_value=True)
 @patch("spawn.cli.app.Prompt.ask", return_value="https://github.com/user/repo.git")
@@ -149,7 +149,7 @@ def test_create_github_publish_success(
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_CONFIG)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.Confirm.ask", return_value=True)
 @patch("spawn.cli.app.Prompt.ask", return_value="https://github.com/user/repo.git")
@@ -169,7 +169,7 @@ def test_create_github_publish_error_prints_message(
 
     result = runner.invoke(app, ["create"])
 
-    assert result.exit_code == 0
+    assert result.exit_code == 6
     assert "❌" in result.output
     assert "push rejected" in result.output
 
@@ -302,7 +302,7 @@ _VALID_AUTO_CONFIG_NO_GIT = ProjectConfig(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 @patch("spawn.cli.app.Confirm.ask", return_value=False)
@@ -326,7 +326,7 @@ def test_noninteractive_name_template_succeeds(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.instantiate_template")
 def test_noninteractive_dry_run_does_not_generate(
     mock_instantiate, mock_generator_cls, mock_get_config
@@ -361,7 +361,7 @@ def test_noninteractive_invalid_project_name_exits_nonzero():
 
 
 @patch("spawn.cli.app.get_project_config", return_value=_VALID_AUTO_CONFIG)
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.Confirm.ask", return_value=False)
 def test_template_only_no_name_falls_through_to_interactive(
@@ -382,7 +382,7 @@ def test_template_only_no_name_falls_through_to_interactive(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 def test_config_file_valid_succeeds(
@@ -416,7 +416,7 @@ def test_config_file_missing_exits_1(tmp_path):
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 @patch("spawn.cli.app.Confirm.ask")
@@ -440,7 +440,7 @@ def test_yes_flag_skips_confirm_ask(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 @patch("spawn.cli.app.Confirm.ask")
@@ -469,7 +469,7 @@ def test_noninteractive_without_yes_also_skips_confirm_ask(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 def test_claude_md_flag_sets_generate_claude_md_on_config(
@@ -496,7 +496,7 @@ def test_claude_md_flag_sets_generate_claude_md_on_config(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 def test_no_claude_md_flag_defaults_false(
@@ -522,7 +522,7 @@ def test_no_claude_md_flag_defaults_false(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 def test_license_none_reaches_generator_config(
@@ -554,7 +554,7 @@ def test_license_none_reaches_generator_config(
 
 
 @patch("spawn.cli.app.get_project_config")
-@patch("spawn.cli.app.ProjectGenerator")
+@patch("spawn.generators.pipeline.ProjectGenerator")
 @patch("spawn.cli.app.show_success")
 @patch("spawn.cli.app.instantiate_template")
 def test_claude_md_via_config_file_sets_generate_claude_md(
@@ -605,10 +605,8 @@ def test_custom_structure_generate_called_with_claude_md(mock_get_config, tmp_pa
     )
 
     with (
-        patch(
-            "spawn.generators.custom_structure.CustomStructureGenerator"
-        ) as mock_gen_cls,
-        patch("spawn.cli.app._write_custom_metadata"),
+        patch("spawn.generators.pipeline.CustomStructureGenerator") as mock_gen_cls,
+        patch("spawn.generators.pipeline.write_project_meta"),
         patch("spawn.cli.app.show_success"),
     ):
         mock_gen_cls.return_value.generate.return_value = Path("cs-proj")

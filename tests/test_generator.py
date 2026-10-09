@@ -851,7 +851,7 @@ def test_extras_mypy_installs_and_configures(
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config(extras=["mypy"]))
 
-    mock_install.assert_any_call(Path("demo"), ["mypy"], dev=True)
+    mock_install.assert_any_call((Path.cwd() / "demo").resolve(), ["mypy"], dev=True)
     content = (tmp_path / "demo" / "pyproject.toml").read_text(encoding="utf-8")
     assert "[tool.mypy]" in content
 
@@ -865,7 +865,9 @@ def test_extras_precommit_installs_and_writes_config(
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config(extras=["pre-commit"]))
 
-    mock_install.assert_any_call(Path("demo"), ["pre-commit"], dev=True)
+    mock_install.assert_any_call(
+        (Path.cwd() / "demo").resolve(), ["pre-commit"], dev=True
+    )
     cfg_file = tmp_path / "demo" / ".pre-commit-config.yaml"
     assert cfg_file.is_file()
     assert RUFF_PRECOMMIT_REV in cfg_file.read_text(encoding="utf-8")

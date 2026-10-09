@@ -4,11 +4,10 @@ import questionary
 import typer
 from rich.prompt import Confirm
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import InvalidInputError, SpawnError
 from spawn.core.models import ProjectConfig
+from spawn.core.planning import supported_providers
 from spawn.core.registry import get_metadata, list_templates
-from spawn.templates.agent import get_supported_providers as get_agent_providers
-from spawn.templates.chatbot import get_supported_providers as get_chatbot_providers
 from spawn.utils.console import console
 from spawn.utils.validators import validate_project_name
 
@@ -135,12 +134,9 @@ def get_project_config() -> ProjectConfig:
 
     # --- Provider ---
     if meta and meta.available_providers and selected_framework:
-        if meta.slug == "agent":
-            provider_options = get_agent_providers(selected_framework)
-        elif meta.slug == "chatbot":
-            provider_options = get_chatbot_providers(selected_framework)
-        else:
-            provider_options = meta.available_providers
+        provider_options = supported_providers(
+            meta.slug, selected_framework, meta.available_providers
+        )
         chosen = _select(
             "Choose Provider", provider_options, default=provider_options[0]
         )
@@ -211,7 +207,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
         entries = parse_structure(raw)
     except StructureParseError as e:
         typer.secho(str(e), fg=typer.colors.RED)
-        raise SpawnError("Could not parse structure.") from e
+        raise InvalidInputError("Could not parse structure.") from e
 
     folders = [e for e in entries if not e.is_file]
     files = [e for e in entries if e.is_file]
@@ -259,7 +255,7 @@ def _get_custom_structure_config(project_name: str) -> ProjectConfig:
     proceed = typer.confirm(typer.style("Proceed?", fg=typer.colors.CYAN), default=True)
 
     if not proceed:
-        raise SpawnError("Cancelled.")
+        raise typer.Abort()
 
     return ProjectConfig(
         name=project_name,
