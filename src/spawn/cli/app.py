@@ -35,6 +35,11 @@ def main_callback(ctx: typer.Context) -> None:
     )
 
 
+def _given_on_command_line(ctx: typer.Context, param: str) -> bool:
+    source = ctx.get_parameter_source(param)
+    return getattr(source, "name", None) == "COMMANDLINE"
+
+
 def _display_info(config) -> tuple[str, list[str]] | None:
     if config.template == "custom":
         return "Custom Structure", [f"cd {config.name}", "Start building your project"]
@@ -46,6 +51,7 @@ def _display_info(config) -> tuple[str, list[str]] | None:
 
 @app.command()
 def create(
+    ctx: typer.Context,
     name: str = typer.Option(
         None, "--name", help="Project name (enables non-interactive mode)"
     ),
@@ -137,15 +143,25 @@ def create(
             except SpawnError as e:
                 fail(e)
 
-            if dry_run:
-                console.print("[green]✓ Config valid[/green]")
-                console.print(config)
-                return
+            if config_file is not None:
+                for param, value, flag in (
+                    ("git", git, "--no-git"),
+                    ("uv", uv, "--no-uv"),
+                ):
+                    if not value and _given_on_command_line(ctx, param):
+                        console.print(
+                            f"[yellow]{flag} ignored: --config takes precedence[/yellow]"
+                        )
         else:
             try:
                 config = get_project_config()
             except SpawnError as e:
                 fail(e)
+
+        if dry_run:
+            console.print("[green]✓ Config valid[/green]")
+            console.print(config)
+            return
 
         try:
             project_path = generate_project(config)

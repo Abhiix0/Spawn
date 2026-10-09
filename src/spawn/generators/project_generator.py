@@ -40,6 +40,16 @@ class ProjectGenerator:
         if "pre-commit" in extras:
             write_precommit_config(project_path)
 
+    def _apply_file_only_extras(self, project_path: Path, extras: list[str]) -> None:
+        if "pre-commit" in extras:
+            write_precommit_config(project_path)
+        skipped = [e for e in extras if e != "pre-commit"]
+        if skipped:
+            console.print(
+                f"[yellow]Skipped without uv: {', '.join(skipped)} "
+                "(need pyproject.toml)[/yellow]"
+            )
+
     def generate(self, config: ProjectConfig) -> Path:
         template = instantiate_template(config)
 
@@ -92,8 +102,11 @@ class ProjectGenerator:
                 initialize_git(project_path)
 
             # Without uv there is no pyproject.toml, which post_install and the
-            # quality extras rely on; skip them as CustomStructureGenerator does.
-            if config.use_uv:
+            # quality extras rely on (generated Dockerfiles and CI workflows also
+            # run `uv sync` against it). Only the pre-commit config is file-only.
+            if not config.use_uv:
+                self._apply_file_only_extras(project_path, config.extras)
+            else:
                 initialize_uv(project_path)
 
                 deps = template.get_dependencies()
