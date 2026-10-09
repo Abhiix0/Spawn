@@ -3,7 +3,7 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## v1.0.9 — Unreleased
+## v1.0.9 — 2026
 
 ### Added
 
