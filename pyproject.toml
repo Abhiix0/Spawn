@@ -20,6 +20,17 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/spawn"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/CONTRIBUTING.md",
+]
+
 
 [dependency-groups]
 dev = [

@@ -6,9 +6,90 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups --python ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Run ruff
+        run: uv run ruff check .
+
+  package-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Build
+        run: uv build
+
+      - name: Smoke-test the built wheel
+        run: bash .github/scripts/smoke.sh
+
+  # Not required: needs network, real git and real uv.
+  integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Build
+        run: uv build
+
+      - name: Real end-to-end create
+        run: |
+          git config --global user.name "ci"
+          git config --global user.email "ci@example.invalid"
+          uv venv "$RUNNER_TEMP/venv"
+          uv pip install --python "$RUNNER_TEMP/venv/bin/python" dist/*.whl
+          work="$(mktemp -d)"
+          cd "$work"
+          "$RUNNER_TEMP/venv/bin/spawn" create --name e2e --template backend-api --extras ruff,pytest,github-actions,docker --yes
+          cd e2e
+          test -f Dockerfile
+          test -f .github/workflows/ci.yml
+          test -d .git
+          test -f uv.lock
+          test -d .venv
+          grep -Eq '"uv": *true' .spawn/meta.json
+
+  # Evidence only (path-safety on Windows); never blocks.
+  windows:
+    runs-on: windows-latest
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +105,3 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
-
-      - name: Run ruff
-        run: uv run ruff check .
