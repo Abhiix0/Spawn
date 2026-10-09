@@ -1,0 +1,12 @@
+.gitignore
+.spawn/meta.json
+AGENTS.md
+CHANGELOG.md
+LICENSE
+README.md
+data/sample.csv
+notebooks/analysis.ipynb
+reports/.gitkeep
+src/__init__.py
+tests/__init__.py
+tests/test_analysis.py
