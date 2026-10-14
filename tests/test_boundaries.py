@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 
 SRC = Path(__file__).parent.parent / "src" / "spawn"
-GUARDED = ("core", "generators", "templates", "utils", "github")
+GUARDED = ("core", "generators", "templates", "utils", "github", "inspection")
 
 
 def _imports_cli(tree: ast.AST) -> bool:
