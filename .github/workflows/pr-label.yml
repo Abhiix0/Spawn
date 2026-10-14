@@ -1,0 +1,28 @@
+name: PR Label
+
+# pull_request_target runs in the context of the base repository, so the
+# GITHUB_TOKEN has write access to add labels even on PRs from forks.
+#
+# SECURITY NOTE: this job intentionally does NOT check out any code from the
+# PR head.  The only action run here is actions/labeler, which only reads
+# .github/labeler.yml from the base branch and then calls the GitHub API.
+# Never add a checkout step or run arbitrary code in this workflow.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  label:
+    name: Label PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Apply labels
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
