@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0",
+  "status": "partial",
+  "generated_at": "2026-10-14T10:00:00+00:00",
+  "target": {
+    "root": "."
+  },
+  "recorded_metadata": {
+    "intent": "backend-api",
+    "framework": "fastapi",
+    "provider": null,
+    "spawn_version": "1.0.9",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "generator": "blueprint",
+    "git": true,
+    "uv": true,
+    "source": null
+  },
+  "summary": {
+    "name": "acme-api",
+    "origin": "spawn",
+    "spawn_version": "1.0.9",
+    "primary_language": "python",
+    "primary_framework": "fastapi"
+  },
+  "structure": {
+    "top_level_files": [
+      ".gitignore",
+      "AGENTS.md",
+      "CHANGELOG.md",
+      "LICENSE",
+      "README.md",
+      "pyproject.toml",
+      "setup.cfg",
+      "uv.lock"
+    ],
+    "top_level_directories": [
+      "src",
+      "tests"
+    ],
+    "file_count": 24,
+    "directory_count": 5
+  },
+  "findings": [
+    {
+      "category": "ci",
+      "subject": "github-actions",
+      "detection_state": "not_detected",
+      "evidence": [],
+      "detail": "checked .github/workflows/*.yml, .github/workflows/*.yaml, .circleci/config.yml, .gitlab-ci.yml — none present"
+    },
+    {
+      "category": "container",
+      "subject": "docker",
+      "detection_state": "not_checked",
+      "evidence": [],
+      "detail": null
+    },
+    {
+      "category": "dependency",
+      "subject": "sqlalchemy",
+      "detection_state": "unknown",
+      "evidence": [
+        {
+          "path": "setup.cfg",
+          "indicator": "dynamic install_requires expression",
+          "detail": null
+        }
+      ],
+      "detail": "setup.cfg contains a dynamic install_requires that references an external version file; static analysis cannot resolve the value"
+    },
+    {
+      "category": "framework",
+      "subject": "fastapi",
+      "detection_state": "detected",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "fastapi in [project.dependencies]",
+          "detail": "fastapi>=0.115.0"
+        }
+      ],
+      "detail": null
+    },
+    {
+      "category": "language",
+      "subject": "python",
+      "detection_state": "detected",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "requires-python field",
+          "detail": ">=3.12"
+        }
+      ],
+      "detail": null
+    },
+    {
+      "category": "package_manager",
+      "subject": "uv",
+      "detection_state": "inferred",
+      "evidence": [
+        {
+          "path": "uv.lock",
+          "indicator": "uv.lock lockfile present",
+          "detail": null
+        }
+      ],
+      "detail": "uv.lock is present but no [tool.uv] section found in pyproject.toml; uv inferred as package manager from lockfile evidence alone"
+    },
+    {
+      "category": "structure",
+      "subject": "spawn-generated",
+      "detection_state": "detected",
+      "evidence": [
+        {
+          "path": ".spawn/meta.json",
+          "indicator": ".spawn/meta.json present",
+          "detail": null
+        }
+      ],
+      "detail": null
+    },
+    {
+      "category": "tool",
+      "subject": "pytest",
+      "detection_state": "detected",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "[tool.pytest.ini_options] section",
+          "detail": null
+        }
+      ],
+      "detail": null
+    }
+  ],
+  "analyzer_results": [
+    {
+      "analyzer_name": "dependency",
+      "status": "partial",
+      "findings": [],
+      "diagnostics": [
+        {
+          "code": "dependency.malformed_manifest",
+          "message": "requirements.txt is truncated and could not be fully parsed; partial dependency list from this file may be missing",
+          "severity": "warning",
+          "source": "dependency",
+          "path": "requirements.txt",
+          "fatal": false
+        }
+      ]
+    },
+    {
+      "analyzer_name": "language",
+      "status": "complete",
+      "findings": [],
+      "diagnostics": []
+    },
+    {
+      "analyzer_name": "tooling",
+      "status": "complete",
+      "findings": [],
+      "diagnostics": []
+    }
+  ],
+  "diagnostics": []
+}
