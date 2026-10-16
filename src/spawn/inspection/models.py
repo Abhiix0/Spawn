@@ -11,6 +11,7 @@ The public surface (re-exported from ``inspection/__init__.py``) is:
     Evidence, Diagnostic, Finding
     AnalyzerResult
     InspectionTarget, DiscoveryInventory
+    ProjectSummary, RepositoryStructure
     InspectionReport
     validate_report
 """
@@ -29,7 +30,7 @@ from spawn.core.project import ProjectMetadata
 # ---------------------------------------------------------------------------
 
 SCHEMA_VERSION: str = "1.0"
-"""Bump policy (see docs/inspection/inspection-contract.md §8):
+"""Bump policy (see docs/inspection/inspection-contract.md §9):
 - Adding a new optional field   → no bump
 - Adding a new required field   → minor bump  ("1.0" → "1.1")
 - Renaming or removing a field  → major bump  ("1.0" → "2.0")
@@ -300,13 +301,23 @@ class InspectionTarget:
     Separates "the caller supplied a path" from "we confirmed it is a readable
     directory".  Constructed by the orchestrator (#58) after validating the
     path; not constructed directly by analyzers.
+
+    Serialisation note: ``to_dict()`` emits ``"root": "."`` — a stable,
+    portable label that does not expose the absolute filesystem path in JSON.
+    The absolute ``path`` is for runtime filesystem operations only.  When
+    loading a report with ``from_dict()`` / ``from_json()``, ``path`` is
+    reconstructed as ``Path(".")``; callers that need the original absolute
+    path must supply it separately.
     """
 
     path: Path
     """Resolved, absolute Path confirmed to be a readable directory."""
 
     def to_dict(self) -> dict:
-        return {"path": self.path.as_posix()}
+        # Emit "." as a portable root label rather than the absolute path.
+        # This keeps JSON output byte-identical across machines inspecting
+        # the same repository from different mount points.
+        return {"root": "."}
 
 
 # ---------------------------------------------------------------------------
@@ -352,6 +363,101 @@ class DiscoveryInventory:
 
 
 # ---------------------------------------------------------------------------
+# ProjectSummary
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ProjectSummary:
+    """Concise, human-readable facts about the inspected project.
+
+    Derived by the orchestrator (#58) from the aggregated findings and
+    ``recorded_metadata``.  It is NOT a separate analysis pass — it is a
+    projection of information already present in the report, computed once
+    after all analyzers have run.
+
+    Fields
+    ------
+    name:
+        Best-effort project name.  Derived in order of preference:
+        1. ``pyproject.toml`` ``[project] name`` (from a dependency finding
+           or structure analyzer).
+        2. The repository's top-level directory name.
+        3. ``None`` if no name can be determined.
+    origin:
+        ``"spawn"`` when a ``structure / spawn-generated`` finding is
+        ``detected``; ``"external"`` otherwise.
+    spawn_version:
+        The ``spawn_version`` field from ``recorded_metadata`` when
+        ``origin == "spawn"``; ``None`` otherwise.
+    primary_language:
+        The ``subject`` of the highest-confidence ``language`` finding, or
+        ``None`` if no language finding exists.
+    primary_framework:
+        The ``subject`` of the highest-confidence ``framework`` finding, or
+        ``None`` if no framework finding exists.
+    """
+
+    name: str | None = None
+    origin: str = "external"  # "spawn" | "external"
+    spawn_version: str | None = None
+    primary_language: str | None = None
+    primary_framework: str | None = None
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "origin": self.origin,
+            "spawn_version": self.spawn_version,
+            "primary_language": self.primary_language,
+            "primary_framework": self.primary_framework,
+        }
+
+
+# ---------------------------------------------------------------------------
+# RepositoryStructure
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RepositoryStructure:
+    """Overview of the repository's top-level layout.
+
+    Derived by the orchestrator (#58) from the ``DiscoveryInventory`` and
+    aggregated findings.  Like ``ProjectSummary``, this is a projection —
+    not a separate analysis pass.
+
+    Fields
+    ------
+    top_level_files:
+        Sorted list of files at the repository root (not in subdirectories).
+        Derived from ``DiscoveryInventory.files`` filtered to entries with
+        no ``/`` separator.
+    top_level_directories:
+        Sorted list of directories at the repository root.
+        Derived from ``DiscoveryInventory.directories`` filtered to entries
+        with no ``/`` separator.
+    file_count:
+        Total number of files in ``DiscoveryInventory.files``.
+    directory_count:
+        Total number of directories in ``DiscoveryInventory.directories``.
+    """
+
+    top_level_files: tuple[str, ...] = ()
+    top_level_directories: tuple[str, ...] = ()
+    file_count: int = 0
+    directory_count: int = 0
+
+    def to_dict(self) -> dict:
+        return {
+            "top_level_files": list(self.top_level_files),
+            "top_level_directories": list(self.top_level_directories),
+            "file_count": self.file_count,
+            "directory_count": self.directory_count,
+        }
+
+
+# ---------------------------------------------------------------------------
 # InspectionReport
 # ---------------------------------------------------------------------------
 
@@ -378,6 +484,8 @@ class InspectionReport:
     generated_at: str = field(default_factory=lambda: _utc_now())
     schema_version: str = SCHEMA_VERSION
     recorded_metadata: ProjectMetadata | None = None
+    summary: ProjectSummary = field(default_factory=ProjectSummary)
+    structure: RepositoryStructure = field(default_factory=RepositoryStructure)
     findings: tuple[Finding, ...] = ()
     analyzer_results: tuple[AnalyzerResult, ...] = ()
     diagnostics: tuple[Diagnostic, ...] = ()
@@ -400,6 +508,8 @@ class InspectionReport:
                 if self.recorded_metadata is None
                 else _metadata_to_dict(self.recorded_metadata)
             ),
+            "summary": self.summary.to_dict(),
+            "structure": self.structure.to_dict(),
             "findings": [f.to_dict() for f in self.findings],
             "analyzer_results": [r.to_dict() for r in self.analyzer_results],
             "diagnostics": [d.to_dict() for d in self.diagnostics],

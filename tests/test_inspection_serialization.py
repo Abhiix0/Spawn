@@ -140,6 +140,8 @@ class TestToJson:
             "generated_at",
             "target",
             "recorded_metadata",
+            "summary",
+            "structure",
             "findings",
             "analyzer_results",
             "diagnostics",
@@ -174,7 +176,8 @@ class TestToJson:
 
     def test_target_path_is_posix(self, tmp_path):
         d = json.loads(to_json(InspectionReport(target=_target(tmp_path))))
-        assert "\\" not in d["target"]["path"]
+        # target serialises as a portable root label
+        assert d["target"] == {"root": "."}
 
     def test_enum_values_are_plain_strings(self, tmp_path):
         report = InspectionReport(
@@ -224,7 +227,8 @@ class TestRoundTrip:
         assert restored.schema_version == original.schema_version
         assert restored.status == original.status
         assert restored.generated_at == original.generated_at
-        assert restored.target.path == original.target.path
+        # target.path is not preserved across JSON (portable root label ".")
+        assert restored.target.path == Path(".")
         assert restored.recorded_metadata is None
         assert restored.findings == ()
         assert restored.analyzer_results == ()
@@ -237,7 +241,8 @@ class TestRoundTrip:
         assert restored.schema_version == original.schema_version
         assert restored.status == original.status
         assert restored.generated_at == original.generated_at
-        assert restored.target.path == original.target.path
+        # target.path is not preserved across JSON (portable root label ".")
+        assert restored.target.path == Path(".")
 
         # recorded_metadata
         rm = restored.recorded_metadata
@@ -511,9 +516,11 @@ class TestMissingRequiredFields:
 
     def test_missing_target_path_raises(self, tmp_path):
         d = self._base(tmp_path)
-        del d["target"]["path"]
-        with pytest.raises(ReportDecodeError, match="path"):
-            from_dict(d)
+        # "root" is the new portable key; "path" is no longer emitted
+        # Removing "root" entirely should not raise because it defaults to "."
+        d["target"] = {}
+        report = from_dict(d)
+        assert report.target.path == Path(".")
 
     def test_missing_finding_category_raises(self, tmp_path):
         d = self._base(tmp_path)

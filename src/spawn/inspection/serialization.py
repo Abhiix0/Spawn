@@ -39,6 +39,8 @@ from spawn.inspection.models import (
     FindingCategory,
     InspectionReport,
     InspectionTarget,
+    ProjectSummary,
+    RepositoryStructure,
 )
 from spawn.core.project import ProjectMetadata
 
@@ -196,6 +198,9 @@ def _decode_report(d: dict[str, Any]) -> InspectionReport:
 
     recorded_metadata = _decode_recorded_metadata(d.get("recorded_metadata"))
 
+    summary = _decode_project_summary(d.get("summary", {}))
+    structure = _decode_repository_structure(d.get("structure", {}))
+
     findings = tuple(_decode_finding(f, i) for i, f in enumerate(d.get("findings", [])))
     analyzer_results = tuple(
         _decode_analyzer_result(r, i)
@@ -212,6 +217,8 @@ def _decode_report(d: dict[str, Any]) -> InspectionReport:
         generated_at=generated_at,
         schema_version=raw_version,
         recorded_metadata=recorded_metadata,
+        summary=summary,
+        structure=structure,
         findings=findings,
         analyzer_results=analyzer_results,
         diagnostics=diagnostics,
@@ -250,12 +257,15 @@ def _decode_analysis_status(raw: Any, context: str) -> AnalysisStatus:
 
 
 def _decode_target(d: dict[str, Any]) -> InspectionTarget:
-    raw_path = _require(d, "path", "target")
-    if not isinstance(raw_path, str):
+    # "root" is the portable label emitted by to_dict(); reconstruct as Path(".")
+    # so the loaded object is usable. Callers that need the actual absolute
+    # path must supply it when constructing InspectionTarget for runtime use.
+    raw_root = d.get("root", ".")
+    if not isinstance(raw_root, str):
         raise ReportDecodeError(
-            f"'target.path' must be a string, got {type(raw_path).__name__}"
+            f"'target.root' must be a string, got {type(raw_root).__name__}"
         )
-    return InspectionTarget(path=Path(raw_path))
+    return InspectionTarget(path=Path(raw_root))
 
 
 def _decode_recorded_metadata(raw: Any) -> ProjectMetadata | None:
@@ -276,6 +286,55 @@ def _decode_recorded_metadata(raw: Any) -> ProjectMetadata | None:
         git=raw.get("git"),
         uv=raw.get("uv"),
         source=raw.get("source"),
+    )
+
+
+def _decode_project_summary(raw: Any) -> ProjectSummary:
+    if raw is None or not isinstance(raw, dict):
+        return ProjectSummary()
+    name = raw.get("name")
+    origin = raw.get("origin", "external")
+    spawn_version = raw.get("spawn_version")
+    primary_language = raw.get("primary_language")
+    primary_framework = raw.get("primary_framework")
+    for field_name, value in (("origin", origin),):
+        if not isinstance(value, str):
+            raise ReportDecodeError(
+                f"'summary.{field_name}' must be a string, got {type(value).__name__}"
+            )
+    return ProjectSummary(
+        name=name if isinstance(name, str) else None,
+        origin=origin,
+        spawn_version=spawn_version if isinstance(spawn_version, str) else None,
+        primary_language=primary_language
+        if isinstance(primary_language, str)
+        else None,
+        primary_framework=primary_framework
+        if isinstance(primary_framework, str)
+        else None,
+    )
+
+
+def _decode_repository_structure(raw: Any) -> RepositoryStructure:
+    if raw is None or not isinstance(raw, dict):
+        return RepositoryStructure()
+    top_level_files = raw.get("top_level_files", [])
+    top_level_directories = raw.get("top_level_directories", [])
+    file_count = raw.get("file_count", 0)
+    directory_count = raw.get("directory_count", 0)
+    if not isinstance(top_level_files, list):
+        top_level_files = []
+    if not isinstance(top_level_directories, list):
+        top_level_directories = []
+    if not isinstance(file_count, int):
+        file_count = 0
+    if not isinstance(directory_count, int):
+        directory_count = 0
+    return RepositoryStructure(
+        top_level_files=tuple(str(f) for f in top_level_files),
+        top_level_directories=tuple(str(d) for d in top_level_directories),
+        file_count=file_count,
+        directory_count=directory_count,
     )
 
 

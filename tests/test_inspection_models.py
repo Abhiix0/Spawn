@@ -377,8 +377,8 @@ class TestInspectionTarget:
     def test_to_dict_uses_posix(self, tmp_path):
         t = InspectionTarget(path=tmp_path)
         d = t.to_dict()
-        assert "/" in d["path"]
-        assert "\\" not in d["path"]
+        # target serialises as a portable root label, not the absolute path
+        assert d == {"root": "."}
 
     def test_frozen(self, tmp_path):
         t = InspectionTarget(path=tmp_path)
@@ -453,6 +453,8 @@ class TestInspectionReport:
             "generated_at",
             "target",
             "recorded_metadata",
+            "summary",
+            "structure",
             "findings",
             "analyzer_results",
             "diagnostics",
@@ -490,7 +492,8 @@ class TestInspectionReport:
 
     def test_to_dict_target_uses_posix(self, tmp_path):
         d = _minimal_report(tmp_path).to_dict()
-        assert "\\" not in d["target"]["path"]
+        # target is serialised as a portable root label
+        assert d["target"] == {"root": "."}
 
     def test_to_dict_findings_serialised(self, tmp_path):
         report = InspectionReport(

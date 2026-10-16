@@ -3,7 +3,7 @@
   "status": "partial",
   "generated_at": "2026-10-14T10:00:00+00:00",
   "target": {
-    "path": "/projects/acme-api"
+    "root": "."
   },
   "recorded_metadata": {
     "intent": "backend-api",
@@ -15,6 +15,31 @@
     "git": true,
     "uv": true,
     "source": null
+  },
+  "summary": {
+    "name": "acme-api",
+    "origin": "spawn",
+    "spawn_version": "1.0.9",
+    "primary_language": "python",
+    "primary_framework": "fastapi"
+  },
+  "structure": {
+    "top_level_files": [
+      ".gitignore",
+      "AGENTS.md",
+      "CHANGELOG.md",
+      "LICENSE",
+      "README.md",
+      "pyproject.toml",
+      "setup.cfg",
+      "uv.lock"
+    ],
+    "top_level_directories": [
+      "src",
+      "tests"
+    ],
+    "file_count": 24,
+    "directory_count": 5
   },
   "findings": [
     {

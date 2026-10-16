@@ -35,6 +35,8 @@ from spawn.inspection.models import (
     FindingCategory,
     InspectionReport,
     InspectionTarget,
+    ProjectSummary,
+    RepositoryStructure,
 )
 from spawn.inspection.serialization import to_json
 from spawn.core.project import ProjectMetadata
@@ -256,6 +258,34 @@ def build() -> InspectionReport:
     )
 
     # ------------------------------------------------------------------
+    # Project summary and repository structure
+    # ------------------------------------------------------------------
+
+    summary = ProjectSummary(
+        name="acme-api",
+        origin="spawn",
+        spawn_version="1.0.9",
+        primary_language="python",
+        primary_framework="fastapi",
+    )
+
+    structure = RepositoryStructure(
+        top_level_files=(
+            ".gitignore",
+            "AGENTS.md",
+            "CHANGELOG.md",
+            "LICENSE",
+            "README.md",
+            "pyproject.toml",
+            "setup.cfg",
+            "uv.lock",
+        ),
+        top_level_directories=("src", "tests"),
+        file_count=24,
+        directory_count=5,
+    )
+
+    # ------------------------------------------------------------------
     # Report
     # ------------------------------------------------------------------
 
@@ -264,6 +294,8 @@ def build() -> InspectionReport:
         status=AnalysisStatus.PARTIAL,  # partial because dependency analyzer is partial
         generated_at=FIXED_GENERATED_AT,
         recorded_metadata=recorded_metadata,
+        summary=summary,
+        structure=structure,
         findings=findings,
         analyzer_results=analyzer_results,
         diagnostics=(),  # no report-level diagnostics

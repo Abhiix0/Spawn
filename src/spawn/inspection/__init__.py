@@ -8,6 +8,7 @@ Public surface.  Downstream modules (#54–#59) import from here.
         Evidence, Diagnostic, Finding,
         AnalyzerResult,
         InspectionTarget, DiscoveryInventory,
+        ProjectSummary, RepositoryStructure,
         InspectionReport,
         validate_report,
         Analyzer,
@@ -31,6 +32,8 @@ from spawn.inspection.models import (
     FindingCategory,
     InspectionReport,
     InspectionTarget,
+    ProjectSummary,
+    RepositoryStructure,
     validate_report,
 )
 from spawn.inspection.serialization import (
@@ -54,7 +57,9 @@ __all__ = [
     "InspectionError",
     "InspectionReport",
     "InspectionTarget",
+    "ProjectSummary",
     "ReportDecodeError",
+    "RepositoryStructure",
     "from_dict",
     "from_json",
     "to_json",
