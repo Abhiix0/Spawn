@@ -75,8 +75,10 @@ def test_normalized_paths_and_deterministic_order(tmp_path):
     assert first.directories == ("B", "one", "one/two", "école")
     assert first.skipped == ()
     assert first.diagnostics == ()
-    assert all(not item.startswith(("/", "./")) and "\\" not in item
-               for item in (*first.files, *first.directories))
+    assert all(
+        not item.startswith(("/", "./")) and "\\" not in item
+        for item in (*first.files, *first.directories)
+    )
     assert all(discover_repository(tmp_path) == first for _ in range(4))
 
 
@@ -98,8 +100,15 @@ def test_default_exclusions_at_all_depths(tmp_path):
 
 def test_exclusion_names_follow_spawn_gitignore_conventions(tmp_path):
     for directory in (
-        "venv", "env", ".uv", ".pytest_cache", ".ruff_cache",
-        ".mypy_cache", "htmlcov", ".tox", ".nox",
+        "venv",
+        "env",
+        ".uv",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+        "htmlcov",
+        ".tox",
+        ".nox",
     ):
         _file(tmp_path / directory / "ignored.py")
         assert directory in DEFAULT_EXCLUDED_DIRECTORIES
@@ -108,8 +117,15 @@ def test_exclusion_names_follow_spawn_gitignore_conventions(tmp_path):
     assert result.files == ("src/main.py",)
     assert result.directories == ("src",)
     assert set(result.skipped) == {
-        "venv", "env", ".uv", ".pytest_cache", ".ruff_cache",
-        ".mypy_cache", "htmlcov", ".tox", ".nox",
+        "venv",
+        "env",
+        ".uv",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+        "htmlcov",
+        ".tox",
+        ".nox",
     }
 
 
@@ -271,8 +287,11 @@ def test_no_import_execution_subprocess_or_writes(tmp_path, monkeypatch):
     _file(tmp_path / "src" / "evil.py", 'raise RuntimeError("should never run")\n')
     marker = tmp_path / "marker.txt"
     _file(marker, "before")
-    before = {p.relative_to(tmp_path).as_posix(): p.read_bytes()
-              for p in tmp_path.rglob("*") if p.is_file()}
+    before = {
+        p.relative_to(tmp_path).as_posix(): p.read_bytes()
+        for p in tmp_path.rglob("*")
+        if p.is_file()
+    }
 
     def forbidden(*args, **kwargs):
         raise AssertionError("Execution attempted")
@@ -282,8 +301,11 @@ def test_no_import_execution_subprocess_or_writes(tmp_path, monkeypatch):
     monkeypatch.setattr(os, "system", forbidden)
     result = discover_repository(tmp_path)
     assert result.files == ("marker.txt", "src/evil.py")
-    after = {p.relative_to(tmp_path).as_posix(): p.read_bytes()
-             for p in tmp_path.rglob("*") if p.is_file()}
+    after = {
+        p.relative_to(tmp_path).as_posix(): p.read_bytes()
+        for p in tmp_path.rglob("*")
+        if p.is_file()
+    }
     assert before == after
     assert marker.read_text() == "before"
 

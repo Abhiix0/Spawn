@@ -118,7 +118,9 @@ def _directory_entries(
                     # Recheck without following it so the diagnostic is useful.
                     if exc.errno == errno.ENOTDIR:
                         try:
-                            mode = os.stat(name, dir_fd=fd, follow_symlinks=False).st_mode
+                            mode = os.stat(
+                                name, dir_fd=fd, follow_symlinks=False
+                            ).st_mode
                         except OSError:
                             pass
                         else:
@@ -142,7 +144,9 @@ def _directory_entries(
             raise OSError(errno.ELOOP, "Directory became a link", str(directory))
         resolved = directory.resolve(strict=True)
         if not resolved.is_relative_to(root):
-            raise OSError(errno.EPERM, "Directory escapes inspection root", str(directory))
+            raise OSError(
+                errno.EPERM, "Directory escapes inspection root", str(directory)
+            )
         with os.scandir(directory) as entries:
             yield sorted(entries, key=lambda entry: entry.name)
 
@@ -220,7 +224,10 @@ def discover_repository(
                             elif stat.S_ISDIR(mode):
                                 # Junctions are not always reported as symlinks.
                                 absolute = target.path.joinpath(*child_parts)
-                                if hasattr(absolute, "is_junction") and absolute.is_junction():
+                                if (
+                                    hasattr(absolute, "is_junction")
+                                    and absolute.is_junction()
+                                ):
                                     skipped.append(rel_path)
                                     diagnostics.append(
                                         Diagnostic(
@@ -256,7 +263,9 @@ def discover_repository(
                     pending.extend(reversed(child_directories))
             except OSError as exc:
                 if not parts:
-                    raise InspectionError(f"Cannot scan inspection root: {exc}") from exc
+                    raise InspectionError(
+                        f"Cannot scan inspection root: {exc}"
+                    ) from exc
                 skipped.append(rel_dir)
                 diagnostics.append(_diagnostic(exc, rel_dir))
     finally:
