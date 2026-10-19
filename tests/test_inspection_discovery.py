@@ -395,7 +395,9 @@ def test_actual_symlink_swap_cannot_escape_on_posix(tmp_path, monkeypatch):
     assert result.diagnostics[0].code == "discovery.symlink_race"
 
 
-def test_path_based_fallback_keeps_relative_paths_and_skips_links(tmp_path, monkeypatch):
+def test_path_based_fallback_keeps_relative_paths_and_skips_links(
+    tmp_path, monkeypatch
+):
     """Exercise the fallback used on platforms without scandir(dirfd)."""
     _file(tmp_path / "nested" / "good.txt")
     _file(tmp_path / "outside-file.txt")
