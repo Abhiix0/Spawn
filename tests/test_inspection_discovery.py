@@ -129,6 +129,55 @@ def test_exclusion_names_follow_spawn_gitignore_conventions(tmp_path):
     }
 
 
+def test_nonexcluded_evidence_configuration_files_are_discoverable(tmp_path):
+    """Inspection must retain manifests, CI configs and Spawn metadata."""
+    expected = (
+        ".github/workflows/check.yml",
+        ".spawn/meta.json",
+        ".devcontainer/devcontainer.json",
+        "Dockerfile",
+        "pyproject.toml",
+        "package.json",
+        "uv.lock",
+        "src/.hidden/custom.toml",
+    )
+    for name in expected:
+        _file(tmp_path / name)
+    _file(tmp_path / "node_modules" / "sub" / "ignore.json")
+    _file(tmp_path / ".git" / "config")
+
+    result = discover_repository(tmp_path)
+    assert result.files == tuple(sorted(expected))
+    assert result.skipped == (".git", "node_modules")
+    assert result.diagnostics == ()
+    assert ".github" in result.directories
+    assert ".spawn" in result.directories
+    assert "src/.hidden" in result.directories
+
+
+def test_excluded_subtrees_are_pruned_before_opening(tmp_path, monkeypatch):
+    """Do not scan an excluded subtree even if it contains nested files."""
+    from contextlib import contextmanager
+
+    _file(tmp_path / "vendor" / "deep" / "ignore.py")
+    _file(tmp_path / "src" / "build" / "nested" / "ignore.py")
+    _file(tmp_path / "src" / "main.py")
+    visited = []
+    original = discovery._directory_entries
+
+    @contextmanager
+    def recording(root, parts, root_fd):
+        visited.append(parts)
+        with original(root, parts, root_fd) as entries:
+            yield entries
+
+    monkeypatch.setattr(discovery, "_directory_entries", recording)
+    result = discover_repository(tmp_path)
+    assert result.files == ("src/main.py",)
+    assert result.skipped == ("src/build", "vendor")
+    assert visited == [(), ("src",)]
+
+
 def test_custom_exclusions_replace_defaults(tmp_path):
     _file(tmp_path / "node_modules" / "a.js")
     _file(tmp_path / "PRIVATE" / "secret.txt")
@@ -200,6 +249,32 @@ def test_broken_and_loop_symlinks_do_not_crash(tmp_path):
     inventory = discover_repository(tmp_path)
     assert inventory.skipped == ("broken", "loop")
     assert len(inventory.diagnostics) == 2
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows directory junction test")
+def test_windows_directory_junction_is_not_traversed(tmp_path):
+    """Exercise an actual junction, not merely a mocked junction flag."""
+    import subprocess
+
+    _file(tmp_path / "external" / "secret.txt")
+    root = tmp_path / "project"
+    root.mkdir()
+    _file(root / "safe.txt")
+    link = root / "joined"
+    attempt = subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(link), str(tmp_path / "external")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if attempt.returncode != 0 or not link.is_junction():
+        pytest.skip("Creating directory junctions is unavailable on this runner")
+
+    result = discover_repository(root)
+    assert result.files == ("safe.txt",)
+    assert result.directories == ()
+    assert result.skipped == ("joined",)
+    assert [d.code for d in result.diagnostics] == ["discovery.symlink_skipped"]
 
 
 def test_root_symlink_resolves_once(tmp_path):

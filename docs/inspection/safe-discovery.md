@@ -101,3 +101,23 @@ If additional metadata becomes essential, propose it through the shared
 contract rather than silently extending discovery. #58 owns invoking discovery
 once and sharing the inventory, and #59 owns CLI/JSON reporting. This text
 is a proposed coordination message, **not** a claim that GMA has approved it.
+
+## Merge-review verification (#54)
+
+The regression fixtures explicitly verify retention of `.github/workflows/check.yml`,
+`.spawn/meta.json`, `.devcontainer/devcontainer.json`, `pyproject.toml`,
+`package.json`, `uv.lock`, `Dockerfile`, and nested hidden configuration files.
+A separate fixture records directory scans and asserts generated, vendor, and
+build subtrees are pruned before entry. The Windows-specific fixture attempts
+to create a real directory junction; it skips when the host cannot do so.
+POSIX tests simulate `ELOOP` and exercise an actual directory-to-symlink swap.
+
+**Safety boundary:** discovery inventory paths are not stable file handles.
+On supported POSIX platforms, the walker protects descent with directory
+descriptors and `O_NOFOLLOW`; the path-based fallback is not race-proof.
+Downstream analyzers reopening discovered paths must implement their own
+file-open safety checks if concurrent hostile filesystem changes matter.
+
+The #53 models remain unmodified. External sign-off from the contract owner
+on `skipped` and intentional exclusions, and from #55, #56, #57, and #58
+owners on path-only inventory sufficiency, remains necessary before merge.
