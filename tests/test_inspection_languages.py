@@ -1,4 +1,5 @@
 """Contract-level tests for static language detection (#55)."""
+
 from pathlib import Path
 
 from spawn.inspection.discovery import discover_repository
@@ -26,7 +27,10 @@ def test_detects_multiple_languages_with_repository_relative_evidence(tmp_path):
     by_subject = {f.subject: f for f in result.findings}
     assert set(by_subject) == {"python", "typescript", "go"}
     assert all(f.category is FindingCategory.LANGUAGE for f in result.findings)
-    assert all(f.detection_state is DetectionState.DETECTED and f.evidence for f in result.findings)
+    assert all(
+        f.detection_state is DetectionState.DETECTED and f.evidence
+        for f in result.findings
+    )
     assert by_subject["typescript"].evidence[0].path == "web/app.tsx"
 
 

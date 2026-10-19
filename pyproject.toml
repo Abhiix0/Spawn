@@ -20,7 +20,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/spawn"]
 
-<<<<<<< Updated upstream
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
@@ -30,12 +29,6 @@ include = [
     "/LICENSE",
     "/pyproject.toml",
     "/CONTRIBUTING.md",
-=======
-[tool.uv.workspace]
-members = [
-    "KYLO",
-    "NEM",
->>>>>>> Stashed changes
 ]
 
 

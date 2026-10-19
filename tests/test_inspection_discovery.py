@@ -386,8 +386,8 @@ def test_no_import_execution_subprocess_or_writes(tmp_path, monkeypatch):
 
 
 def test_diagnostics_sorted_stably(tmp_path):
-    (tmp_path / "z").symlink_to(tmp_path / "missing-z")
-    (tmp_path / "a").symlink_to(tmp_path / "missing-a")
+    _symlink(tmp_path / "z", tmp_path / "missing-z")
+    _symlink(tmp_path / "a", tmp_path / "missing-a")
     result = discover_repository(tmp_path)
     assert [d.path for d in result.diagnostics] == ["a", "z"]
     assert all(d.source == "discovery" and not d.fatal for d in result.diagnostics)

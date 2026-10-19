@@ -1,4 +1,5 @@
 """Contract-level tests for static framework detection (#55)."""
+
 from pathlib import Path
 
 from spawn.inspection.discovery import discover_repository
@@ -19,7 +20,9 @@ def run(root: Path):
 
 def test_detects_framework_imports_and_multiple_frameworks(tmp_path):
     write(tmp_path, "api/main.py", "from fastapi import FastAPI\napp = FastAPI()\n")
-    write(tmp_path, "web/app.tsx", "import React from 'react';\nexport default React;\n")
+    write(
+        tmp_path, "web/app.tsx", "import React from 'react';\nexport default React;\n"
+    )
     result = run(tmp_path)
     by_subject = {f.subject: f for f in result.findings}
     assert set(by_subject) == {"fastapi", "react"}
@@ -62,5 +65,7 @@ def test_malformed_manifest_is_diagnostic_and_partial(tmp_path):
 
 
 def test_unrecognized_dependency_is_not_reported_as_framework(tmp_path):
-    write(tmp_path, "package.json", '{"dependencies": {"some-unknown-framework": "1.0"}}')
+    write(
+        tmp_path, "package.json", '{"dependencies": {"some-unknown-framework": "1.0"}}'
+    )
     assert run(tmp_path).findings == ()
