@@ -42,6 +42,7 @@ from spawn.inspection.serialization import (
     from_json,
     to_json,
 )
+from spawn.inspection.orchestrator import run_inspection
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -62,6 +63,7 @@ __all__ = [
     "RepositoryStructure",
     "from_dict",
     "from_json",
+    "run_inspection",
     "to_json",
     "validate_report",
 ]
