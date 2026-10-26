@@ -373,9 +373,10 @@ class TestRecoverableDiagnostic:
 
 
 class TestPerAnalyzerStatus:
-    def test_three_analyzers_present(self, analyzer_results_by_name):
+    def test_four_analyzers_present(self, analyzer_results_by_name):
         assert set(analyzer_results_by_name.keys()) == {
             "dependency",
+            "framework",
             "language",
             "tooling",
         }
