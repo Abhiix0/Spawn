@@ -41,6 +41,21 @@ def test_version_prints_version_string():
     assert "Spawn v" in result.output
 
 
+def test_root_version_flag_matches_version_command():
+    from spawn import __version__
+
+    flag = runner.invoke(app, ["--version"])
+    cmd = runner.invoke(app, ["version"])
+    assert flag.exit_code == 0
+    assert flag.output == cmd.output == f"Spawn v{__version__}\n"
+
+
+def test_root_version_flag_skips_banner_and_commands():
+    result = runner.invoke(app, ["--version"])
+    assert "Commands" not in result.output
+    assert runner.invoke(app, ["--help"]).exit_code == 0
+
+
 # ---------------------------------------------------------------------------
 # spawn create — happy path (use_git=True, decline GitHub publish)
 # ---------------------------------------------------------------------------

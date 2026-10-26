@@ -21,8 +21,23 @@ from spawn.utils.success import show_success
 app = typer.Typer()
 
 
+def _version_option(value: bool) -> None:
+    if value:
+        version()
+        raise typer.Exit()
+
+
 @app.callback(invoke_without_command=True)
-def main_callback(ctx: typer.Context) -> None:
+def main_callback(
+    ctx: typer.Context,
+    _version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_option,
+        is_eager=True,
+        help="Show the installed version and exit.",
+    ),
+) -> None:
     if ctx.invoked_subcommand is not None:
         return
 
