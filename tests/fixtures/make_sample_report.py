@@ -77,9 +77,46 @@ def build() -> InspectionReport:
         detail=None,
     )
 
-    # DETECTED: fastapi via dependency declaration
+    # Framework analyzer output: a dependency-only INFERRED signal and a direct
+    # DETECTED import signal.  The orchestrator keeps the highest state and
+    # unions the evidence, so the aggregated finding is DETECTED.
+    fw_import = Finding(
+        category=FindingCategory.FRAMEWORK,
+        subject="fastapi",
+        detection_state=DetectionState.DETECTED,
+        evidence=(
+            Evidence(
+                path="src/acme_api/main.py",
+                indicator="static import/declaration for fastapi",
+                detail=None,
+            ),
+        ),
+        detail=None,
+    )
+    fw_dependency = Finding(
+        category=FindingCategory.FRAMEWORK,
+        subject="fastapi",
+        detection_state=DetectionState.INFERRED,
+        evidence=(
+            Evidence(
+                path="pyproject.toml",
+                indicator="framework dependency declared in manifest",
+                detail=None,
+            ),
+        ),
+        detail="A framework dependency is declared, but no direct usage was found",
+    )
     f_framework = Finding(
         category=FindingCategory.FRAMEWORK,
+        subject="fastapi",
+        detection_state=DetectionState.DETECTED,
+        evidence=(fw_dependency.evidence[0], fw_import.evidence[0]),
+        detail=None,
+    )
+
+    # DETECTED: fastapi declared in pyproject.toml (dependency analyzer)
+    f_dep_fastapi = Finding(
+        category=FindingCategory.DEPENDENCY,
         subject="fastapi",
         detection_state=DetectionState.DETECTED,
         evidence=(
@@ -140,15 +177,16 @@ def build() -> InspectionReport:
         ),
     )
 
-    # NOT_CHECKED: container analysis skipped because dependency analyzer
-    # emitted a fatal diagnostic that caused the orchestrator to skip downstream
-    # analyzers for this subject
+    # NOT_CHECKED: no diagnostic is claimed as the cause.  (The real tooling
+    # analyzer emits not_checked only next to a fatal tooling.internal_error;
+    # modelling that here would turn the tooling result into FAILED, which
+    # test_inspection_sample.py pins as COMPLETE.)
     f_container = Finding(
         category=FindingCategory.CONTAINER,
         subject="docker",
         detection_state=DetectionState.NOT_CHECKED,
         evidence=(),
-        detail=None,
+        detail="Container configuration was not examined for this report",
     )
 
     # DETECTED: spawn-generated structure marker
@@ -186,6 +224,7 @@ def build() -> InspectionReport:
     findings = (
         f_ci,
         f_container,
+        f_dep_fastapi,
         f_dep_unknown,
         f_framework,
         f_language,
@@ -220,26 +259,38 @@ def build() -> InspectionReport:
     result_dependency = AnalyzerResult(
         analyzer_name="dependency",
         status=AnalysisStatus.PARTIAL,  # ran but hit a non-fatal diagnostic
-        findings=(),  # findings are aggregated at report level
+        findings=(f_dep_fastapi, f_dep_unknown, f_pkg_manager),
         diagnostics=(dep_diagnostic,),
+    )
+
+    result_framework = AnalyzerResult(
+        analyzer_name="framework",
+        status=AnalysisStatus.COMPLETE,
+        findings=(fw_dependency, fw_import),
+        diagnostics=(),
     )
 
     result_language = AnalyzerResult(
         analyzer_name="language",
         status=AnalysisStatus.COMPLETE,
-        findings=(),
+        findings=(f_language,),
         diagnostics=(),
     )
 
     result_tooling = AnalyzerResult(
         analyzer_name="tooling",
         status=AnalysisStatus.COMPLETE,
-        findings=(),
+        findings=(f_ci, f_container, f_structure, f_pytest),
         diagnostics=(),
     )
 
     # Canonical order: sorted by analyzer_name
-    analyzer_results = (result_dependency, result_language, result_tooling)
+    analyzer_results = (
+        result_dependency,
+        result_framework,
+        result_language,
+        result_tooling,
+    )
 
     # ------------------------------------------------------------------
     # Recorded metadata from .spawn/meta.json
@@ -277,12 +328,13 @@ def build() -> InspectionReport:
             "LICENSE",
             "README.md",
             "pyproject.toml",
+            "requirements.txt",
             "setup.cfg",
             "uv.lock",
         ),
-        top_level_directories=("src", "tests"),
-        file_count=24,
-        directory_count=5,
+        top_level_directories=(".spawn", "src", "tests"),
+        file_count=25,
+        directory_count=4,
     )
 
     # ------------------------------------------------------------------
