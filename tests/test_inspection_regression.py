@@ -360,7 +360,7 @@ def test_excluded_dirs_and_symlinks(tmp_path):
         d.path for d in report.diagnostics if d.code == "discovery.symlink_skipped"
     }
     assert skipped == {"link.txt", "linkdir"}
-    assert report.status == AnalysisStatus.PARTIAL
+    assert report.status == AnalysisStatus.COMPLETE  # symlink_skipped is info-level
     assert states(report) == EXPECTED["special_files"][1]
 
 
