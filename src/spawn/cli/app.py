@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 
 import typer
@@ -6,7 +8,7 @@ from rich.prompt import Confirm, Prompt
 from spawn import __version__
 from spawn.cli.noninteractive import build_config_from_args, build_config_from_file
 from spawn.cli.prompts import get_project_config
-from spawn.cli.errors import fail, report_unexpected
+from spawn.cli.errors import UNEXPECTED_EXIT_CODE, fail, report_unexpected
 from spawn.core.exceptions import InvalidInputError, SpawnError
 from spawn.core.registry import instantiate_template
 from spawn.generators.pipeline import generate_project
@@ -30,6 +32,7 @@ def main_callback(ctx: typer.Context) -> None:
     console.print("  [cyan]create[/cyan]    Scaffold a new project")
     console.print("  [cyan]doctor[/cyan]    Check the health of a project directory")
     console.print("  [cyan]version[/cyan]   Show the installed version")
+    console.print("  [cyan]inspect[/cyan]   Inspect a repository (read-only)")
     console.print(
         "\n[dim]Run [cyan]spawn COMMAND --help[/cyan] for details on a command.[/dim]\n"
     )
@@ -348,6 +351,57 @@ def doctor(
         raise
     except Exception as e:
         report_unexpected(e)
+
+
+@app.command(name="inspect")
+def inspect_command(
+    path: str = typer.Argument(
+        ".",
+        help="Path to the repository to inspect. Defaults to current directory.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Print the full report as JSON on stdout (errors go to stderr)",
+    ),
+) -> None:
+    """Inspect a repository (read-only)."""
+    try:
+        from spawn.cli.inspect_render import render_report
+        from spawn.inspection import AnalysisStatus, InspectionError, run_inspection
+        from spawn.inspection import to_json
+
+        try:
+            report = run_inspection(path)
+        except InspectionError as e:
+            if json_output:
+                typer.echo(str(e), err=True)
+                raise typer.Exit(e.exit_code)
+            fail(e)
+
+        if json_output:
+            sys.stdout.write(to_json(report))
+        else:
+            render_report(report, path)
+        if report.status == AnalysisStatus.FAILED:
+            raise typer.Exit(InspectionError.exit_code)
+    except (KeyboardInterrupt, EOFError, typer.Abort):
+        console.print("\n[yellow]Cancelled.[/yellow]")
+        raise typer.Exit(130)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        if not json_output:
+            report_unexpected(e)
+        if os.environ.get("SPAWN_DEBUG", "").strip().lower() not in (
+            "",
+            "0",
+            "false",
+            "no",
+        ):
+            raise
+        typer.echo(f"Unexpected error ({type(e).__name__}): {e}", err=True)
+        raise typer.Exit(UNEXPECTED_EXIT_CODE)
 
 
 def main():
