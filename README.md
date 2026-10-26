@@ -78,6 +78,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **GitHub publishing** | Connects your project to an existing GitHub repo and pushes the initial commit |
 | **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
 | **spawn doctor --fix** | Fixes missing files and config automatically — never overwrites, never installs packages |
+| **spawn inspect** | Static, read-only summary of a repository: languages, frameworks, dependencies, package managers, tooling and layout, as text or JSON |
 
 ---
 
@@ -133,12 +134,13 @@ Running `spawn` with no arguments shows the banner, the installed version, and t
 
 ```
 SPAWN — scaffold your next project
-v1.0.9
+v1.1.0
 
 Commands
   create    Scaffold a new project
   doctor    Check the health of a project directory
   version   Show the installed version
+  inspect   Inspect a repository (read-only)
 
 Run spawn COMMAND --help for details on a command.
 ```
@@ -780,8 +782,42 @@ spawn doctor --fix --license mit
 
 ```bash
 spawn version
-# → Spawn v1.0.9
+# → Spawn v1.1.0
+
+spawn --version
+# → Spawn v1.1.0
 ```
+
+### `spawn inspect`
+
+Give Spawn a repository and receive a deterministic, evidence-backed summary of what it contains.
+
+```bash
+spawn inspect .            # human-readable summary
+spawn inspect . --json     # full report on stdout, schema_version "1.0"
+spawn inspect . --verbose  # all dependencies, entries and evidence paths
+```
+
+```
+⚡ SPAWN / INSPECT
+
+demo
+python project · 11 files · 3 directories
+
+PROJECT OVERVIEW
+  Primary language  python
+  Framework         Not detected
+  Package manager   Not detected
+  Origin            spawn
+
+✓ Inspection complete
+```
+
+**Scope.** 25 languages by extension and manifest; React, Next.js, Vue, Nuxt, Angular, Svelte, Express, FastAPI, Flask, Django, Starlette, Pydantic and Laravel; dependencies from `pyproject.toml`, `requirements*.txt` and `package.json`; package managers (uv, poetry, pipenv, pip, npm, yarn, pnpm, bun); tooling (ruff, black, flake8, mypy, pyright, pytest, eslint, prettier, jest, vitest, pre-commit, git), CI, containers and databases. Full matrix: [supported technologies](docs/inspection/supported-technologies.md).
+
+**Limitations.** Detection is static and evidence-based: a finding means an indicator exists, not that the project builds or runs. Frameworks seen only in a dependency declaration are marked *inferred*; imports are matched by regex, so import-like text in comments or strings can false-positive. CI, container and pre-commit detection is presence-only. Databases are inferred from driver packages. Manifests such as `Pipfile`, `setup.py`, `Cargo.toml`, `go.mod`, `Gemfile` and `pom.xml` give no dependency findings. Directories named `build`, `dist`, `env`, `target`, `vendor` and the like are skipped at any depth.
+
+**Safety.** `spawn inspect` is read-only: it never runs repository code, installs anything, uses the network or writes to the repository, and it does not follow symbolic links. It exits 0 for complete and partial reports and 7 for an invalid path or failed inspection. See the [command reference](docs/commands.md#spawn-inspect).
 
 ### Publish to GitHub
 
@@ -814,6 +850,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 | Version | Highlight |
 |---|---|
+| **v1.1.0** | `spawn inspect`: static, read-only repository inspection (languages, frameworks, dependencies, package managers, tooling, layout) with human and `--json` output; `spawn --version` |
 | **v1.0.9** | Core hardening: documented exit-code contract (generation, toolchain and publish failures exit non-zero), `--no-uv` honored for templates (file-only extras still written), path-traversal protection for custom structures, `read_project_metadata` extension boundary |
 | **v1.0.8** | `spawn doctor --fix` (`--dry-run`, `--yes`, `--license`), `--license` flag and prompt on `create`, `CHANGELOG.md` generated for every project, `pre-commit` and `mypy` extras across all templates, Custom Structure Mypy option |
 | **v1.0.7** | Fixed UTF-8 console crash on Windows when stdout is redirected/piped, added Windows reserved device name validation (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`9`, `LPT1`–`9`), clarified Python 3.12 requirement |

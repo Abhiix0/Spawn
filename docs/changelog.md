@@ -3,6 +3,33 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.1.0 — 2026
+
+### Added
+
+- **`spawn inspect [PATH] [--json] [--verbose]`** — read-only, static inspection of a repository. Prints a human summary (overview, technology, tooling, structure, diagnostics) or, with `--json`, the full report on stdout. Exits 0 for complete and partial reports and 7 for an invalid path or failed inspection (see `docs/commands.md`).
+- **`spawn --version`** — prints the same line as `spawn version`.
+- **Inspection contract** — `spawn.inspection` models (`InspectionReport`, `Finding`, `Evidence`, `Diagnostic`), `SCHEMA_VERSION` `"1.0"`, `validate_report`, and `to_json` / `from_json`. See `docs/inspection/inspection-contract.md`.
+- **Safe discovery** — one sorted inventory scan; symlinks and junctions are never followed, default exclusions (`.git`, `node_modules`, `build`, `dist`, `venv`, `env`, `target`, ...) match at any depth, errors below the root become diagnostics.
+- **Language and framework detection** — 25 languages by extension and manifest; React, Next.js, Vue, Nuxt, Angular, Svelte, Express, FastAPI, Flask, Django, Starlette, Pydantic and Laravel from manifests (inferred), imports and config files (detected).
+- **Dependency and package-manager analyzer** — direct dependencies from `pyproject.toml`, `requirements*.txt` and `package.json`; uv, poetry, pipenv, pip, npm, yarn, pnpm and bun.
+- **Tooling analyzer** — Python and JavaScript tools, git, CI systems, Docker and Compose, database drivers, `tests-directory`, `src-layout` and `spawn-generated` markers.
+- **Orchestrator** — runs the analyzers in a fixed order with per-analyzer isolation, merges findings by `(category, subject)`, derives the summary and structure, and reads `.spawn/meta.json` as untrusted recorded metadata.
+- **Test corpus** — generated fixture repositories and a regression suite (`tests/test_inspection_*.py`).
+- Release smoke test now runs `spawn inspect . --json` against a generated project and checks it is unchanged.
+
+### Known limitations
+
+- Excluded directory basenames (`build`, `env`, `target`, `vendor`, `dist`, `coverage`, ...) match at any depth.
+- `.git` is detected through discovery's skipped list only.
+- Framework imports are regex-matched: import-like text in comments or strings can false-positive; multi-line and destructured imports are missed.
+- Frameworks found only in a dependency declaration are inferred, and `primary_framework` may be inferred.
+- CI, container and pre-commit detection is presence-only (no YAML parsing).
+- Databases are inferred from driver packages only.
+- A pip and an npm package with the same name share one finding.
+- `Pipfile`, `setup.py`, `Cargo.toml`, `go.mod`, `Gemfile`, `composer.json`, `pom.xml` and Gradle files produce no dependency findings; Rails is not detected.
+- `summary.name` is the directory basename.
+
 ## v1.0.9 — 2026
 
 ### Added

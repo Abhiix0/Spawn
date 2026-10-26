@@ -27,6 +27,12 @@ for f in README.md AGENTS.md .spawn/meta.json; do
   test -f "ci-smoke/$f" || { echo "missing ci-smoke/$f" >&2; exit 1; }
 done
 
+# inspect must be valid JSON and must not touch the project
+before="$(cd ci-smoke && find . -type f | sort)"
+(cd ci-smoke && "$spawn" inspect . --json) | "$bin/python" -c 'import json,sys; assert "schema_version" in json.load(sys.stdin)'
+after="$(cd ci-smoke && find . -type f | sort)"
+[ "$before" = "$after" ] || { echo "inspect changed ci-smoke" >&2; exit 1; }
+
 expect_exit() {
   want="$1"; shift
   set +e; "$@" > /dev/null 2>&1; got=$?; set -e
