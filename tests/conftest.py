@@ -44,3 +44,11 @@ def spawn_project(tmp_path, no_toolchain):
         return generate_project(config)
 
     return make
+
+
+@pytest.fixture(autouse=True)
+def plain_terminal(monkeypatch):
+    """CI sets GITHUB_ACTIONS/FORCE_COLOR, which makes Rich emit ANSI into CliRunner output."""
+    for var in ("GITHUB_ACTIONS", "FORCE_COLOR", "CI", "TTY_COMPATIBLE"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("NO_COLOR", "1")
