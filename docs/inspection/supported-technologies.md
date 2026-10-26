@@ -14,7 +14,7 @@ indicator is omitted rather than reported as absent.
 
 | Subject | Direct source extensions | Manifest indicators |
 |---|---|---|
-| `python` | `.py`, `.pyi`, `.pyx` | `pyproject.toml` with `[project]` or `[tool.poetry]` |
+| `python` | `.py`, `.pyi` | `pyproject.toml` with `[project]` or `[tool.poetry]` |
 | `javascript` | `.js`, `.mjs`, `.cjs`, `.jsx` | `package.json` with package metadata/dependency/script keys |
 | `typescript` | `.ts`, `.tsx` | — |
 | `java` | `.java` | `pom.xml`, `build.gradle` |
@@ -67,16 +67,35 @@ is correctly configured or operational.
 | `django` | `django` in Python dependency manifests | Python import | `manage.py` |
 | `starlette` | `starlette` in Python dependency manifests | Python import | — |
 | `pydantic` | `pydantic` in Python dependency manifests | Python import | — |
-| `rails` | `rails` in supported manifest declarations | — | — |
 | `laravel` | `laravel/framework` in `composer.json` | — | — |
 
-Framework package names are normalized only where documented by the parser.
-`requirements.txt`, `requirements-dev.txt`, and `Pipfile` are parsed as simple
-line-oriented declarations; nested includes, environment markers, dynamic
-metadata, lockfile-specific semantics, and arbitrary build-script evaluation
-are not resolved. Gradle/Maven/Gemfile framework dependency parsing is not yet
-comprehensive. Framework imports in comments or strings can cause false positives;
-this release intentionally avoids AST execution and full semantic parsing.
+Python package names are extracted from PEP 508 requirement strings and
+normalized per PEP 503 (`Flask (>=2)`, `name[extra]>=1; marker` and
+`pkg @ url` all resolve to their distribution name). Manifest sources:
+`package.json` and `composer.json` dependency tables; `pyproject.toml`
+`[project].dependencies`, `[project.optional-dependencies]`,
+`[dependency-groups]` (strings only; `include-group` entries are skipped) and
+Poetry `dependencies`, `dev-dependencies` and `group.*.dependencies`;
+`Pipfile` (TOML `[packages]` and `[dev-packages]`); and line-oriented
+`requirements.txt` / `requirements-dev.txt`. Nested includes, environment
+markers, dynamic metadata, lockfiles and build scripts are not resolved.
+`Gemfile`, `pom.xml` and `build.gradle*` are not parsed for frameworks, so
+Rails and JVM frameworks are not detected.
+
+Known false negatives: imports split across several lines
+(`import {
+ a,
+ b } from 'react'`), destructured `require()` calls
+(`const { Router } = require('express')`), and non-`import` forms such as
+dynamic `import()`.
+
+Known false positives: import-like text inside comments, string literals and
+template literals (for example code samples embedded in generator templates) is
+matched, because detection is regex-based and does not parse source.
+
+`pydantic` and `starlette` are emitted as `framework` findings; whether they
+meet the contract's "application-level framework" definition is pending a
+decision in #58.
 
 ## Error and ambiguity behavior
 
