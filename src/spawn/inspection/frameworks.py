@@ -7,6 +7,7 @@ import re
 import tomllib
 from pathlib import Path
 
+from spawn.inspection.languages import read_text_bounded, table
 from spawn.inspection.models import (
     AnalysisStatus,
     AnalyzerResult,
@@ -36,18 +37,18 @@ PACKAGE_RULES = {
     "laravel": {"laravel/framework"},
 }
 IMPORTS = {
-    "react": r"(?m)^\s*import\b.*?\bfrom\s*['\"]react(?:/[^'\"]*)?['\"]",
-    "nextjs": r"(?m)^\s*import\b.*?\bfrom\s*['\"]next(?:/[^'\"]*)?['\"]",
-    "vue": r"(?m)^\s*import\b.*?\bfrom\s*['\"]vue['\"]",
-    "nuxt": r"(?m)^\s*import\b.*?\bfrom\s*['\"]nuxt(?:/[^'\"]*)?['\"]",
-    "angular": r"(?m)^\s*import\b.*?\bfrom\s*['\"]@angular/",
-    "svelte": r"(?m)^\s*import\b.*?\bfrom\s*['\"]svelte(?:/[^'\"]*)?['\"]",
-    "express": r"(?m)^\s*(?:import\b.*?\bfrom\s*|const\s+\w+\s*=\s*require\s*\()\s*['\"]express['\"]",
-    "fastapi": r"(?m)^\s*(?:from\s+fastapi\s+import\b|import\s+fastapi\b)",
-    "flask": r"(?m)^\s*(?:from\s+flask\s+import\b|import\s+flask\b)",
-    "django": r"(?m)^\s*(?:from\s+django\b|import\s+django\b)",
-    "starlette": r"(?m)^\s*(?:from\s+starlette\b|import\s+starlette\b)",
-    "pydantic": r"(?m)^\s*(?:from\s+pydantic\b|import\s+pydantic\b)",
+    "react": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]react(?:/[^'\"]*)?['\"]",
+    "nextjs": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]next(?:/[^'\"]*)?['\"]",
+    "vue": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]vue['\"]",
+    "nuxt": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]nuxt(?:/[^'\"]*)?['\"]",
+    "angular": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]@angular/",
+    "svelte": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]svelte(?:/[^'\"]*)?['\"]",
+    "express": r"(?m)^[ \t]*(?:import\b.*?\bfrom\s*|const\s+\w+\s*=\s*require\s*\()\s*['\"]express['\"]",
+    "fastapi": r"(?m)^[ \t]*(?:from\s+fastapi\s+import\b|import\s+fastapi\b)",
+    "flask": r"(?m)^[ \t]*(?:from\s+flask\s+import\b|import\s+flask\b)",
+    "django": r"(?m)^[ \t]*(?:from\s+django\b|import\s+django\b)",
+    "starlette": r"(?m)^[ \t]*(?:from\s+starlette\b|import\s+starlette\b)",
+    "pydantic": r"(?m)^[ \t]*(?:from\s+pydantic\b|import\s+pydantic\b)",
 }
 CONFIGS = {
     "nextjs": {"next.config.js", "next.config.mjs", "next.config.ts"},
@@ -68,7 +69,19 @@ MANIFESTS = {
     "build.gradle",
     "build.gradle.kts",
 }
-MAX_FILE_SIZE = 1_000_000
+SOURCE_SUFFIXES = {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
+
+
+def _py_name(spec: str) -> str | None:
+    """PEP 508 distribution name, PEP 503-normalized."""
+    m = re.match(r"[A-Za-z0-9][A-Za-z0-9._-]*", spec.strip())
+    return re.sub(r"[-_.]+", "-", m.group()).lower() if m else None
+
+
+def _py_names(specs: object) -> set[str]:
+    items = specs if isinstance(specs, list) else list(specs)
+    names = {_py_name(s) for s in items if isinstance(s, str)}
+    return {n for n in names if n}
 
 
 def _dependency_names(rel: str, text: str) -> set[str]:
@@ -85,50 +98,43 @@ def _dependency_names(rel: str, text: str) -> set[str]:
                 "peerDependencies",
                 "optionalDependencies",
             )
-            for pkg in (
-                data.get(section, {}) if isinstance(data.get(section, {}), dict) else {}
-            )
+            for pkg in table(data, section)
         }
     if name == "pyproject.toml":
         data = tomllib.loads(text)
-        names: set[str] = set()
-        project = data.get("project", {})
-        if isinstance(project, dict) and isinstance(project.get("dependencies"), list):
-            for dep in project["dependencies"]:
-                if isinstance(dep, str):
-                    names.add(
-                        re.split(r"[<>=!~;\[]", dep, 1)[0]
-                        .strip()
-                        .lower()
-                        .replace("_", "-")
-                    )
-        poetry = data.get("tool", {}).get("poetry", {})
-        if isinstance(poetry, dict):
-            for section in ("dependencies", "dev-dependencies"):
-                vals = poetry.get(section, {})
-                if isinstance(vals, dict):
-                    names.update(
-                        str(k).lower().replace("_", "-") for k in vals if k != "python"
-                    )
+        project = table(data, "project")
+        specs: list = []
+        for dependencies in (
+            project.get("dependencies"),
+            *table(project, "optional-dependencies").values(),
+            *table(data, "dependency-groups").values(),  # include-group dicts skipped
+        ):
+            if isinstance(dependencies, list):
+                specs.extend(dependencies)
+        names = _py_names(specs)
+        poetry = table(table(data, "tool"), "poetry")
+        tables = [table(poetry, s) for s in ("dependencies", "dev-dependencies")]
+        tables += [table(g, "dependencies") for g in table(poetry, "group").values()]
+        for deps in tables:
+            names |= _py_names(k for k in deps if k != "python")
         return names
-    if name in {"requirements.txt", "requirements-dev.txt", "Pipfile"}:
-        return {
-            m.group(1).lower().replace("_", "-")
+    if name == "Pipfile":
+        data = tomllib.loads(text)
+        return _py_names(
+            k for s in ("packages", "dev-packages") for k in table(data, s)
+        )
+    if name in {"requirements.txt", "requirements-dev.txt"}:
+        return _py_names(
+            line
             for line in text.splitlines()
             if not line.lstrip().startswith(("#", "-", "\\"))
-            for m in [re.match(r"\s*([A-Za-z0-9_.-]+)\s*(?:[<>=!~;\[]|$)", line)]
-            if m
-        }
+        )
     if name == "composer.json":
         data = json.loads(text)
         return {
             str(k).lower()
             for section in ("require", "require-dev")
-            for k in (
-                data.get(section, {})
-                if isinstance(data, dict) and isinstance(data.get(section, {}), dict)
-                else {}
-            )
+            for k in table(data, section)
         }
     return set()
 
@@ -146,109 +152,104 @@ class FrameworkDetector:
         self, target: InspectionTarget, inventory: DiscoveryInventory
     ) -> AnalyzerResult:
         found: dict[str, dict[str, Evidence]] = {}
+        direct: set[str] = set()  # frameworks with import/config evidence
         diagnostics: list[Diagnostic] = []
-        for rel in inventory.files:
-            path = Path(rel)
-            name = path.name
-            if (
-                name not in MANIFESTS
-                and path.suffix.lower()
-                not in {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
-                and not any(name in names for names in CONFIGS.values())
-            ):
-                continue
-            try:
-                text = (target.path / rel).read_text(encoding="utf-8")
-                if len(text) > MAX_FILE_SIZE:
-                    diagnostics.append(
-                        Diagnostic(
-                            "framework.file_too_large",
-                            "File exceeds 1 MB limit; skipped.",
-                            "warning",
-                            self.name,
-                            rel,
-                        )
-                    )
-                    continue
-            except (OSError, UnicodeError) as exc:
-                diagnostics.append(
-                    Diagnostic(
-                        "framework.unreadable_file",
-                        f"Could not read file: {exc}",
-                        "warning",
-                        self.name,
-                        rel,
-                    )
+        try:
+            for rel in inventory.files:
+                self._scan(target, rel, found, direct, diagnostics)
+        except Exception as exc:  # noqa: BLE001 - run() must never raise
+            diagnostics.append(
+                Diagnostic(
+                    "framework.internal_error",
+                    f"Internal error ({type(exc).__name__}).",
+                    "error",
+                    self.name,
+                    fatal=True,
                 )
-                continue
+            )
+        findings = tuple(
+            Finding(
+                FindingCategory.FRAMEWORK,
+                framework,
+                DetectionState.DETECTED
+                if framework in direct
+                else DetectionState.INFERRED,
+                tuple(sorted(items.values(), key=lambda e: e.path)),
+                None
+                if framework in direct
+                else "A framework dependency is declared, but no matching import or dedicated configuration was found.",
+            )
+            for framework, items in sorted(found.items())
+        )
+        if any(d.fatal for d in diagnostics):
+            status = AnalysisStatus.FAILED
+        else:
+            status = AnalysisStatus.PARTIAL if diagnostics else AnalysisStatus.COMPLETE
+        return AnalyzerResult(self.name, status, findings, tuple(diagnostics))
+
+    def _scan(self, target, rel, found, direct, diagnostics) -> None:
+        path = Path(rel)
+        name = path.name
+        is_source = path.suffix.lower() in SOURCE_SUFFIXES
+        if (
+            name not in MANIFESTS
+            and not is_source
+            and not any(name in names for names in CONFIGS.values())
+        ):
+            return
+        try:
+            text = read_text_bounded(target.path / rel)
+        except (OSError, UnicodeError) as exc:
+            diagnostics.append(
+                Diagnostic(
+                    "framework.unreadable_file",
+                    f"Could not read file ({type(exc).__name__}).",
+                    "warning",
+                    self.name,
+                    rel,
+                )
+            )
+            return
+        if text is None:
+            diagnostics.append(
+                Diagnostic(
+                    "framework.file_too_large",
+                    "File exceeds 1 MB limit; skipped.",
+                    "warning",
+                    self.name,
+                    rel,
+                )
+            )
+            return
+        deps: set[str] = set()
+        if name in MANIFESTS:
             try:
-                deps = _dependency_names(rel, text) if name in MANIFESTS else set()
-            except (
-                OSError,
-                UnicodeError,
-                ValueError,
-                TypeError,
-                tomllib.TOMLDecodeError,
-            ) as exc:
+                deps = _dependency_names(rel, text)
+            except ValueError as exc:  # JSON and TOML decode errors are ValueErrors
                 diagnostics.append(
                     Diagnostic(
                         "framework.malformed_manifest",
-                        f"Could not parse manifest: {exc}",
+                        f"Could not parse manifest ({type(exc).__name__}).",
                         "warning",
                         self.name,
                         rel,
                     )
                 )
-                deps = set()
-            for framework, packages in PACKAGE_RULES.items():
-                if deps & packages:
-                    found.setdefault(framework, {})[rel] = Evidence(
-                        rel, "framework dependency declared in manifest"
-                    )
-            if path.suffix.lower() in {
-                ".py",
-                ".js",
-                ".jsx",
-                ".mjs",
-                ".cjs",
-                ".ts",
-                ".tsx",
-            }:
-                for framework, pattern in IMPORTS.items():
-                    if re.search(pattern, text):
-                        found.setdefault(framework, {})[rel] = Evidence(
-                            rel, f"static import/declaration for {framework}"
-                        )
-            for framework, names in CONFIGS.items():
-                if name in names:
-                    found.setdefault(framework, {})[rel] = Evidence(
-                        rel, f"recognized {name} configuration/entry-point indicator"
-                    )
-        findings = []
-        for framework, items in sorted(found.items()):
-            direct = any(
-                "static import/declaration" in e.indicator
-                or "configuration/entry-point" in e.indicator
-                for e in items.values()
-            )
-            state = DetectionState.DETECTED if direct else DetectionState.INFERRED
-            detail = (
-                None
-                if direct
-                else "A framework dependency is declared, but no matching import or dedicated configuration was found."
-            )
-            findings.append(
-                Finding(
-                    FindingCategory.FRAMEWORK,
-                    framework,
-                    state,
-                    tuple(sorted(items.values(), key=lambda e: e.path)),
-                    detail,
+        for framework, packages in PACKAGE_RULES.items():
+            if deps & packages:
+                found.setdefault(framework, {})[rel] = Evidence(
+                    rel, "framework dependency declared in manifest"
                 )
-            )
-        return AnalyzerResult(
-            self.name,
-            AnalysisStatus.PARTIAL if diagnostics else AnalysisStatus.COMPLETE,
-            tuple(findings),
-            tuple(diagnostics),
-        )
+        if is_source:
+            for framework, pattern in IMPORTS.items():
+                if re.search(pattern, text):
+                    direct.add(framework)
+                    found.setdefault(framework, {})[rel] = Evidence(
+                        rel, f"static import/declaration for {framework}"
+                    )
+        for framework, names in CONFIGS.items():
+            if name in names:
+                direct.add(framework)
+                found.setdefault(framework, {})[rel] = Evidence(
+                    rel, f"recognized {name} configuration/entry-point indicator"
+                )

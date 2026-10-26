@@ -24,21 +24,21 @@ network.
 
 ## Validation
 
-Command run:
-
 ```sh
-PYTHONPATH=/mnt/data/spawn_review/spawn/src python -m pytest -c /dev/null -q /tmp/spawn-detector-tests
+uv sync --all-groups
+uv run pytest tests/test_inspection_languages.py tests/test_inspection_frameworks.py
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
 ```
 
-Result: `11 passed`. The two detector test modules were copied to a temporary
-test directory so the repository-wide `tests/conftest.py` would not load.
-
-`compileall` passed for the new modules and tests. Ruff could not run because
-Ruff is not installed in the environment. The normal in-repository pytest
-command remains blocked by pre-existing `pyproject.toml` merge-conflict markers
-(line 23 onwards); bypassing that config then reaches a missing `questionary`
-dependency from the existing `tests/conftest.py`. No existing test suite
-assertions have therefore been run.
+Files are read as bytes, at most 1,000,000 bytes (limit measured in bytes, not
+characters); larger files produce `*.file_too_large` / `language.manifest_too_large`
+diagnostics. Diagnostic messages contain fixed text plus the exception type
+name only, never paths or raw exception text. Each `run()` catches unexpected
+errors and returns the findings gathered so far with a fatal
+`language.internal_error` / `framework.internal_error` diagnostic and status
+`failed`.
 
 ## Limitations
 
@@ -54,6 +54,6 @@ assertions have therefore been run.
 
 ## Integration notes
 
-The shared inspection models and discovery interface were not modified. The
-repository's existing `pyproject.toml` conflict markers are outside this issue's
-scope and must be resolved by the repository owner before full validation.
+The shared inspection models and discovery interface were not modified.
+See `supported-technologies.md` for the documented false negatives, false
+positives and the open `pydantic`/`starlette` classification question (#58).
