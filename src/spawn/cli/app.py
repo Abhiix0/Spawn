@@ -364,6 +364,12 @@ def inspect_command(
         "--json",
         help="Print the full report as JSON on stdout (errors go to stderr)",
     ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Show all dependencies, top-level entries and evidence paths",
+    ),
 ) -> None:
     """Inspect a repository (read-only)."""
     try:
@@ -382,7 +388,7 @@ def inspect_command(
         if json_output:
             sys.stdout.write(to_json(report))
         else:
-            render_report(report, path)
+            render_report(report, path, verbose)
         if report.status == AnalysisStatus.FAILED:
             raise typer.Exit(InspectionError.exit_code)
     except (KeyboardInterrupt, EOFError, typer.Abort):
