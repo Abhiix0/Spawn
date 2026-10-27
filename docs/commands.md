@@ -7,7 +7,8 @@
 | `spawn` | Show the banner, version, and command list |
 | `spawn create` | Scaffold a new project (interactive or non-interactive) |
 | `spawn doctor` | Score a project directory's health out of 135 |
-| `spawn version` | Print the installed version |
+| `spawn inspect` | Inspect a repository and report what it contains (read-only) |
+| `spawn version` | Print the installed version (also `spawn --version`) |
 
 ---
 
@@ -18,12 +19,13 @@ Running `spawn` with no arguments prints the ASCII banner, the installed version
 ```
 <ASCII SPAWN banner — "scaffold your next project">
 
-v1.0.9
+v1.1.0
 
 Commands
   create    Scaffold a new project
   doctor    Check the health of a project directory
   version   Show the installed version
+  inspect   Inspect a repository (read-only)
 
 Run spawn COMMAND --help for details on a command.
 ```
@@ -398,7 +400,7 @@ If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAU
   "intent": "backend-api",
   "framework": "fastapi",
   "provider": null,
-  "spawn_version": "1.0.9",
+  "spawn_version": "1.1.0",
   "created_at": "2026-01-01T00:00:00+00:00",
   "generator": "blueprint",
   "git": true,
@@ -518,13 +520,71 @@ spawn doctor --fix --license mit
 
 ---
 
+## `spawn inspect`
+
+```
+spawn inspect [PATH] [--json] [--verbose | -v]
+```
+
+Statically inspects a repository and reports its languages, frameworks, declared dependencies, package managers, engineering tooling and layout. `PATH` defaults to `.`. Every positive finding carries repository-relative evidence.
+
+| Option | Effect |
+|---|---|
+| `--json` | Print the full report as JSON on stdout (`schema_version` `"1.0"`); errors go to stderr |
+| `--verbose`, `-v` | Show all dependencies, all top-level entries and evidence paths |
+
+### Safety
+
+`spawn inspect` is read-only and static. It never executes or imports repository code, installs dependencies, uses the network or writes to the repository. Symbolic links and directory junctions are listed as skipped, never followed. Files are read with a 1 MB cap. `.env` files are never read.
+
+### Human output
+
+Sections, in order: header, **Project overview** (primary language, framework, package manager, origin, Spawn version for Spawn-generated projects), **Technology** (languages, other frameworks, dependencies), **Tooling** (tools, CI, containers, databases), **Repository structure** (file/directory counts, top-level entries, structure markers), **Diagnostics**, and a final status line.
+
+State markers:
+
+| Marker (ASCII) | State | Meaning |
+|---|---|---|
+| `✓` (`+`) | detected | A direct static indicator exists |
+| `~` | inferred | Indirect evidence only (for example a declared dependency without config); the detail says why |
+| `?` | unknown | The check could not be completed |
+| `○` (`-`) | not detected / not checked | Looked for and absent, or not looked for |
+
+The framework line is suffixed `inferred` when the primary framework rests on a dependency declaration alone. Diagnostics list warnings and errors with a stable code (for example `discovery.permission_denied`, `framework.malformed_manifest`) and the affected path. A report with warnings ends `Inspection partial: findings may be incomplete`.
+
+### JSON output
+
+`--json` writes one JSON document to stdout and nothing else. `target.root` is always `"."`; no absolute path is emitted. Fields: `schema_version`, `status`, `generated_at`, `target`, `recorded_metadata`, `summary`, `structure`, `findings`, `analyzer_results`, `diagnostics`.
+
+```bash
+spawn inspect ./my-project --json
+```
+
+### Inspect exit codes
+
+| Code | When |
+|---|---|
+| 0 | Inspection complete or partial (a partial report still prints) |
+| 7 | Path missing, not a directory or unreadable; or the repository root could not be scanned (status `failed`) |
+| 10 | Unexpected error |
+
+With `--json`, an invalid path prints the message to stderr, leaves stdout empty and exits 7. An unexpected error in `--json` mode also prints to stderr only (`SPAWN_DEBUG=1` raises the traceback).
+
+### Limitations
+
+See [Supported technologies](inspection/supported-technologies.md#limitations) for what is and is not detected.
+
+---
+
 ## `spawn version`
 
-Prints the installed version. No arguments or options; exit code 0; writes nothing.
+Prints the installed version. `spawn --version` prints the same line. No other arguments or options; exit code 0; writes nothing.
 
 ```bash
 spawn version
-# Spawn v1.0.9
+# Spawn v1.1.0
+spawn --version
+# Spawn v1.1.0
 ```
 
 ---
@@ -540,6 +600,7 @@ spawn version
 | 4 | Toolchain error (`git` or `uv` missing or failed) |
 | 5 | Generation / template error |
 | 6 | Publish error (GitHub publishing failed) |
+| 7 | Inspection error (`spawn inspect`: invalid or unreadable path, or a failed inspection) |
 | 10 | Unexpected error (re-run with `SPAWN_DEBUG=1` for a traceback) |
 | 130 | Cancelled (Ctrl+C, EOF, or declining the final prompt) |
 

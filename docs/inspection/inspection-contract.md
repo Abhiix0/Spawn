@@ -844,6 +844,30 @@ Once each owner posts confirmation, this table will be updated to
 
 ---
 
+### Outcome record (implemented in v1.1.0)
+
+Sign-offs were given by merging #54-#59 against this contract. `SCHEMA_VERSION`
+and the schema are unchanged. Items marked *decision* are implementation choices
+made after the original contract; the rest follows the contract as written.
+
+| Item | Outcome |
+|---|---|
+| `DiscoveryInventory` shape and `skipped` | Plain path strings, sorted; deliberate exclusions and skipped links go in `skipped` (links also get an info diagnostic). Contract shape |
+| `subject` strings | Lowercase slugs, listed in `supported-technologies.md`. Contract shape |
+| Finding per package vs manifest | One dependency finding per package; evidence lists each declaring manifest. Contract shape |
+| `PACKAGE_MANAGER` scope | *Decision:* multi-ecosystem: pip, uv, poetry, pipenv, npm, yarn, pnpm, bun |
+| `TOOL` covers git; CI subject | *Decision:* git is a `tool` (`.git` detected, ignore files only inferred); CI subjects are `github-actions`, `gitlab-ci`, `circleci`, `jenkins`, `azure-pipelines` |
+| Dedup / evidence merge key | *Decision:* group by `(category, subject)`, highest state wins; evidence is the union of `Evidence` items sorted by `(path, indicator, detail)` (not "union by path, first-seen order"); `detail` is the smallest non-empty detail among winners |
+| Info vs warning status | *Decision:* `info` diagnostics never change status; a non-fatal warning or error makes an analyzer, and the report, `partial`; a fatal one makes an analyzer `failed`; report is `failed` only when discovery fails |
+| `summary.name` | *Decision:* root directory basename only, `null` when empty; the manifest's declared name is not used |
+| `spawn-generated` semantics | *Decision:* a marker only (`structure/spawn-generated`); `summary.origin` is `spawn` when it is detected, and `spawn_version` is copied from metadata only then |
+| Ecosystem identity collision | *Decision (known limitation):* a pip and an npm package with the same name merge into one finding |
+| `primary_*` selection | *Decision:* best `detected` finding, else best `inferred`, by evidence count then subject; may be inferred |
+| `target.root` and `generated_at` | `target.root` is `"."`; `generated_at` is excluded from regression comparison. Contract shape |
+| Exit codes (#59) | *Decision:* `0` complete or partial, `7` invalid root or failed inspection, `10` unexpected. The suggested `1`/`2` split was not adopted |
+
+---
+
 ## 16. Python Compatibility
 
 FINAL. Addresses pre-merge review point 4.
@@ -866,6 +890,8 @@ No compatibility risk.
 ---
 
 ## 17. Open Questions
+
+All five questions below were resolved in v1.1.0; see the outcome record in section 15 (1 and 2: contract shape kept; 3: one per package; 4: multi-ecosystem; 5: exit codes 0/7/10).
 
 | # | Question | Owner | Notes |
 |---|---|---|---|

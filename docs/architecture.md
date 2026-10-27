@@ -23,9 +23,10 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "1.0.9"
+├── __init__.py         # __version__ via importlib.metadata, fallback "1.1.0" (keep in sync with pyproject.toml)
 ├── cli/
-│   ├── app.py          # Typer app: create, version, doctor commands
+│   ├── app.py          # Typer app: create, version (and --version), doctor, inspect commands
+│   ├── inspect_render.py # Rich rendering of an InspectionReport for `spawn inspect`
 │   ├── noninteractive.py # Build config from CLI flags or JSON config file
 │   └── prompts.py      # Interactive prompts; derives menu from registry
 ├── core/
@@ -41,6 +42,18 @@ src/spawn/
 │   ├── exceptions.py   # GitHubPublishError
 │   ├── publisher.py    # GitHubPublisher — stages, commits, pushes
 │   └── validators.py   # GitHub URL validation
+├── inspection/         # Read-only repository inspection (never imports spawn.cli)
+│   ├── models.py       # Report/finding/evidence/diagnostic models, SCHEMA_VERSION, validate_report
+│   ├── base.py         # Analyzer protocol
+│   ├── discovery.py    # validate_inspection_root, discover_repository (single inventory scan)
+│   ├── languages.py    # LanguageDetector
+│   ├── frameworks.py   # FrameworkDetector
+│   ├── dependencies.py # DependencyAnalyzer (dependencies, package managers)
+│   ├── tooling.py      # ToolingAnalyzer (tools, CI, containers, databases, structure)
+│   ├── orchestrator.py # run_inspection: runs analyzers, aggregates, builds the report
+│   ├── serialization.py # to_json / from_json
+│   ├── exceptions.py   # InspectionError (exit code 7)
+│   └── _reading.py     # Bounded file reads
 ├── templates/
 │   ├── base.py         # BaseTemplate dataclass
 │   ├── shared_content.py     # README_CONTENT, GITIGNORE_CONTENT, CI, and tool configs
@@ -255,3 +268,23 @@ To add a template: subclass `BaseTemplate` in `templates/<slug>/` and add a `Tem
 ## 10. Error model
 
 All Spawn errors derive from `SpawnError` (`core/exceptions.py`); each class carries the CLI `exit_code`. The CLI prints `❌ message` and exits with that code. See [Exit codes](commands.md#exit-codes).
+
+## 11. Inspection pipeline
+
+```
+spawn inspect -> run_inspection -> validate root -> discover once -> analyzers -> aggregate/dedupe/sort -> InspectionReport -> human or JSON
+```
+
+| Step | Owner |
+|---|---|
+| CLI: argument, `--json`, exit codes | `cli/app.py::inspect_command` |
+| Validate root (bad root raises `InspectionError`, exit 7) | `inspection/discovery.py::validate_inspection_root` |
+| Discover once: sorted files, directories, skipped, diagnostics; symlinks never followed | `inspection/discovery.py::discover_repository` |
+| Analyzers, fixed order: language, framework, dependency, tooling; each gets the same immutable inventory | `inspection/orchestrator.py::ANALYZERS` |
+| Isolate: a crashing or invalid analyzer becomes a `failed` result, others continue | `orchestrator._run_one` |
+| Aggregate: validate findings, merge by `(category, subject)`, sort; derive summary and structure | `orchestrator._aggregate`, `_summary` |
+| Render: Rich output, or `to_json` on stdout | `cli/inspect_render.py`, `inspection/serialization.py` |
+
+Analyzers only consume the inventory (plus bounded reads of files it lists); they do not walk the tree. Nothing is executed, installed, fetched or written. `.spawn/meta.json` is read at most once, as untrusted recorded metadata.
+
+**Module boundary:** `inspection/` never imports `spawn.cli`; `tests/test_boundaries.py` enforces this. Statuses and semantics are in [the inspection contract](inspection/inspection-contract.md); what is detected is in [supported technologies](inspection/supported-technologies.md).

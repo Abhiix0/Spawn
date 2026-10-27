@@ -5,6 +5,7 @@ from pathlib import Path
 
 from spawn.cli.errors import UNEXPECTED_EXIT_CODE
 from spawn.core import exceptions
+from spawn.inspection import exceptions as inspection_exceptions
 
 ROOT = Path(__file__).resolve().parent.parent
 COMMANDS = ROOT / "docs" / "commands.md"
@@ -20,7 +21,8 @@ def _documented_codes() -> set[int]:
 def test_exit_codes_table_matches_code():
     expected = {
         cls.exit_code
-        for cls in vars(exceptions).values()
+        for module in (exceptions, inspection_exceptions)
+        for cls in vars(module).values()
         if isinstance(cls, type) and issubclass(cls, exceptions.SpawnError)
     }
     expected |= {0, 2, 130, UNEXPECTED_EXIT_CODE}

@@ -1,5 +1,7 @@
 # Issue #55 Handoff — Language and Framework Detection
 
+> Implemented state (v1.1.0). Both analyzers run inside `run_inspection` (see `docs/architecture.md`) alongside the dependency and tooling analyzers. The support matrix is in `supported-technologies.md`.
+
 ## Interface
 
 Both analyzers implement the approved `spawn.inspection.Analyzer` protocol:
@@ -25,11 +27,7 @@ network.
 ## Validation
 
 ```sh
-uv sync --all-groups
 uv run pytest tests/test_inspection_languages.py tests/test_inspection_frameworks.py
-uv run pytest
-uv run ruff check .
-uv run ruff format --check .
 ```
 
 Files are read as bytes, at most 1,000,000 bytes (limit measured in bytes, not
@@ -55,5 +53,5 @@ errors and returns the findings gathered so far with a fatal
 ## Integration notes
 
 The shared inspection models and discovery interface were not modified.
-See `supported-technologies.md` for the documented false negatives, false
-positives and the open `pydantic`/`starlette` classification question (#58).
+See `supported-technologies.md` for the documented false negatives and false
+positives. `pydantic` and `starlette` are emitted as ordinary `framework` findings.
