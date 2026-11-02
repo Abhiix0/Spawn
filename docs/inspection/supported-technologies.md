@@ -82,16 +82,19 @@ markers, dynamic metadata, lockfiles and build scripts are not resolved.
 `Gemfile`, `pom.xml` and `build.gradle*` are not parsed for frameworks, so
 Rails and JVM frameworks are not detected.
 
-Known false negatives: imports split across several lines
+Known false negatives (JS/TS): imports split across several lines
 (`import {
  a,
  b } from 'react'`), destructured `require()` calls
 (`const { Router } = require('express')`), and non-`import` forms such as
 dynamic `import()`.
 
-Known false positives: import-like text inside comments, string literals and
-template literals (for example code samples embedded in generator templates) is
-matched, because detection is regex-based and does not parse source.
+Python imports (`django`, `fastapi`, `flask`, `pydantic`, `starlette`) are read
+from the AST of `.py` files, so strings, docstrings and comments never match
+and relative imports are ignored. A `.py` file that cannot be parsed yields the
+`framework.unparseable_source` warning and the report status is `partial`.
+JS/TS imports are still regex-matched and can false-positive on import-like
+text in comments or template literals.
 
 `pydantic` and `starlette` are emitted as `framework` findings, like the others, so they can become `primary_framework` when they have the most evidence.
 
@@ -172,7 +175,7 @@ A tool config makes the tool `detected`. A tool declared as a dependency without
 
 - Directory exclusions match basenames at any depth, case-insensitively: `build`, `dist`, `env`, `venv`, `target`, `vendor`, `coverage`, `htmlcov`, `node_modules`, `__pycache__`, `.git` and similar are skipped wherever they occur, even when they hold real source.
 - `.git` is detected only because discovery lists it as skipped; an export without `.git` reports git as `inferred` at best.
-- Framework imports are regex-based: import-like text in comments or strings is a false positive (inspecting Spawn itself reports `django` because template sources contain it); multi-line and destructured imports are missed.
+- Python framework imports are read from the AST (no false positives from strings or comments; unparseable files are skipped with a warning). JS/TS framework imports are regex-based, so import-like text in comments or template literals is a false positive; multi-line and destructured JS/TS imports are missed.
 - A framework found only through a dependency declaration is `inferred`, and `summary.primary_framework` may be such an inferred framework. It is picked by evidence count, which reflects representation, not importance.
 - CI, container and pre-commit detection is presence-only: no YAML is parsed.
 - Databases are inferred from driver packages only; READMEs, `.env`, data files and compose images are not evidence.
