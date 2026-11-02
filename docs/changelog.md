@@ -3,6 +3,22 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.1.1 — 2026
+
+### Fixed
+
+- **False-positive frameworks in `spawn inspect`** — Python framework detection (django, fastapi, flask, pydantic, starlette) now reads imports from the AST of `.py` files. Import-like text in string literals, docstrings and comments no longer produces findings; inspecting Spawn itself no longer reports django, fastapi or flask.
+- Python imports are only matched in `.py` files and JS/TS imports only in JS/TS files (previously every pattern ran on every source file).
+- Now detected: `from fastapi.responses import X`, `import os, flask`, and imports nested in functions or `try` blocks.
+
+### Changed
+
+- A `.py` file that cannot be parsed (syntax error, null bytes) produces a `framework.unparseable_source` warning and the report status becomes `partial`.
+
+### Known limitations
+
+- JavaScript/TypeScript framework imports are still regex-matched; import-like text in comments or template literals can false-positive, and multi-line or destructured imports are missed.
+
 ## v1.1.0 — 2026
 
 ### Added

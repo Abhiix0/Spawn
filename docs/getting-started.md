@@ -49,14 +49,14 @@ After installation, `spawn` is available anywhere on your machine.
 
 ```bash
 spawn version
-# Spawn v1.1.0
+# Spawn v1.1.1
 ```
 
 Or just run `spawn` with no arguments to see the command overview:
 
 ```
 SPAWN — scaffold your next project
-v1.1.0
+v1.1.1
 
 Commands
   create    Scaffold a new project

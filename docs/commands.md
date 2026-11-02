@@ -19,7 +19,7 @@ Running `spawn` with no arguments prints the ASCII banner, the installed version
 ```
 <ASCII SPAWN banner — "scaffold your next project">
 
-v1.1.0
+v1.1.1
 
 Commands
   create    Scaffold a new project
@@ -400,7 +400,7 @@ If `--claude-md` was passed (or `"claude_md": true` in the config file), a `CLAU
   "intent": "backend-api",
   "framework": "fastapi",
   "provider": null,
-  "spawn_version": "1.1.0",
+  "spawn_version": "1.1.1",
   "created_at": "2026-01-01T00:00:00+00:00",
   "generator": "blueprint",
   "git": true,
@@ -582,9 +582,9 @@ Prints the installed version. `spawn --version` prints the same line. No other a
 
 ```bash
 spawn version
-# Spawn v1.1.0
+# Spawn v1.1.1
 spawn --version
-# Spawn v1.1.0
+# Spawn v1.1.1
 ```
 
 ---
