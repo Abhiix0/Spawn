@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 import tomllib
+import warnings
 from pathlib import Path
 
 from spawn.inspection.languages import read_text_bounded, table
@@ -44,12 +46,8 @@ IMPORTS = {
     "angular": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]@angular/",
     "svelte": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]svelte(?:/[^'\"]*)?['\"]",
     "express": r"(?m)^[ \t]*(?:import\b.*?\bfrom\s*|const\s+\w+\s*=\s*require\s*\()\s*['\"]express['\"]",
-    "fastapi": r"(?m)^[ \t]*(?:from\s+fastapi\s+import\b|import\s+fastapi\b)",
-    "flask": r"(?m)^[ \t]*(?:from\s+flask\s+import\b|import\s+flask\b)",
-    "django": r"(?m)^[ \t]*(?:from\s+django\b|import\s+django\b)",
-    "starlette": r"(?m)^[ \t]*(?:from\s+starlette\b|import\s+starlette\b)",
-    "pydantic": r"(?m)^[ \t]*(?:from\s+pydantic\b|import\s+pydantic\b)",
 }
+PY_IMPORT_MODULES = frozenset({"django", "fastapi", "flask", "pydantic", "starlette"})
 CONFIGS = {
     "nextjs": {"next.config.js", "next.config.mjs", "next.config.ts"},
     "nuxt": {"nuxt.config.js", "nuxt.config.ts"},
@@ -70,6 +68,20 @@ MANIFESTS = {
     "build.gradle.kts",
 }
 SOURCE_SUFFIXES = {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
+
+
+def _python_imported_frameworks(text: str) -> set[str]:
+    """Top-level framework modules really imported; strings and comments never count."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # inspected code may emit SyntaxWarning
+        tree = ast.parse(text)
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            names.add(node.module)
+    return {n.split(".", 1)[0] for n in names} & PY_IMPORT_MODULES
 
 
 def _py_name(spec: str) -> str | None:
@@ -240,7 +252,26 @@ class FrameworkDetector:
                 found.setdefault(framework, {})[rel] = Evidence(
                     rel, "framework dependency declared in manifest"
                 )
-        if is_source:
+        if path.suffix.lower() == ".py":
+            try:
+                imported = _python_imported_frameworks(text)
+            except (SyntaxError, ValueError, RecursionError) as exc:
+                diagnostics.append(
+                    Diagnostic(
+                        "framework.unparseable_source",
+                        f"Could not parse Python source ({type(exc).__name__}); imports not analyzed.",
+                        "warning",
+                        self.name,
+                        rel,
+                    )
+                )
+                imported = set()
+            for framework in sorted(imported):
+                direct.add(framework)
+                found.setdefault(framework, {})[rel] = Evidence(
+                    rel, f"static import/declaration for {framework}"
+                )
+        elif is_source:
             for framework, pattern in IMPORTS.items():
                 if re.search(pattern, text):
                     direct.add(framework)
