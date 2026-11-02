@@ -9,7 +9,12 @@ import pytest
 
 from spawn.inspection.discovery import discover_repository
 import spawn.inspection.frameworks as fw
-from spawn.inspection.frameworks import IMPORTS, FrameworkDetector, _dependency_names
+from spawn.inspection.frameworks import (
+    IMPORTS,
+    PY_IMPORT_MODULES,
+    FrameworkDetector,
+    _dependency_names,
+)
 from spawn.inspection.languages import MAX_FILE_SIZE
 from spawn.inspection.models import (
     AnalysisStatus,
@@ -103,8 +108,123 @@ def test_whitespace_only_source_file_is_processed_quickly(tmp_path, filler):
 
 
 def test_all_import_patterns_are_anchored_without_newline_spanning():
-    assert len(IMPORTS) == 12
+    assert len(IMPORTS) == 7
     assert all(p.startswith("(?m)^[ \\t]*") for p in IMPORTS.values())
+    assert PY_IMPORT_MODULES == {"django", "fastapi", "flask", "pydantic", "starlette"}
+
+
+def test_imports_inside_strings_are_not_evidence(tmp_path):
+    src = (
+        'TEMPLATE = """\nfrom django.db import models\nimport flask\n'
+        'from fastapi import FastAPI\n"""\n'
+    )
+    write(tmp_path, "t.py", src)
+    result = run(tmp_path)
+    assert result.findings == ()
+    assert result.status is AnalysisStatus.COMPLETE
+
+
+def test_commented_and_docstring_imports_are_not_evidence(tmp_path):
+    write(
+        tmp_path,
+        "a.py",
+        '"""\nimport flask\n"""\n# from flask import Flask\n#import django\n',
+    )
+    assert run(tmp_path).findings == ()
+
+
+def test_real_import_with_string_mention_reports_only_real(tmp_path):
+    write(tmp_path, "pkg/a.py", 'import flask\nS = """\nimport django\n"""\n')
+    result = run(tmp_path)
+    assert _subjects(result) == {"flask": DetectionState.DETECTED}
+    assert result.findings[0].evidence[0].path == "pkg/a.py"
+
+
+def test_submodule_from_import_is_detected(tmp_path):
+    write(tmp_path, "a.py", "from fastapi.responses import JSONResponse\n")
+    assert _subjects(run(tmp_path)) == {"fastapi": DetectionState.DETECTED}
+
+
+def test_multi_nested_and_try_imports_are_detected(tmp_path):
+    write(tmp_path, "a.py", "import os, flask\n")
+    write(tmp_path, "b.py", "def f():\n    import django\n")
+    write(
+        tmp_path, "c.py", "try:\n    import starlette\nexcept ImportError:\n    pass\n"
+    )
+    assert set(_subjects(run(tmp_path))) == {"flask", "django", "starlette"}
+
+
+def test_relative_imports_are_ignored(tmp_path):
+    write(tmp_path, "a.py", "from .django import x\nfrom . import flask\n")
+    assert run(tmp_path).findings == ()
+
+
+def test_lookalike_modules_are_ignored(tmp_path):
+    write(
+        tmp_path,
+        "a.py",
+        "import flask_cors\nfrom fastapi_users import x\nimport rest_framework\n",
+    )
+    assert run(tmp_path).findings == ()
+
+
+def test_syntax_error_is_diagnostic_and_other_files_still_detected(tmp_path):
+    write(tmp_path, "bad.py", "import flask\ndef (:\n")
+    write(tmp_path, "good.py", "import django\n")
+    result = run(tmp_path)
+    assert _subjects(result) == {"django": DetectionState.DETECTED}
+    assert result.status is AnalysisStatus.PARTIAL
+    d = result.diagnostics[0]
+    assert d.code == "framework.unparseable_source"
+    assert d.path == "bad.py"
+    assert d.message == (
+        "Could not parse Python source (SyntaxError); imports not analyzed."
+    )
+
+
+def test_null_byte_file_is_diagnostic(tmp_path):
+    _write_bytes(tmp_path, "n.py", b"import flask\x00\n")
+    result = run(tmp_path)
+    assert result.findings == ()
+    assert result.diagnostics[0].code == "framework.unparseable_source"
+
+
+def test_recursion_error_is_diagnostic(tmp_path, monkeypatch):
+    write(tmp_path, "a.py", "import flask\n")
+
+    def deep(*args, **kwargs):
+        raise RecursionError
+
+    monkeypatch.setattr(fw.ast, "parse", deep)
+    result = run(tmp_path)
+    assert result.findings == ()
+    assert result.diagnostics[0].code == "framework.unparseable_source"
+
+
+def test_python_syntax_warnings_do_not_escape(tmp_path):
+    write(tmp_path, "a.py", 'x = "\\d"\nimport flask\n')
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = run(tmp_path)
+    assert _subjects(result) == {"flask": DetectionState.DETECTED}
+
+
+def test_patterns_apply_only_to_their_own_language(tmp_path):
+    write(tmp_path, "a.py", "import React from 'react'\n")
+    write(tmp_path, "b.js", "from flask import Flask\n")
+    write(tmp_path, "c.tsx", "import React from 'react';\n")
+    result = run(tmp_path)
+    assert _subjects(result) == {"react": DetectionState.DETECTED}
+    assert [e.path for e in result.findings[0].evidence] == ["c.tsx"]
+
+
+def test_large_valid_python_parses_quickly(tmp_path):
+    line = b"x = 1\n"
+    _write_bytes(tmp_path, "big.py", line * (MAX_FILE_SIZE // len(line)))
+    start = time.perf_counter()
+    result = run(tmp_path)
+    assert time.perf_counter() - start < 5.0
+    assert result.status is AnalysisStatus.COMPLETE
 
 
 def test_file_of_exactly_the_byte_limit_is_accepted(tmp_path):
