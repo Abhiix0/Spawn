@@ -44,7 +44,6 @@ feature_1,feature_2,feature_3,feature_4,target
 
 ML_TRAIN_CONTENT = """\
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -104,8 +103,6 @@ ML_TEST_CONTENT = """\
 import json
 from pathlib import Path
 
-import pytest
-
 
 def test_train_produces_model(tmp_path, monkeypatch):
     import shutil
@@ -117,6 +114,7 @@ def test_train_produces_model(tmp_path, monkeypatch):
     shutil.copy(src_dataset, tmp_path / "data" / "dataset.csv")
 
     from src.train import train
+
     train()
 
     model_path = tmp_path / "models" / "model.joblib"
@@ -132,6 +130,7 @@ def test_train_accuracy_is_valid(tmp_path, monkeypatch):
     shutil.copy(src_dataset, tmp_path / "data" / "dataset.csv")
 
     from src.train import train
+
     train()
 
     exp_files = list((tmp_path / "experiments").glob("*.json"))

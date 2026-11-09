@@ -239,6 +239,45 @@ def test_ci_with_ruff_and_pytest_includes_both_steps():
     assert "uv run pytest" in ci
 
 
+def test_ci_pytest_step_remains_generic_for_non_django():
+    for framework in ("fastapi", "flask"):
+        template = BackendAPITemplate(
+            framework=framework, extras=["github-actions", "pytest"]
+        )
+        ci = _render_ci(template)
+        assert "uv run pytest" in ci
+        assert "manage.py test" not in ci
+
+
+def _render_ci(template):
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as directory:
+        path = Path(directory)
+        (path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n', encoding="utf-8"
+        )
+        template.post_install(path)
+        return (path / ".github" / "workflows" / "ci.yml").read_text()
+
+
+def test_django_ci_uses_django_test_runner():
+    template = BackendAPITemplate(
+        framework="django", extras=["github-actions", "pytest"]
+    )
+    ci = _render_ci(template)
+    assert "uv run python manage.py test" in ci
+    assert "uv run pytest" not in ci
+
+
+def test_django_ci_without_pytest_has_no_test_step():
+    template = BackendAPITemplate(framework="django", extras=["github-actions"])
+    ci = _render_ci(template)
+    assert "Run Django tests" not in ci
+    assert "Run Pytest" not in ci
+
+
 def test_gitignore_does_not_ignore_uv_lock():
     from spawn.templates.shared_content import GITIGNORE_CONTENT
 

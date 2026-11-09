@@ -78,10 +78,16 @@ def _is_file_entry(name: str) -> bool:
     return segment.lower() in _KNOWN_EXTENSIONLESS_FILES
 
 
-def _strip_name(name: str) -> str:
-    """Remove trailing slash and inline comments."""
+def _strip_name(name: str) -> tuple[str, bool]:
+    """Remove trailing slash and inline comments.
+
+    Returns (stripped_name, had_trailing_slash).  The trailing-slash flag
+    should be forwarded to _build_entries so that explicit directory markers
+    are honoured even for names that look like files (e.g. ``config.d/``).
+    """
     name = re.sub(r"\s*#.*$", "", name).strip()
-    return name.rstrip("/")
+    had_slash = name.endswith("/")
+    return name.rstrip("/"), had_slash
 
 
 # ─── Format detection ─────────────────────────────────────────────────────
@@ -101,64 +107,67 @@ def detect_format(raw: str) -> str:
 # ─── Per-format depth extraction ──────────────────────────────────────────
 
 
-def _tree_depth_and_name(line: str) -> tuple[int, str] | None:
+def _tree_depth_and_name(line: str) -> tuple[int, str, bool] | None:
     stripped = line.rstrip()
     if not stripped:
         return None
 
     # Root line: no tree characters
     if not any(c in stripped for c in _TREE_CHARS):
-        name = _strip_name(stripped.lstrip())
+        name, had_slash = _strip_name(stripped.lstrip())
         if not name:
             return None
-        return (0, name)
+        return (0, name, had_slash)
 
     match = re.match(r"^([\s│]*)[├└]──\s*(.+)$", stripped)
     if not match:
         return None
-    prefix, name = match.group(1), match.group(2).rstrip()
-    name = _strip_name(name)
+    prefix, raw_name = match.group(1), match.group(2).rstrip()
+    name, had_slash = _strip_name(raw_name)
     if not name:
         return None
     depth = len(prefix) // 4 + 1
-    return (depth, name)
+    return (depth, name, had_slash)
 
 
-def _markdown_depth_and_name(line: str, indent_unit: int) -> tuple[int, str] | None:
+def _markdown_depth_and_name(
+    line: str, indent_unit: int
+) -> tuple[int, str, bool] | None:
     match = _MARKDOWN_LINE_RE.match(line)
     if not match:
         stripped = line.strip()
         if not stripped:
             return None
-        return (0, _strip_name(stripped))
+        name, had_slash = _strip_name(stripped)
+        return (0, name, had_slash)
     spaces = len(match.group(1))
-    name = _strip_name(line[match.end() :].strip())
+    name, had_slash = _strip_name(line[match.end() :].strip())
     if not name:
         return None
     depth = (spaces // indent_unit + 1) if indent_unit > 0 else 1
-    return (depth, name)
+    return (depth, name, had_slash)
 
 
 def _indented_depth_and_name(
     line: str, indent_unit: int | None
-) -> tuple[int, str, int | None]:
+) -> tuple[int, str, bool, int | None]:
     stripped = line.rstrip()
     if not stripped or not stripped.strip():
-        return (-1, "", indent_unit)
+        return (-1, "", False, indent_unit)
 
     leading = len(stripped) - len(stripped.lstrip())
-    name = _strip_name(stripped.strip())
+    name, had_slash = _strip_name(stripped.strip())
     if not name:
-        return (-1, "", indent_unit)
+        return (-1, "", False, indent_unit)
 
     if leading == 0:
-        return (0, name, indent_unit)
+        return (0, name, had_slash, indent_unit)
 
     if indent_unit is None:
         indent_unit = leading
 
     depth = leading // indent_unit
-    return (depth, name, indent_unit)
+    return (depth, name, had_slash, indent_unit)
 
 
 # ─── Main parser ──────────────────────────────────────────────────────────
@@ -188,7 +197,7 @@ def parse_structure(raw: str) -> list[ParsedEntry]:
     return _build_entries(depth_name_pairs)
 
 
-def _parse_tree_lines(lines: list[str]) -> list[tuple[int, str]]:
+def _parse_tree_lines(lines: list[str]) -> list[tuple[int, str, bool]]:
     result = []
     for line in lines:
         parsed = _tree_depth_and_name(line)
@@ -198,7 +207,7 @@ def _parse_tree_lines(lines: list[str]) -> list[tuple[int, str]]:
     return result
 
 
-def _parse_markdown_lines(lines: list[str]) -> list[tuple[int, str]]:
+def _parse_markdown_lines(lines: list[str]) -> list[tuple[int, str, bool]]:
     indent_unit = 2
     space_counts = []
     for line in lines:
@@ -219,14 +228,16 @@ def _parse_markdown_lines(lines: list[str]) -> list[tuple[int, str]]:
     return result
 
 
-def _parse_indented_lines(lines: list[str]) -> list[tuple[int, str]]:
+def _parse_indented_lines(lines: list[str]) -> list[tuple[int, str, bool]]:
     indent_unit: int | None = None
     result = []
     for line in lines:
-        depth, name, indent_unit = _indented_depth_and_name(line, indent_unit)
+        depth, name, had_slash, indent_unit = _indented_depth_and_name(
+            line, indent_unit
+        )
         if depth < 0 or not name:
             continue
-        result.append((depth, name))
+        result.append((depth, name, had_slash))
     return result
 
 
@@ -245,22 +256,22 @@ def _check_entry_safe(name: str, full_path: str) -> None:
 
 
 def _build_entries(
-    depth_name_pairs: list[tuple[int, str]],
+    depth_name_pairs: list[tuple[int, str, bool]],
 ) -> list[ParsedEntry]:
     if not depth_name_pairs:
         raise StructureParseError("No parseable entries found in input.")
 
     # Normalise so the shallowest entry is always at depth 0
-    min_depth = min(d for d, _ in depth_name_pairs)
+    min_depth = min(d for d, _, _ in depth_name_pairs)
     if min_depth != 0:
-        depth_name_pairs = [(d - min_depth, n) for d, n in depth_name_pairs]
+        depth_name_pairs = [(d - min_depth, n, s) for d, n, s in depth_name_pairs]
 
     entries: list[ParsedEntry] = []
     seen: set[str] = set()
     stack: list[str] = [""]
     prev_depth = -1
 
-    for depth, name in depth_name_pairs:
+    for depth, name, had_slash in depth_name_pairs:
         if depth > prev_depth + 1:
             raise StructureParseError(
                 f"Entry '{name}' is indented {depth} level(s) deep but the "
@@ -273,7 +284,8 @@ def _build_entries(
         full_path = f"{parent}/{name}".lstrip("/") if parent else name
         _check_entry_safe(name, full_path)
 
-        is_file = _is_file_entry(name)
+        # Explicit trailing slash always wins; fall back to heuristic rules.
+        is_file = False if had_slash else _is_file_entry(name)
 
         if full_path in seen:
             raise StructureParseError(

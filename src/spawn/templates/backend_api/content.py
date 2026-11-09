@@ -128,6 +128,7 @@ def create_app() -> Flask:
     app.config.from_object(Config)
 
     from app.routes.health import health_bp
+
     app.register_blueprint(health_bp)
 
     return app
@@ -506,4 +507,9 @@ GITHUB_ACTIONS_CI_RUFF_STEP = """\
 GITHUB_ACTIONS_CI_PYTEST_STEP = """\
       - name: Run Pytest
         run: uv run pytest
+"""
+
+GITHUB_ACTIONS_CI_DJANGO_TEST_STEP = """\
+      - name: Run Django tests
+        run: uv run python manage.py test
 """

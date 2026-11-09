@@ -107,10 +107,9 @@ def _py_name(name: str) -> str:
 def _clean(spec: object) -> str | None:
     if not isinstance(spec, str) or not spec.strip():
         return None
-    val = spec.strip()
-    if len(val) > 1024:
-        val = val[:1024]
-    return redact_url(val)[:_MAX_DETAIL]
+    # Sanitize before applying the detail cap so truncation cannot leave a
+    # credential-bearing URL's userinfo in the displayed prefix.
+    return redact_url(spec.strip())[:_MAX_DETAIL]
 
 
 def _unsupported(count: int) -> Problem:

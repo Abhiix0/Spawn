@@ -348,7 +348,9 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
     model = os.getenv("MODEL", "ollama/llama3.2")
     base_url = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
     full_messages = [{{"role": "system", "content": system_prompt}}] + messages
-    response = litellm.completion(model=model, messages=full_messages, api_base=base_url)
+    response = litellm.completion(
+        model=model, messages=full_messages, api_base=base_url
+    )
     return response.choices[0].message.content or ""
 """
 
@@ -531,7 +533,9 @@ from src.chatbot.chat import get_response
 
 def test_get_response_returns_string():
     with patch("src.chatbot.chat.get_llm_response", return_value="Hello!"):
-        with patch("src.chatbot.chat.get_system_prompt", return_value="You are helpful."):
+        with patch(
+            "src.chatbot.chat.get_system_prompt", return_value="You are helpful."
+        ):
             result = get_response("Hi")
     assert isinstance(result, str)
     assert result == "Hello!"

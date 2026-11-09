@@ -897,3 +897,150 @@ def test_regular_extensionless_word_stays_folder(tmp_path, monkeypatch):
         )
     assert (project_path / "docs").is_dir(), "'docs' should be a directory"
     assert (project_path / "api").is_dir(), "'api' should be a directory"
+
+
+# ─── FS-02: preserve trailing-slash directory classification ──────────────────
+
+
+def _parse_and_generate(tmp_path, raw, project_name="ts-proj"):
+    """Parse *raw* then generate, returning (project_path, entries)."""
+    entries = parse_structure(raw)
+    with patch(_PATCH_UV_F), patch(_PATCH_GIT_F), patch(_PATCH_INS_F):
+        return (
+            CustomStructureGenerator().generate(
+                project_name, entries, use_git=False, use_uv=False
+            ),
+            entries,
+        )
+
+
+# -- tree format -----------------------------------------------------------
+
+
+def test_fs02_tree_github_workflows_dir_not_file(tmp_path, monkeypatch):
+    """.github/ with trailing slash in tree format must be a directory."""
+    monkeypatch.chdir(tmp_path)
+    raw = ".github/\n└── workflows/\n    └── ci.yml\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "tree-gh")
+    assert (project_path / ".github").is_dir(), ".github/ should be a directory"
+    assert (project_path / ".github" / "workflows").is_dir()
+    assert (project_path / ".github" / "workflows" / "ci.yml").is_file()
+
+
+def test_fs02_tree_vscode_dir_not_file(tmp_path, monkeypatch):
+    """.vscode/ with trailing slash stays a directory in tree format."""
+    monkeypatch.chdir(tmp_path)
+    raw = ".vscode/\n└── settings.json\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "tree-vsc")
+    assert (project_path / ".vscode").is_dir()
+    assert (project_path / ".vscode" / "settings.json").is_file()
+
+
+def test_fs02_tree_config_d_dir_not_file(tmp_path, monkeypatch):
+    """config.d/ has a dot but trailing slash marks it a directory in tree format."""
+    monkeypatch.chdir(tmp_path)
+    raw = "config.d/\n└── app.yaml\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "tree-cd")
+    assert (project_path / "config.d").is_dir(), "config.d/ should be a directory"
+    assert (project_path / "config.d" / "app.yaml").is_file()
+
+
+def test_fs02_tree_version_dir_not_file(tmp_path, monkeypatch):
+    """v1.0/ has a dot but trailing slash marks it a directory in tree format."""
+    monkeypatch.chdir(tmp_path)
+    raw = "v1.0/\n└── x.py\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "tree-ver")
+    assert (project_path / "v1.0").is_dir(), "v1.0/ should be a directory"
+    assert (project_path / "v1.0" / "x.py").is_file()
+
+
+# -- markdown format -------------------------------------------------------
+
+
+def test_fs02_md_github_workflows_dir_not_file(tmp_path, monkeypatch):
+    """.github/ with trailing slash in markdown format must be a directory."""
+    monkeypatch.chdir(tmp_path)
+    raw = "- .github/\n  - workflows/\n    - ci.yml\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "md-gh")
+    assert (project_path / ".github").is_dir()
+    assert (project_path / ".github" / "workflows").is_dir()
+    assert (project_path / ".github" / "workflows" / "ci.yml").is_file()
+
+
+def test_fs02_md_config_d_dir_not_file(tmp_path, monkeypatch):
+    """config.d/ with trailing slash stays a directory in markdown format."""
+    monkeypatch.chdir(tmp_path)
+    raw = "- config.d/\n  - app.yaml\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "md-cd")
+    assert (project_path / "config.d").is_dir()
+    assert (project_path / "config.d" / "app.yaml").is_file()
+
+
+# -- indented format -------------------------------------------------------
+
+
+def test_fs02_indented_github_workflows_dir_not_file(tmp_path, monkeypatch):
+    """.github/ with trailing slash in indented format must be a directory."""
+    monkeypatch.chdir(tmp_path)
+    raw = ".github/\n    workflows/\n        ci.yml\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "ind-gh")
+    assert (project_path / ".github").is_dir()
+    assert (project_path / ".github" / "workflows").is_dir()
+    assert (project_path / ".github" / "workflows" / "ci.yml").is_file()
+
+
+def test_fs02_indented_vscode_dir_not_file(tmp_path, monkeypatch):
+    """.vscode/ stays a directory in indented format."""
+    monkeypatch.chdir(tmp_path)
+    raw = ".vscode/\n    settings.json\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "ind-vsc")
+    assert (project_path / ".vscode").is_dir()
+    assert (project_path / ".vscode" / "settings.json").is_file()
+
+
+def test_fs02_indented_config_d_dir_not_file(tmp_path, monkeypatch):
+    """config.d/ stays a directory (not a file) in indented format."""
+    monkeypatch.chdir(tmp_path)
+    raw = "config.d/\n    app.yaml\n"
+    project_path, _ = _parse_and_generate(tmp_path, raw, "ind-cd")
+    assert (project_path / "config.d").is_dir()
+    assert (project_path / "config.d" / "app.yaml").is_file()
+
+
+# -- ParsedEntry assertions (no filesystem) --------------------------------
+
+
+@pytest.mark.parametrize(
+    "raw,expected_dirs,expected_files",
+    [
+        # tree format
+        (
+            ".github/\n└── workflows/\n    └── ci.yml\n",
+            {".github", ".github/workflows"},
+            {".github/workflows/ci.yml"},
+        ),
+        # markdown format
+        (
+            "- .github/\n  - workflows/\n    - ci.yml\n",
+            {".github", ".github/workflows"},
+            {".github/workflows/ci.yml"},
+        ),
+        # indented format
+        (
+            ".github/\n    workflows/\n        ci.yml\n",
+            {".github", ".github/workflows"},
+            {".github/workflows/ci.yml"},
+        ),
+    ],
+)
+def test_fs02_parsed_entries_is_file_flag(raw, expected_dirs, expected_files):
+    """ParsedEntry.is_file is correct for trailing-slash dirs across all formats."""
+    entries = parse_structure(raw)
+    actual_dirs = {e.path for e in entries if not e.is_file}
+    actual_files = {e.path for e in entries if e.is_file}
+    assert expected_dirs <= actual_dirs, (
+        f"Expected dirs {expected_dirs!r} not all in {actual_dirs!r}"
+    )
+    assert expected_files <= actual_files, (
+        f"Expected files {expected_files!r} not all in {actual_files!r}"
+    )

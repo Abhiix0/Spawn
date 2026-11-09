@@ -115,6 +115,7 @@ def test_clean_produces_lowercase_categories(raw_csv: Path, tmp_path: Path):
     os.environ["OUTPUT_PATH"] = str(out)
 
     from pipelines.clean_data import run
+
     run()
 
     df = pd.read_csv(out)
@@ -129,6 +130,7 @@ def test_clean_drops_rows_with_missing_required_values(raw_csv: Path, tmp_path: 
     os.environ["OUTPUT_PATH"] = str(out)
 
     from pipelines.clean_data import run
+
     run()
 
     df = pd.read_csv(out)
@@ -142,6 +144,7 @@ def test_clean_missing_input_exits(tmp_path: Path):
     os.environ["OUTPUT_PATH"] = str(tmp_path / "out.csv")
 
     from pipelines.clean_data import run
+
     with pytest.raises(SystemExit) as exc_info:
         run()
     assert exc_info.value.code == 1

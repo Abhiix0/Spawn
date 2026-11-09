@@ -573,6 +573,17 @@ def test_redact_url_preserves_ordinary_and_redacts_multiple_urls():
     assert "https://public.org/repo" in redacted
 
 
+def test_clean_redacts_before_detail_cap():
+    from spawn.inspection.dependencies import _clean
+
+    # Keep the URL's userinfo terminator beyond the old pre-redaction cap.
+    value = "https://user:" + ("x" * 1100) + "@example.com/package"
+    result = _clean(value)
+    assert result is not None
+    assert "user:" not in result
+    assert "x" * 20 not in result
+
+
 def test_large_package_json_inspection_bounded_time(tmp_path):
     # 64 KB of repeated a. values inside package.json dependencies
     bad_dep = "a." * 32000

@@ -40,6 +40,7 @@ from spawn.templates.backend_api.content import (
     GITHUB_ACTIONS_CI_BASE,
     GITHUB_ACTIONS_CI_RUFF_STEP,
     GITHUB_ACTIONS_CI_PYTEST_STEP,
+    GITHUB_ACTIONS_CI_DJANGO_TEST_STEP,
 )
 
 # ---------------------------------------------------------------------------
@@ -237,5 +238,8 @@ class BackendAPITemplate(BaseTemplate):
             if "ruff" in self.extras:
                 ci_content += GITHUB_ACTIONS_CI_RUFF_STEP
             if "pytest" in self.extras:
-                ci_content += GITHUB_ACTIONS_CI_PYTEST_STEP
+                if self.framework == "django":
+                    ci_content += GITHUB_ACTIONS_CI_DJANGO_TEST_STEP
+                else:
+                    ci_content += GITHUB_ACTIONS_CI_PYTEST_STEP
             (workflows_path / "ci.yml").write_text(ci_content, encoding="utf-8")
