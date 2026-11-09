@@ -9,6 +9,7 @@ import typer
 from typer.testing import CliRunner
 
 from spawn.cli.app import app
+from spawn.cli.errors import UNEXPECTED_EXIT_CODE, fail, report_unexpected
 from spawn.core.exceptions import (
     ConfigError,
     FilesystemError,
@@ -217,3 +218,37 @@ def test_git_stderr_is_redacted():
         with pytest.raises(ToolchainError) as ei:
             run_git_command(Path("."), "push")
     assert "tok123" not in str(ei.value)
+
+
+# ── CLI-M01 markup escaping regressions ──
+def test_fail_escapes_rich_markup_and_preserves_exit_code(capsys):
+    with pytest.raises(typer.Exit) as exc:
+        fail(InvalidInputError("[/red]x"))
+    assert exc.value.exit_code == 1
+
+
+def test_report_unexpected_escapes_rich_markup(monkeypatch, capsys):
+    monkeypatch.delenv("SPAWN_DEBUG", raising=False)
+    with pytest.raises(typer.Exit) as exc:
+        report_unexpected(ValueError("[/]"))
+    assert exc.value.exit_code == UNEXPECTED_EXIT_CODE
+
+
+def test_inspect_path_with_markup_returns_exit_7_without_traceback():
+    r = runner.invoke(app, ["inspect", "[/red]x"])
+    assert r.exit_code == 7
+    assert "[/red]x" in r.output
+    _no_traceback(r)
+
+
+def test_fail_escapes_link_payload(capsys):
+    with pytest.raises(typer.Exit) as exc:
+        fail(InvalidInputError("[link=https://example.invalid]click[/link]"))
+    assert exc.value.exit_code == 1
+
+
+def test_fail_retains_ordinary_styling_and_wording():
+    r = _create("--name", "x", "--template", "nope")
+    assert r.exit_code == 1
+    assert "Unknown template: 'nope'" in r.output
+    _no_traceback(r)

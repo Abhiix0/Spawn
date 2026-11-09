@@ -589,4 +589,3 @@ def test_rollback_different_real_dir_replacement_leaves_canary_untouched(offline
     assert proj.is_dir()
     assert (proj / "canary1.txt").read_text() == "canary1"
     assert (proj / "canary2.txt").read_text() == "canary2"
-

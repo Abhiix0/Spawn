@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import typer
+from rich.markup import escape
 from rich.prompt import Confirm, Prompt
 
 from spawn import __version__
@@ -288,10 +289,14 @@ def doctor(
 
         project_path = Path(path).resolve()
         if not project_path.exists():
-            console.print(f"[red]❌ Path does not exist: {project_path}[/red]")
+            console.print(
+                f"[red]❌ Path does not exist: {escape(str(project_path))}[/red]"
+            )
             raise typer.Exit(1)
         if not project_path.is_dir():
-            console.print(f"[red]❌ Path is not a directory: {project_path}[/red]")
+            console.print(
+                f"[red]❌ Path is not a directory: {escape(str(project_path))}[/red]"
+            )
             raise typer.Exit(1)
 
         from spawn.utils.doctor import ProjectHealthChecker, run_health_check
