@@ -18,6 +18,7 @@ from spawn.core.exceptions import FilesystemError, StructureParseError
 from spawn.generators.destination import (
     assert_available,
     cleanup_created,
+    record_ownership,
     resolve_destination,
     safe_join,
 )
@@ -386,9 +387,12 @@ class CustomStructureGenerator:
         assert_available(project_path, f"Directory '{project_name}' already exists.")
 
         created = False
+        token = None
         try:
             project_path.mkdir()
             created = True
+            token = record_ownership(project_path)
+            self._last_ownership_token = token
 
             for entry in entries:
                 if entry.path == "pyproject.toml" and use_uv:
@@ -472,12 +476,12 @@ class CustomStructureGenerator:
 
         except OSError as e:
             if created:
-                cleanup_created(project_path)
+                cleanup_created(project_path, token=token)
             raise FilesystemError(str(e)) from e
 
         except BaseException:
             if created:
-                cleanup_created(project_path)
+                cleanup_created(project_path, token=token)
             raise
 
         return project_path

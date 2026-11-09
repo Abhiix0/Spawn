@@ -11,7 +11,8 @@ from spawn.generators.project_generator import ProjectGenerator
 def generate_project(config: ProjectConfig) -> Path:
     """Single entry point: generate a project (custom or template) from config."""
     if config.template == "custom":
-        project_path = CustomStructureGenerator().generate(
+        generator = CustomStructureGenerator()
+        project_path = generator.generate(
             project_name=config.name,
             entries=config.custom_entries or [],
             use_git=config.use_git,
@@ -25,7 +26,9 @@ def generate_project(config: ProjectConfig) -> Path:
         try:
             write_project_meta(project_path, config, generator="custom")
         except OSError as e:
-            cleanup_created(project_path)
+            cleanup_created(
+                project_path, token=getattr(generator, "_last_ownership_token", None)
+            )
             raise FilesystemError(str(e)) from e
         return project_path
 

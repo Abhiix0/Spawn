@@ -86,10 +86,9 @@ jobs:
           test -d .venv
           grep -Eq '"uv": *true' .spawn/meta.json
 
-  # Evidence only (path-safety on Windows); never blocks.
+  # Windows path-safety check.
   windows:
     runs-on: windows-latest
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4

@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -426,3 +427,166 @@ def test_cli_refuses_dangling_link_destination_interactive_and_noninteractive(of
     assert r_int.exit_code == 3
     assert "already exists" in r_int.output
     assert not temp_target.exists()
+
+
+# ── FS-03 safe rollback regressions ──
+def test_cleanup_leaf_is_link_or_junction_left_untouched(offline):
+    victim = offline / "victim"
+    victim.mkdir()
+    (victim / "c1.txt").write_text("c1")
+    (victim / "c2.txt").write_text("c2")
+
+    # Junction test on Windows
+    if sys.platform == "win32":
+        junc = offline / "junc"
+        _make_junction(victim, junc)
+        cleanup_created(junc)
+        assert (victim / "c1.txt").read_text() == "c1"
+        assert (victim / "c2.txt").read_text() == "c2"
+        assert junc.is_junction()
+
+    # Symlink test where supported
+    sym = offline / "sym"
+    try:
+        os.symlink(victim, sym, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pass
+    else:
+        cleanup_created(sym)
+        assert (victim / "c1.txt").read_text() == "c1"
+        assert (victim / "c2.txt").read_text() == "c2"
+
+
+def test_template_rollback_junction_swap_leaves_victim_untouched(offline):
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+
+    victim = offline / "victim"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    def hook(proj_path):
+        shutil.rmtree(proj_path)
+        _make_junction(victim, proj_path)
+        raise RuntimeError("simulated failure after junction swap")
+
+    cfg = _cfg(name="proj")
+    with patch("spawn.generators.project_generator.write_changelog", side_effect=hook):
+        with pytest.raises(RuntimeError):
+            ProjectGenerator().generate(cfg)
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_custom_rollback_junction_swap_leaves_victim_untouched(offline):
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+
+    victim = offline / "victim_custom"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    def hook(proj_path, *args, **kwargs):
+        shutil.rmtree(proj_path)
+        _make_junction(victim, proj_path)
+        raise RuntimeError("simulated failure after custom junction swap")
+
+    entries = [ParsedEntry("a.txt", True)]
+    with patch(
+        "spawn.generators.custom_structure.CustomStructureGenerator._apply_dev_setup",
+        side_effect=hook,
+    ):
+        with pytest.raises(RuntimeError):
+            CustomStructureGenerator().generate(
+                "proj", entries, use_uv=True, dev_setup=["ruff"]
+            )
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_pipeline_meta_failure_junction_swap_leaves_victim_untouched(offline):
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+
+    victim = offline / "victim_meta"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    from spawn.generators import pipeline
+
+    def hook(proj_path, *a, **kw):
+        shutil.rmtree(proj_path)
+        _make_junction(victim, proj_path)
+        raise OSError("simulated meta write failure")
+
+    cfg = _cfg(
+        template="custom", custom_entries=[ParsedEntry("a.txt", True)], use_uv=False
+    )
+    with patch.object(pipeline, "write_project_meta", side_effect=hook):
+        with pytest.raises(SpawnError, match="simulated meta write failure"):
+            pipeline.generate_project(cfg)
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_template_rollback_symlink_swap_leaves_victim_untouched(offline):
+    victim = offline / "victim_sym"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    test_link = offline / "test_link"
+    try:
+        os.symlink(victim, test_link, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks unavailable")
+    else:
+        test_link.unlink()
+
+    def hook(proj_path):
+        shutil.rmtree(proj_path)
+        os.symlink(victim, proj_path, target_is_directory=True)
+        raise RuntimeError("simulated failure after symlink swap")
+
+    cfg = _cfg(name="proj")
+    with patch("spawn.generators.project_generator.write_changelog", side_effect=hook):
+        with pytest.raises(RuntimeError):
+            ProjectGenerator().generate(cfg)
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_rollback_different_real_dir_replacement_leaves_canary_untouched(offline):
+    victim = offline / "victim_dir"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    def hook(proj_path):
+        shutil.rmtree(proj_path)
+        # Create a new directory at proj_path with different inode
+        victim.rename(proj_path)
+        raise RuntimeError("simulated failure after different dir swap")
+
+    cfg = _cfg(name="proj")
+    with patch("spawn.generators.project_generator.write_changelog", side_effect=hook):
+        with pytest.raises(RuntimeError):
+            ProjectGenerator().generate(cfg)
+
+    # proj was swapped with a different real directory; it must NOT be deleted
+    proj = offline / "proj"
+    assert proj.is_dir()
+    assert (proj / "canary1.txt").read_text() == "canary1"
+    assert (proj / "canary2.txt").read_text() == "canary2"
+

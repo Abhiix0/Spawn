@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
 
 from spawn.core.exceptions import FilesystemError, InvalidInputError
@@ -48,21 +49,57 @@ def safe_join(root: Path, relative: str) -> Path:
     return root / relative
 
 
-def cleanup_created(path: Path, root_guard: Path | None = None) -> None:
-    """Remove *path* only if it is a real directory that is safe to delete.
+@dataclass(frozen=True)
+class OwnershipToken:
+    path: Path
+    dev: int
+    ino: int
+
+
+def record_ownership(path: Path) -> OwnershipToken:
+    """Capture filesystem identity immediately after creating *path*."""
+    stat = os.lstat(path)
+    return OwnershipToken(path=path, dev=stat.st_dev, ino=stat.st_ino)
+
+
+def cleanup_created(
+    path: Path,
+    root_guard: Path | None = None,
+    token: OwnershipToken | None = None,
+) -> None:
+    """Remove *path* only if it is the exact real directory created by this run.
 
     Callers must only invoke this for directories created by the current run.
     """
-    if path.is_symlink() or not path.is_dir():
+    try:
+        if os.path.islink(path) or path.is_symlink():
+            return
+        if getattr(path, "is_junction", lambda: False)():
+            return
+        if not path.is_dir():
+            return
+
+        stat = os.lstat(path)
+        if token is not None:
+            if stat.st_dev != token.dev or stat.st_ino != token.ino:
+                return
+
+        cwd = Path.cwd().resolve()
+        path_parent = path.parent.resolve()
+        path_cmp = path_parent / path.name
+        home = Path.home().resolve()
+        if (
+            path_cmp == path_parent  # filesystem root
+            or path_cmp == home
+            or path_cmp == cwd
+            or path_cmp in cwd.parents
+            or (
+                root_guard is not None
+                and path_cmp == (root_guard.parent.resolve() / root_guard.name)
+            )
+        ):
+            return
+
+        shutil.rmtree(path, ignore_errors=True)
+    except OSError:
         return
-    resolved = path.resolve()
-    cwd = Path.cwd().resolve()
-    if (
-        resolved == resolved.parent  # filesystem root
-        or resolved == Path.home().resolve()
-        or resolved == cwd
-        or resolved in cwd.parents
-        or (root_guard is not None and resolved == root_guard.resolve())
-    ):
-        return
-    shutil.rmtree(resolved, ignore_errors=True)
