@@ -55,6 +55,4 @@ def install_packages(
 
     except subprocess.CalledProcessError as exc:
         stderr_msg = redact_url(exc.stderr.strip()) if exc.stderr else ""
-        raise ToolchainError(
-            stderr_msg or "Failed to install packages."
-        ) from exc
+        raise ToolchainError(stderr_msg or "Failed to install packages.") from exc
