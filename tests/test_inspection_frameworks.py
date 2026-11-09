@@ -1,5 +1,6 @@
 """Contract-level tests for static framework detection (#55)."""
 
+import re
 import time
 import warnings
 from dataclasses import replace
@@ -445,3 +446,53 @@ def test_deterministic_across_runs_and_inventory_order(tmp_path):
     assert FrameworkDetector().run(target, inventory) == first
     flipped = replace(inventory, files=tuple(reversed(inventory.files)))
     assert FrameworkDetector().run(target, flipped) == first
+
+
+# ─── ISEC-01 bounded framework regex work ──────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "framework, positive_line",
+    [
+        ("react", "import React from 'react';"),
+        ("nextjs", "import Link from 'next/link';"),
+        ("vue", "import { ref } from 'vue';"),
+        ("nuxt", "import { useAsyncData } from 'nuxt/app';"),
+        ("angular", "import { Component } from '@angular/core';"),
+        ("svelte", "import { onMount } from 'svelte';"),
+        ("express", "import express from 'express';"),
+        ("express", "const express = require('express');"),
+    ],
+)
+def test_framework_import_patterns_positives_and_hostiles(framework, positive_line):
+    pattern = IMPORTS[framework]
+    # Positive case matches
+    assert re.search(pattern, positive_line) is not None
+
+    # Hostile line with trailing spaces does not match and completes fast
+    hostile = "import from " + (" " * 500)
+    start = time.perf_counter()
+    assert re.search(pattern, hostile) is None
+    assert time.perf_counter() - start < 1.0
+
+
+def test_framework_import_line_boundaries_and_length_limit(tmp_path):
+    # Overlong line (>1000 characters) followed by a valid import
+    overlong = "// " + ("x" * 2000)
+    valid = "import React from 'react';"
+    write(tmp_path, "src/app.js", f"{overlong}\n{valid}\n")
+
+    result = run(tmp_path)
+    assert "react" in _subjects(result)
+    assert result.status is AnalysisStatus.COMPLETE
+
+
+def test_large_app_js_inspection_bounded_time(tmp_path):
+    # 64 KB of spaces after import from
+    hostile_js = "import from " + (" " * 64000)
+    write(tmp_path, "src/app.js", hostile_js)
+    start = time.perf_counter()
+    result = run(tmp_path)
+    elapsed = time.perf_counter() - start
+    assert elapsed < 5.0
+    assert result.status is AnalysisStatus.COMPLETE

@@ -38,14 +38,16 @@ PACKAGE_RULES = {
     "rails": {"rails"},
     "laravel": {"laravel/framework"},
 }
+MAX_CANDIDATE_LINE_LENGTH = 1000
+
 IMPORTS = {
-    "react": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]react(?:/[^'\"]*)?['\"]",
-    "nextjs": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]next(?:/[^'\"]*)?['\"]",
-    "vue": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]vue['\"]",
-    "nuxt": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]nuxt(?:/[^'\"]*)?['\"]",
-    "angular": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]@angular/",
-    "svelte": r"(?m)^[ \t]*import\b.*?\bfrom\s*['\"]svelte(?:/[^'\"]*)?['\"]",
-    "express": r"(?m)^[ \t]*(?:import\b.*?\bfrom\s*|const\s+\w+\s*=\s*require\s*\()\s*['\"]express['\"]",
+    "react": r"(?m)^[ \t]*import\s+(?>[^;'\r\n]*?\bfrom\s+)['\"]react(?:/[^'\"]*)?['\"]",
+    "nextjs": r"(?m)^[ \t]*import\s+(?>[^;'\r\n]*?\bfrom\s+)['\"]next(?:/[^'\"]*)?['\"]",
+    "vue": r"(?m)^[ \t]*import\s+(?>[^;'\r\n]*?\bfrom\s+)['\"]vue['\"]",
+    "nuxt": r"(?m)^[ \t]*import\s+(?>[^;'\r\n]*?\bfrom\s+)['\"]nuxt(?:/[^'\"]*)?['\"]",
+    "angular": r"(?m)^[ \t]*import\s+(?>[^;'\r\n]*?\bfrom\s+)['\"]@angular/",
+    "svelte": r"(?m)^[ \t]*import\s+(?>[^;'\r\n]*?\bfrom\s+)['\"]svelte(?:/[^'\"]*)?['\"]",
+    "express": r"(?m)^[ \t]*(?:import\s+(?>[^;'\r\n]*?\bfrom\s+)|const\s+(?>\w+\s*=\s*require\s*\()\s*)['\"]express['\"]",
 }
 PY_IMPORT_MODULES = frozenset({"django", "fastapi", "flask", "pydantic", "starlette"})
 CONFIGS = {
@@ -272,12 +274,19 @@ class FrameworkDetector:
                     rel, f"static import/declaration for {framework}"
                 )
         elif is_source:
-            for framework, pattern in IMPORTS.items():
-                if re.search(pattern, text):
-                    direct.add(framework)
-                    found.setdefault(framework, {})[rel] = Evidence(
-                        rel, f"static import/declaration for {framework}"
-                    )
+            for line in text.splitlines():
+                if len(line) > MAX_CANDIDATE_LINE_LENGTH:
+                    continue
+                if "import" not in line and "require" not in line:
+                    continue
+                for framework, pattern in IMPORTS.items():
+                    if framework in direct:
+                        continue
+                    if re.search(pattern, line):
+                        direct.add(framework)
+                        found.setdefault(framework, {})[rel] = Evidence(
+                            rel, f"static import/declaration for {framework}"
+                        )
         for framework, names in CONFIGS.items():
             if name in names:
                 direct.add(framework)

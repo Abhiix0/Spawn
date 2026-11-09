@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 
 from spawn.core.exceptions import ToolchainError
+from spawn.utils.redact import redact_url
 
 
 def initialize_uv(project_path: Path) -> None:
@@ -26,8 +27,9 @@ def initialize_uv(project_path: Path) -> None:
         raise ToolchainError("UV is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError as exc:
+        stderr_msg = redact_url(exc.stderr.strip()) if exc.stderr else ""
         raise ToolchainError(
-            exc.stderr.strip() or "Failed to initialize UV environment."
+            stderr_msg or "Failed to initialize UV environment."
         ) from exc
 
 
@@ -52,6 +54,5 @@ def install_packages(
         raise ToolchainError("UV is not installed or not available in PATH.")
 
     except subprocess.CalledProcessError as exc:
-        raise ToolchainError(
-            exc.stderr.strip() or "Failed to install packages."
-        ) from exc
+        stderr_msg = redact_url(exc.stderr.strip()) if exc.stderr else ""
+        raise ToolchainError(stderr_msg or "Failed to install packages.") from exc
