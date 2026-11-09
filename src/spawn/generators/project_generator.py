@@ -6,6 +6,7 @@ from spawn.core.registry import instantiate_template
 from spawn.generators.destination import (
     assert_available,
     cleanup_created,
+    record_ownership,
     resolve_destination,
 )
 from spawn.generators.metadata import write_project_meta
@@ -60,9 +61,11 @@ class ProjectGenerator:
         assert_available(project_path, f"Directory '{config.name}' already exists.")
 
         created = False
+        token = None
         try:
             project_path.mkdir()
             created = True
+            token = record_ownership(project_path)
 
             context = {"project_name": config.name}
             template.generate(project_path, context)
@@ -121,12 +124,12 @@ class ProjectGenerator:
 
         except OSError as e:
             if created:
-                cleanup_created(project_path)
+                cleanup_created(project_path, token=token)
             raise FilesystemError(str(e)) from e
 
         except BaseException:
             if created:
-                cleanup_created(project_path)
+                cleanup_created(project_path, token=token)
             raise
 
         return project_path

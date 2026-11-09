@@ -134,7 +134,7 @@ Running `spawn` with no arguments shows the banner, the installed version, and t
 
 ```
 SPAWN — scaffold your next project
-v1.1.0
+v1.1.1
 
 Commands
   create    Scaffold a new project
@@ -782,10 +782,10 @@ spawn doctor --fix --license mit
 
 ```bash
 spawn version
-# → Spawn v1.1.0
+# → Spawn v1.1.1
 
 spawn --version
-# → Spawn v1.1.0
+# → Spawn v1.1.1
 ```
 
 ### `spawn inspect`
@@ -850,6 +850,7 @@ All tests should pass. If they don't, please [open an issue](https://github.com/
 
 | Version | Highlight |
 |---|---|
+| **v1.1.1** | Framework detection fix: Python imports read from the AST, so framework code inside strings, docstrings and comments no longer produces findings |
 | **v1.1.0** | `spawn inspect`: static, read-only repository inspection (languages, frameworks, dependencies, package managers, tooling, layout) with human and `--json` output; `spawn --version` |
 | **v1.0.9** | Core hardening: documented exit-code contract (generation, toolchain and publish failures exit non-zero), `--no-uv` honored for templates (file-only extras still written), path-traversal protection for custom structures, `read_project_metadata` extension boundary |
 | **v1.0.8** | `spawn doctor --fix` (`--dry-run`, `--yes`, `--license`), `--license` flag and prompt on `create`, `CHANGELOG.md` generated for every project, `pre-commit` and `mypy` extras across all templates, Custom Structure Mypy option |

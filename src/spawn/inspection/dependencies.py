@@ -107,6 +107,8 @@ def _py_name(name: str) -> str:
 def _clean(spec: object) -> str | None:
     if not isinstance(spec, str) or not spec.strip():
         return None
+    # Sanitize before applying the detail cap so truncation cannot leave a
+    # credential-bearing URL's userinfo in the displayed prefix.
     return redact_url(spec.strip())[:_MAX_DETAIL]
 
 

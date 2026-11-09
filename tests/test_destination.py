@@ -1,7 +1,13 @@
 import os
+import shutil
+import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from typer.testing import CliRunner
+
+from spawn.cli.app import app
 
 from spawn.core.exceptions import SpawnError, StructureParseError
 from spawn.core.models import ProjectConfig
@@ -236,3 +242,350 @@ def test_destination_honored_by_both_generators(offline, tmp_path_factory):
 
 def test_module_exports():
     assert destination.safe_join is safe_join
+
+
+# ── FS-01 occupied destination regressions ──
+def _make_junction(target: Path, link: Path) -> None:
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+    import _winapi
+
+    _winapi.CreateJunction(str(target), str(link))
+
+
+def test_generators_reject_existing_regular_dir_and_file(offline):
+    d = offline / "existing_dir"
+    d.mkdir()
+    (d / "keep.txt").write_text("keep")
+    f = offline / "existing_file"
+    f.write_text("file")
+
+    for name in ("existing_dir", "existing_file"):
+        with pytest.raises(SpawnError, match="already exists"):
+            ProjectGenerator().generate(_cfg(name=name))
+        with pytest.raises(SpawnError, match="already exists"):
+            CustomStructureGenerator().generate(
+                name, [ParsedEntry("a.txt", True)], use_uv=False
+            )
+    assert (d / "keep.txt").read_text() == "keep"
+    assert f.read_text() == "file"
+
+
+def test_generators_reject_live_symlink_leaves_canary_untouched(offline):
+    canary = offline / "canary"
+    canary.mkdir()
+    (canary / "keep.txt").write_text("precious")
+    link = offline / "proj"
+    try:
+        os.symlink(canary, link, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks unavailable")
+
+    with pytest.raises(SpawnError, match="already exists"):
+        ProjectGenerator().generate(_cfg(name="proj"))
+    assert (canary / "keep.txt").read_text() == "precious"
+    assert not (canary / "README.md").exists()
+
+    with pytest.raises(SpawnError, match="already exists"):
+        CustomStructureGenerator().generate(
+            "proj", [ParsedEntry("a.txt", True)], use_uv=False
+        )
+    assert (canary / "keep.txt").read_text() == "precious"
+    assert not (canary / "a.txt").exists()
+
+
+def test_generators_reject_dangling_symlink(offline):
+    link = offline / "proj"
+    target = offline / "target_dir"
+    try:
+        os.symlink(target, link)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks unavailable")
+
+    with pytest.raises(SpawnError, match="already exists"):
+        ProjectGenerator().generate(_cfg(name="proj"))
+    assert not target.exists()
+
+    with pytest.raises(SpawnError, match="already exists"):
+        CustomStructureGenerator().generate(
+            "proj", [ParsedEntry("a.txt", True)], use_uv=False
+        )
+    assert not target.exists()
+
+
+def test_generators_reject_live_junction_leaves_canary_untouched(offline):
+    canary = offline / "canary"
+    canary.mkdir()
+    (canary / "keep.txt").write_text("precious")
+    link = offline / "proj"
+    _make_junction(canary, link)
+
+    with pytest.raises(SpawnError, match="already exists"):
+        ProjectGenerator().generate(_cfg(name="proj"))
+    assert (canary / "keep.txt").read_text() == "precious"
+    assert not (canary / "README.md").exists()
+
+    with pytest.raises(SpawnError, match="already exists"):
+        CustomStructureGenerator().generate(
+            "proj", [ParsedEntry("a.txt", True)], use_uv=False
+        )
+    assert (canary / "keep.txt").read_text() == "precious"
+    assert not (canary / "a.txt").exists()
+
+
+def test_generators_reject_dangling_junction(offline):
+    temp_target = offline / "temp_target"
+    temp_target.mkdir()
+    link = offline / "proj"
+    _make_junction(temp_target, link)
+    temp_target.rmdir()
+    assert not temp_target.exists()
+
+    with pytest.raises(SpawnError, match="already exists"):
+        ProjectGenerator().generate(_cfg(name="proj"))
+    assert not temp_target.exists()
+
+    with pytest.raises(SpawnError, match="already exists"):
+        CustomStructureGenerator().generate(
+            "proj", [ParsedEntry("a.txt", True)], use_uv=False
+        )
+    assert not temp_target.exists()
+
+
+def test_cli_refuses_occupied_destination_interactive_and_noninteractive(offline):
+    canary = offline / "canary"
+    canary.mkdir()
+    (canary / "keep.txt").write_text("precious")
+    link = offline / "link_proj"
+    if sys.platform == "win32":
+        _make_junction(canary, link)
+    else:
+        try:
+            os.symlink(canary, link, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks unavailable")
+
+    runner = CliRunner()
+    # Non-interactive
+    r_non = runner.invoke(
+        app,
+        ["create", "--name", "link_proj", "--template", "cli", "--no-git", "--no-uv"],
+    )
+    assert r_non.exit_code == 3
+    assert "already exists" in r_non.output
+    assert (canary / "keep.txt").read_text() == "precious"
+    assert not (canary / "README.md").exists()
+
+    # Interactive
+    cfg = ProjectConfig(name="link_proj", template="cli", use_git=False, use_uv=False)
+    with patch("spawn.cli.app.get_project_config", return_value=cfg):
+        r_int = runner.invoke(app, ["create"])
+    assert r_int.exit_code == 3
+    assert "already exists" in r_int.output
+    assert (canary / "keep.txt").read_text() == "precious"
+    assert not (canary / "README.md").exists()
+
+
+def test_cli_refuses_dangling_link_destination_interactive_and_noninteractive(offline):
+    temp_target = offline / "temp_target"
+    temp_target.mkdir()
+    link = offline / "dangling_proj"
+    if sys.platform == "win32":
+        _make_junction(temp_target, link)
+    else:
+        try:
+            os.symlink(temp_target, link)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks unavailable")
+    temp_target.rmdir()
+    assert not temp_target.exists()
+
+    runner = CliRunner()
+    # Non-interactive
+    r_non = runner.invoke(
+        app,
+        [
+            "create",
+            "--name",
+            "dangling_proj",
+            "--template",
+            "cli",
+            "--no-git",
+            "--no-uv",
+        ],
+    )
+    assert r_non.exit_code == 3
+    assert "already exists" in r_non.output
+    assert not temp_target.exists()
+
+    # Interactive
+    cfg = ProjectConfig(
+        name="dangling_proj", template="cli", use_git=False, use_uv=False
+    )
+    with patch("spawn.cli.app.get_project_config", return_value=cfg):
+        r_int = runner.invoke(app, ["create"])
+    assert r_int.exit_code == 3
+    assert "already exists" in r_int.output
+    assert not temp_target.exists()
+
+
+# ── FS-03 safe rollback regressions ──
+def test_cleanup_leaf_is_link_or_junction_left_untouched(offline):
+    victim = offline / "victim"
+    victim.mkdir()
+    (victim / "c1.txt").write_text("c1")
+    (victim / "c2.txt").write_text("c2")
+
+    # Junction test on Windows
+    if sys.platform == "win32":
+        junc = offline / "junc"
+        _make_junction(victim, junc)
+        cleanup_created(junc)
+        assert (victim / "c1.txt").read_text() == "c1"
+        assert (victim / "c2.txt").read_text() == "c2"
+        assert junc.is_junction()
+
+    # Symlink test where supported
+    sym = offline / "sym"
+    try:
+        os.symlink(victim, sym, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pass
+    else:
+        cleanup_created(sym)
+        assert (victim / "c1.txt").read_text() == "c1"
+        assert (victim / "c2.txt").read_text() == "c2"
+
+
+def test_template_rollback_junction_swap_leaves_victim_untouched(offline):
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+
+    victim = offline / "victim"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    def hook(proj_path):
+        shutil.rmtree(proj_path)
+        _make_junction(victim, proj_path)
+        raise RuntimeError("simulated failure after junction swap")
+
+    cfg = _cfg(name="proj")
+    with patch("spawn.generators.project_generator.write_changelog", side_effect=hook):
+        with pytest.raises(RuntimeError):
+            ProjectGenerator().generate(cfg)
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_custom_rollback_junction_swap_leaves_victim_untouched(offline):
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+
+    victim = offline / "victim_custom"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    def hook(proj_path, *args, **kwargs):
+        shutil.rmtree(proj_path)
+        _make_junction(victim, proj_path)
+        raise RuntimeError("simulated failure after custom junction swap")
+
+    entries = [ParsedEntry("a.txt", True)]
+    with patch(
+        "spawn.generators.custom_structure.CustomStructureGenerator._apply_dev_setup",
+        side_effect=hook,
+    ):
+        with pytest.raises(RuntimeError):
+            CustomStructureGenerator().generate(
+                "proj", entries, use_uv=True, dev_setup=["ruff"]
+            )
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_pipeline_meta_failure_junction_swap_leaves_victim_untouched(offline):
+    if sys.platform != "win32":
+        pytest.skip("Windows junctions only available on Windows")
+
+    victim = offline / "victim_meta"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    from spawn.generators import pipeline
+
+    def hook(proj_path, *a, **kw):
+        shutil.rmtree(proj_path)
+        _make_junction(victim, proj_path)
+        raise OSError("simulated meta write failure")
+
+    cfg = _cfg(
+        template="custom", custom_entries=[ParsedEntry("a.txt", True)], use_uv=False
+    )
+    with patch.object(pipeline, "write_project_meta", side_effect=hook):
+        with pytest.raises(SpawnError, match="simulated meta write failure"):
+            pipeline.generate_project(cfg)
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_template_rollback_symlink_swap_leaves_victim_untouched(offline):
+    victim = offline / "victim_sym"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    test_link = offline / "test_link"
+    try:
+        os.symlink(victim, test_link, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks unavailable")
+    else:
+        test_link.unlink()
+
+    def hook(proj_path):
+        shutil.rmtree(proj_path)
+        os.symlink(victim, proj_path, target_is_directory=True)
+        raise RuntimeError("simulated failure after symlink swap")
+
+    cfg = _cfg(name="proj")
+    with patch("spawn.generators.project_generator.write_changelog", side_effect=hook):
+        with pytest.raises(RuntimeError):
+            ProjectGenerator().generate(cfg)
+
+    assert (victim / "canary1.txt").read_text() == "canary1"
+    assert (victim / "canary2.txt").read_text() == "canary2"
+    assert victim.is_dir()
+
+
+def test_rollback_different_real_dir_replacement_leaves_canary_untouched(offline):
+    victim = offline / "victim_dir"
+    victim.mkdir()
+    (victim / "canary1.txt").write_text("canary1")
+    (victim / "canary2.txt").write_text("canary2")
+
+    def hook(proj_path):
+        shutil.rmtree(proj_path)
+        # Create a new directory at proj_path with different inode
+        victim.rename(proj_path)
+        raise RuntimeError("simulated failure after different dir swap")
+
+    cfg = _cfg(name="proj")
+    with patch("spawn.generators.project_generator.write_changelog", side_effect=hook):
+        with pytest.raises(RuntimeError):
+            ProjectGenerator().generate(cfg)
+
+    # proj was swapped with a different real directory; it must NOT be deleted
+    proj = offline / "proj"
+    assert proj.is_dir()
+    assert (proj / "canary1.txt").read_text() == "canary1"
+    assert (proj / "canary2.txt").read_text() == "canary2"

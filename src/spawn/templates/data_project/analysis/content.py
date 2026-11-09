@@ -66,6 +66,7 @@ NOTEBOOK_CONTENT = json.dumps(
                 "outputs": [],
                 "source": [
                     "import os\n",
+                    "\n",
                     'os.makedirs("reports", exist_ok=True)\n',
                     "\n",
                     "fig, ax = plt.subplots(figsize=(8, 5))\n",
@@ -94,7 +95,6 @@ NOTEBOOK_CONTENT = json.dumps(
 )
 
 TEST_CONTENT = """\
-import os
 from pathlib import Path
 
 

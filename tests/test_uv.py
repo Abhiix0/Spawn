@@ -85,3 +85,32 @@ def test_install_packages_existing_callers_unaffected(mock_run, tmp_path):
     assert "fastapi" in called_cmd
     assert "uvicorn" in called_cmd
     assert "--dev" not in called_cmd
+
+
+# ─── SEC-02 stderr credential redaction ────────────────────────────────────
+
+
+def test_initialize_uv_redacts_credentials(tmp_path):
+    with patch(
+        "spawn.utils.uv.subprocess.run",
+        side_effect=_make_called_process_error(
+            "error: failed to fetch https://token:secret123@pkg.internal/index"
+        ),
+    ):
+        with pytest.raises(SpawnError) as exc_info:
+            initialize_uv(tmp_path)
+    assert "secret123" not in str(exc_info.value)
+    assert "https://pkg.internal/index" in str(exc_info.value)
+
+
+def test_install_packages_redacts_credentials(tmp_path):
+    err = subprocess.CalledProcessError(
+        returncode=1,
+        cmd=["uv", "add", "my-pkg"],
+        stderr="fatal: https://user:pass456@git.corp/repo.git auth failed",
+    )
+    with patch("spawn.utils.uv.subprocess.run", side_effect=err):
+        with pytest.raises(SpawnError) as exc_info:
+            install_packages(tmp_path, ["my-pkg"])
+    assert "pass456" not in str(exc_info.value)
+    assert "https://git.corp/repo.git auth failed" in str(exc_info.value)

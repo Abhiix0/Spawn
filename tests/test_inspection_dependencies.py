@@ -4,6 +4,7 @@ import ast
 import hashlib
 import json
 import random
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -535,3 +536,66 @@ def test_modules_are_static_and_traversal_free():
                     else getattr(func, "id", "")
                 )
                 assert called not in banned_calls, module.__name__
+
+
+# ─── ISEC-01 adversarial scaling and redaction regressions ─────────────────
+
+
+def test_clean_adversarial_repeated_strings():
+    from spawn.inspection.dependencies import _clean
+
+    for sz in (4000, 16000, 64000, 100000):
+        val = "a." * (sz // 2)
+        start = time.perf_counter()
+        res = _clean(val)
+        elapsed = time.perf_counter() - start
+        assert elapsed < 1.0
+        assert res is not None
+        assert len(res) <= 200
+
+
+def test_redact_url_preserves_ordinary_and_redacts_multiple_urls():
+    from spawn.utils.redact import redact_url
+
+    plain = "https://example.com/path/to/resource"
+    assert redact_url(plain) == plain
+
+    multi = (
+        "urls: https://user1:tok1@github.com/a/b.git and "
+        "http://user2:tok2@gitlab.com/c/d.git also "
+        "https://public.org/repo"
+    )
+    redacted = redact_url(multi)
+    assert "tok1" not in redacted and "user1" not in redacted
+    assert "tok2" not in redacted and "user2" not in redacted
+    assert "https://github.com/a/b.git" in redacted
+    assert "http://gitlab.com/c/d.git" in redacted
+    assert "https://public.org/repo" in redacted
+
+
+def test_clean_redacts_before_detail_cap():
+    from spawn.inspection.dependencies import _clean
+
+    # Keep the URL's userinfo terminator beyond the old pre-redaction cap.
+    value = "https://user:" + ("x" * 1100) + "@example.com/package"
+    result = _clean(value)
+    assert result is not None
+    assert "user:" not in result
+    assert "x" * 20 not in result
+
+
+def test_large_package_json_inspection_bounded_time(tmp_path):
+    # 64 KB of repeated a. values inside package.json dependencies
+    bad_dep = "a." * 32000
+    write(
+        tmp_path,
+        "package.json",
+        f'{{"dependencies": {{"my-pkg": "{bad_dep}"}}}}',
+    )
+    target = InspectionTarget(tmp_path.resolve())
+    inv = discover_repository(target)
+    start = time.perf_counter()
+    result = DependencyAnalyzer().run(target, inv)
+    elapsed = time.perf_counter() - start
+    assert elapsed < 5.0
+    assert result.status is AnalysisStatus.COMPLETE

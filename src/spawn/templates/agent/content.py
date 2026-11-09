@@ -9,7 +9,6 @@ Be concise and accurate in your responses.
 """
 
 SETTINGS_CONTENT = """\
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -36,8 +35,10 @@ def calculate(expression: str) -> str:
     \"\"\"
     # Strip whitespace and validate characters
     cleaned = expression.strip()
-    if not re.match(r'^[\\d\\s\\+\\-\\*\\/\\(\\)\\.\\*\\*\\/\\/]+$', cleaned):
-        return f"Invalid expression: only numbers and operators (+,-,*,/,**,//) are allowed"
+    if not re.match(r"^[\\d\\s\\+\\-\\*\\/\\(\\)\\.\\*\\*\\/\\/]+$", cleaned):
+        return (
+            "Invalid expression: only numbers and operators (+,-,*,/,**,//) are allowed"
+        )
     try:
         result = eval(cleaned, {{"__builtins__": {{}}}}, {{}})
         return str(result)

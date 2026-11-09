@@ -52,7 +52,6 @@ run the ingestion step is triggered automatically before the Q&A loop starts.
 
 SETTINGS_CONTENT = """\
 import os
-from pathlib import Path
 
 from dotenv import load_dotenv
 from llama_index.core import Settings
@@ -228,6 +227,7 @@ def main() -> None:
             print(f"\\n[Error] {{e}}\\n")
             import shutil
             from pathlib import Path
+
             shutil.rmtree(Path("chroma_db"), ignore_errors=True)
             return
         print()
@@ -264,6 +264,7 @@ from unittest.mock import MagicMock, patch
 def test_index_exists_false_when_no_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     from src.knowledge.index import index_exists
+
     assert not index_exists()
 
 
@@ -271,6 +272,7 @@ def test_index_exists_false_when_empty_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "chroma_db").mkdir()
     from src.knowledge.index import index_exists
+
     assert not index_exists()
 
 
@@ -280,6 +282,7 @@ def test_index_exists_true_when_has_file(tmp_path, monkeypatch):
     chroma.mkdir()
     (chroma / "chroma.sqlite3").write_text("db")
     from src.knowledge.index import index_exists
+
     assert index_exists()
 
 
@@ -289,6 +292,7 @@ def test_index_exists_false_when_sqlite_file_empty(tmp_path, monkeypatch):
     chroma.mkdir()
     (chroma / "chroma.sqlite3").write_bytes(b"")
     from src.knowledge.index import index_exists
+
     assert not index_exists()
 
 
@@ -305,6 +309,7 @@ def test_answer_question_mock():
 
     with patch("src.retrieval.retrieve.load_index", return_value=mock_index):
         from src.retrieval.retrieve import answer_question
+
         result = answer_question("What is Spawn?")
 
     assert isinstance(result, str)
@@ -325,6 +330,7 @@ def test_answer_question_rate_limit_raises_runtime_error():
 
     with patch("src.retrieval.retrieve.load_index", return_value=mock_index):
         from src.retrieval.retrieve import answer_question
+
         try:
             answer_question("What is Spawn?")
             assert False, "Expected RuntimeError"
@@ -333,12 +339,12 @@ def test_answer_question_rate_limit_raises_runtime_error():
 
 
 def test_answer_question_api_error_raises_runtime_error():
-    from openai import APIError
+    from openai import APIStatusError
 
     mock_engine = MagicMock()
     mock_response = MagicMock()
     mock_response.status_code = 500
-    mock_engine.query.side_effect = APIError(
+    mock_engine.query.side_effect = APIStatusError(
         "server error", response=mock_response, body=None
     )
     mock_index = MagicMock()
@@ -346,6 +352,7 @@ def test_answer_question_api_error_raises_runtime_error():
 
     with patch("src.retrieval.retrieve.load_index", return_value=mock_index):
         from src.retrieval.retrieve import answer_question
+
         try:
             answer_question("What is Spawn?")
             assert False, "Expected RuntimeError"

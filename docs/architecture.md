@@ -23,7 +23,7 @@ Entry point: `spawn.cli.app:main` (defined in `pyproject.toml` as `[project.scri
 
 ```
 src/spawn/
-├── __init__.py         # __version__ via importlib.metadata, fallback "1.1.0" (keep in sync with pyproject.toml)
+├── __init__.py         # __version__ via importlib.metadata, fallback "1.1.1" (keep in sync with pyproject.toml)
 ├── cli/
 │   ├── app.py          # Typer app: create, version (and --version), doctor, inspect commands
 │   ├── inspect_render.py # Rich rendering of an InspectionReport for `spawn inspect`

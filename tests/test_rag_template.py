@@ -1,4 +1,5 @@
 import os
+import ast
 import py_compile
 import re
 import tempfile
@@ -182,6 +183,22 @@ def test_file_is_valid_python(filepath):
         raise AssertionError(f"{filepath} is not valid Python: {e}") from e
     finally:
         os.unlink(fname)
+
+
+def test_api_error_fixture_uses_response_aware_status_error():
+    content = dict(RAGTemplate().starter_files)["tests/test_rag.py"]
+    rendered = content.format_map({"project_name": "test-rag"})
+    tree = ast.parse(rendered)
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "APIStatusError"
+    ]
+    assert len(calls) == 1
+    assert {keyword.arg for keyword in calls[0].keywords} >= {"response", "body"}
+    assert "from openai import APIError" not in rendered
 
 
 @pytest.mark.parametrize("filepath", PYTHON_FILES)
