@@ -496,3 +496,4 @@ def test_large_app_js_inspection_bounded_time(tmp_path):
     elapsed = time.perf_counter() - start
     assert elapsed < 5.0
     assert result.status is AnalysisStatus.COMPLETE
+
