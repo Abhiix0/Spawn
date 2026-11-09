@@ -19,7 +19,9 @@ def resolve_destination(name: str, destination: Path | None = None) -> Path:
             f"Invalid project name '{name}': must be a single directory name."
         )
     base = Path.cwd() / name if destination is None else Path(destination)
-    return base.resolve()
+    if not base.name:
+        return base.resolve()
+    return base.parent.resolve() / base.name
 
 
 def assert_available(path: Path, message: str) -> None:
