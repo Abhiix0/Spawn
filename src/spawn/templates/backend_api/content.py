@@ -293,7 +293,12 @@ ROOT_URLCONF = "config.urls"
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {{}}
+DATABASES = {{
+    "default": {{
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }}
+}}
 
 STATIC_URL = "/static/"
 
@@ -343,6 +348,16 @@ urlpatterns = [
 ]
 """
 
+DJANGO_CONFTEST_CONTENT = """\
+import django
+import os
+
+
+def pytest_configure():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    django.setup()
+"""
+
 DJANGO_HEALTH_TESTS_CONTENT = """\
 from django.test import TestCase, Client
 
@@ -372,8 +387,16 @@ uv run python manage.py runserver
 
 ## Running Tests
 
+Using Django's built-in test runner:
+
 ```bash
 uv run python manage.py test
+```
+
+Or using pytest (requires the `pytest` extra):
+
+```bash
+uv run pytest
 ```
 
 ## Endpoints
@@ -397,6 +420,7 @@ uv run python manage.py test
 │       ├── views.py
 │       ├── urls.py
 │       └── tests.py
+├── conftest.py
 └── README.md
 ```
 """
@@ -422,10 +446,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY pyproject.toml .
-RUN pip install uv && uv sync
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --frozen --no-dev
 
 COPY . .
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 
@@ -437,10 +463,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY pyproject.toml .
-RUN pip install uv && uv sync
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --frozen --no-dev
 
 COPY . .
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 5000
 
@@ -452,10 +480,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY pyproject.toml .
-RUN pip install uv && uv sync
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --frozen --no-dev
 
 COPY . .
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 

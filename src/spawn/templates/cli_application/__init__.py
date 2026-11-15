@@ -27,6 +27,7 @@ from spawn.templates.cli_application.content import (
     CLICK_INTERACTIVE_README_CONTENT,
     ARGPARSE_INTERACTIVE_README_CONTENT,
 )
+from spawn.utils.uv import install_packages
 
 # ---------------------------------------------------------------------------
 # Folder structures
@@ -198,8 +199,20 @@ class CLITemplate(BaseTemplate):
         current = pyproject.read_text(encoding="utf-8")
         additions = ""
 
-        if "pytest" in self.extras:
+        # Always write pytest config and install pytest as a dev dep so
+        # `uv run pytest` works out of the box, even without the pytest extra.
+        # We add it via install_packages(dev=True) rather than get_dependencies()
+        # to keep it in the dev group and avoid inflating runtime deps.
+        if pyproject.exists():
             additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
+
+        if "pytest" not in self.extras:
+            # Install pytest as a dev dep; skip if the user already selected
+            # the pytest extra (it's already in get_dependencies()).
+            try:
+                install_packages(project_path, ["pytest"], dev=True)
+            except Exception:
+                pass  # Non-fatal: best-effort; user can install manually.
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"
