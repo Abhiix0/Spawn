@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from spawn.core.exceptions import SpawnError
+from spawn.core.exceptions import FilesystemError, SpawnError
 from spawn.generators.project_files import (
     add_mypy_config,
     add_pytest_config,
@@ -18,6 +18,53 @@ from spawn.generators.project_files import (
 )
 from spawn.utils.doctor import HealthCheck
 from spawn.utils.git import get_git_user_name, initialize_git
+
+
+def _safe_write_path(project_path: Path, filename: str) -> Path:
+    """Return the resolved write target, raising FilesystemError if it would
+    escape *project_path* or write through a symlink to outside it.
+
+    Rules
+    -----
+    - The final path must be a strict descendant of ``project_path.resolve()``.
+    - Neither the target file itself nor any of its ancestor components (between
+      the project root and the file) may be a symlink whose resolved destination
+      lies outside the project root.
+    - Dangling symlinks (symlinks that point to a non-existent target) are
+      rejected unconditionally because we cannot verify where they point.
+    """
+    root = project_path.resolve()
+    target = (project_path / filename).resolve()
+
+    # The resolved target must be inside the project root.
+    if not target.is_relative_to(root):
+        raise FilesystemError(
+            f"Doctor --fix refused: '{filename}' resolves outside the project root."
+        )
+
+    # Walk every path component between root and the final target.
+    # Any intermediate symlink that exits the root is rejected.
+    # Also reject dangling symlinks anywhere on the path.
+    parts = Path(filename).parts
+    partial = project_path
+    for part in parts:
+        partial = partial / part
+        if partial.is_symlink():
+            # Dangling symlink — target does not exist.
+            if not partial.exists():
+                raise FilesystemError(
+                    f"Doctor --fix refused: '{filename}' contains a dangling symlink "
+                    f"at '{partial.relative_to(project_path)}'."
+                )
+            # Symlink exists; ensure it resolves inside the root.
+            resolved_part = partial.resolve()
+            if not resolved_part.is_relative_to(root):
+                raise FilesystemError(
+                    f"Doctor --fix refused: '{filename}' contains a symlink that "
+                    f"escapes the project root at "
+                    f"'{partial.relative_to(project_path)}'."
+                )
+    return target
 
 
 @dataclass
@@ -48,6 +95,18 @@ _DEV_TOOL_PACKAGES: list[tuple[str, str]] = [
 ]
 
 
+def _guarded(
+    project_path: Path, filename: str, write_fn: Callable[[], bool]
+) -> Callable[[], bool]:
+    """Return a lambda that validates the write path before calling *write_fn*."""
+
+    def _apply() -> bool:
+        _safe_write_path(project_path, filename)
+        return write_fn()
+
+    return _apply
+
+
 def plan_fixes(
     project_path: Path,
     checks: list[HealthCheck],
@@ -64,7 +123,11 @@ def plan_fixes(
             FixAction(
                 check="README.md",
                 description="Create README.md",
-                apply=lambda: write_readme_from_project(project_path),
+                apply=_guarded(
+                    project_path,
+                    "README.md",
+                    lambda: write_readme_from_project(project_path),
+                ),
             )
         )
 
@@ -73,7 +136,11 @@ def plan_fixes(
             FixAction(
                 check="AGENTS.md",
                 description="Create AGENTS.md",
-                apply=lambda: write_agents_md_generic(project_path),
+                apply=_guarded(
+                    project_path,
+                    "AGENTS.md",
+                    lambda: write_agents_md_generic(project_path),
+                ),
             )
         )
 
@@ -82,7 +149,9 @@ def plan_fixes(
             FixAction(
                 check=".gitignore",
                 description="Create .gitignore",
-                apply=lambda: write_gitignore(project_path),
+                apply=_guarded(
+                    project_path, ".gitignore", lambda: write_gitignore(project_path)
+                ),
             )
         )
 
@@ -91,7 +160,9 @@ def plan_fixes(
             FixAction(
                 check="CHANGELOG.md",
                 description="Create CHANGELOG.md",
-                apply=lambda: write_changelog(project_path),
+                apply=_guarded(
+                    project_path, "CHANGELOG.md", lambda: write_changelog(project_path)
+                ),
             )
         )
 
@@ -99,6 +170,7 @@ def plan_fixes(
         if license_kind == "mit":
 
             def _apply_license() -> bool:
+                _safe_write_path(project_path, "LICENSE")
                 holder = get_git_user_name() or f"{project_path.name} contributors"
                 return write_license(project_path, "mit", holder)
 
@@ -117,7 +189,9 @@ def plan_fixes(
             FixAction(
                 check="Tests",
                 description="Create tests/ directory",
-                apply=lambda: write_tests_dir(project_path),
+                apply=_guarded(
+                    project_path, "tests", lambda: write_tests_dir(project_path)
+                ),
             )
         )
 
@@ -127,7 +201,11 @@ def plan_fixes(
                 FixAction(
                     check="Pytest",
                     description="Add Pytest configuration to pyproject.toml",
-                    apply=lambda: add_pytest_config(project_path),
+                    apply=_guarded(
+                        project_path,
+                        "pyproject.toml",
+                        lambda: add_pytest_config(project_path),
+                    ),
                 )
             )
         else:
@@ -139,7 +217,11 @@ def plan_fixes(
                 FixAction(
                     check="Ruff",
                     description="Add Ruff configuration to pyproject.toml",
-                    apply=lambda: add_ruff_config(project_path),
+                    apply=_guarded(
+                        project_path,
+                        "pyproject.toml",
+                        lambda: add_ruff_config(project_path),
+                    ),
                 )
             )
         else:
@@ -151,7 +233,11 @@ def plan_fixes(
                 FixAction(
                     check="Type Checking",
                     description="Add Mypy configuration to pyproject.toml",
-                    apply=lambda: add_mypy_config(project_path),
+                    apply=_guarded(
+                        project_path,
+                        "pyproject.toml",
+                        lambda: add_mypy_config(project_path),
+                    ),
                 )
             )
         else:
@@ -162,7 +248,11 @@ def plan_fixes(
             FixAction(
                 check="Pre-commit",
                 description="Create .pre-commit-config.yaml",
-                apply=lambda: write_precommit_config(project_path),
+                apply=_guarded(
+                    project_path,
+                    ".pre-commit-config.yaml",
+                    lambda: write_precommit_config(project_path),
+                ),
             )
         )
 
@@ -172,7 +262,11 @@ def plan_fixes(
                 FixAction(
                     check="GitHub Actions",
                     description="Create GitHub Actions CI workflow",
-                    apply=lambda: write_ci_workflow(project_path),
+                    apply=_guarded(
+                        project_path,
+                        ".github/workflows/ci.yml",
+                        lambda: write_ci_workflow(project_path),
+                    ),
                 )
             )
         else:

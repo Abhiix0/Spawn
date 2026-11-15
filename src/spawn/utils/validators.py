@@ -13,6 +13,15 @@ _WINDOWS_RESERVED = {
 
 
 def validate_project_name(name: str) -> None:
+    # Reject names that look like CLI options (start with one or more hyphens
+    # followed by at least one character).  Examples: -lead, -rf, --help.
+    # Such names would be misinterpreted by subprocess calls and confuse users.
+    if re.match(r"^-+\S", name):
+        raise InvalidInputError(
+            f"'{name}' looks like a command-line option. "
+            "Project names must not start with a hyphen."
+        )
+
     # Check for Windows reserved device names (case-insensitive, strip any
     # extension so e.g. "NUL.txt" is caught too).
     stem = name.split(".")[0].upper()
