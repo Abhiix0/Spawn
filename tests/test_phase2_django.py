@@ -68,27 +68,31 @@ def test_django_files_include_conftest():
 
 def test_django_with_pytest_extra_includes_pytest_django():
     t = BackendAPITemplate(framework="django", extras=["pytest"])
-    deps = t.get_dependencies()
-    assert "pytest-django" in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest-django" in dev
+    assert "pytest" in dev
 
 
 def test_django_without_pytest_extra_excludes_pytest_django():
     t = BackendAPITemplate(framework="django", extras=[])
     deps = t.get_dependencies()
     assert "pytest-django" not in deps
+    assert "pytest-django" not in t.get_dev_dependencies()
 
 
 def test_fastapi_with_pytest_extra_does_not_include_pytest_django():
     """pytest-django must not bleed into the FastAPI template."""
     t = BackendAPITemplate(framework="fastapi", extras=["pytest"])
-    deps = t.get_dependencies()
-    assert "pytest-django" not in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest-django" not in dev
+    assert "httpx" in dev
 
 
 def test_flask_with_pytest_extra_does_not_include_pytest_django():
     t = BackendAPITemplate(framework="flask", extras=["pytest"])
-    deps = t.get_dependencies()
-    assert "pytest-django" not in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest-django" not in dev
+    assert "httpx" in dev
 
 
 # ---------------------------------------------------------------------------

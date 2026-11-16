@@ -39,16 +39,21 @@ def test_automation_base_dependencies():
 
 def test_automation_extras_add_deps():
     t = AutomationTemplate(extras=["pytest", "ruff"])
-    deps = t.get_dependencies()
-    assert "pytest" in deps
-    assert "ruff" in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest" in dev
+    assert any(d.startswith("ruff") for d in dev)
+    # Runtime deps must not be polluted by dev tools
+    runtime = t.get_dependencies()
+    assert "pytest" not in runtime
+    assert not any(d.startswith("ruff") for d in runtime)
 
 
 def test_automation_no_extras_excludes_optional_deps():
     t = AutomationTemplate()
     deps = t.get_dependencies()
     assert "pytest" not in deps
-    assert "ruff" not in deps
+    assert not any(d.startswith("ruff") for d in deps)
+    assert t.get_dev_dependencies() == []
 
 
 def test_automation_readme_contains_project_name():

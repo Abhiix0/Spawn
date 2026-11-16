@@ -43,6 +43,7 @@ from spawn.templates.backend_api.content import (
     GITHUB_ACTIONS_CI_PYTEST_STEP,
     GITHUB_ACTIONS_CI_DJANGO_TEST_STEP,
 )
+from spawn.templates.shared_content import dev_dependency_extras
 
 # ---------------------------------------------------------------------------
 # Framework definitions
@@ -184,22 +185,21 @@ class BackendAPITemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "flask":
-            base_deps = list(FLASK_DEPS)
-        elif self.framework == "django":
-            base_deps = list(DJANGO_DEPS)
-        else:
-            base_deps = list(FASTAPI_DEPS)
+            return list(FLASK_DEPS)
+        if self.framework == "django":
+            return list(DJANGO_DEPS)
+        return list(FASTAPI_DEPS)
 
+    def get_dev_dependencies(self) -> list[str]:
+        dev: list[str] = []
         if "pytest" in self.extras:
+            dev.append("pytest")
             if self.framework == "django":
-                base_deps += ["pytest", "pytest-django"]
+                dev.append("pytest-django")
             else:
-                base_deps += ["pytest", "httpx"]
-
-        if "ruff" in self.extras:
-            base_deps += ["ruff"]
-
-        return base_deps
+                dev.append("httpx")
+        dev.extend(dev_dependency_extras(self.extras))
+        return dev
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"

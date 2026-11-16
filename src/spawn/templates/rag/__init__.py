@@ -18,6 +18,7 @@ from spawn.templates.rag.content import (
     make_readme,
     make_agents_md,
 )
+from spawn.templates.shared_content import dev_dependency_extras
 
 RAG_FOLDERS = [
     "data",
@@ -72,7 +73,7 @@ class RAGTemplate(BaseTemplate):
         return make_agents_md().format_map(context)
 
     def get_dependencies(self) -> list[str]:
-        base = [
+        return [
             "llama-index-core",
             "llama-index-vector-stores-chroma",
             "llama-index-embeddings-openai",
@@ -80,11 +81,13 @@ class RAGTemplate(BaseTemplate):
             "chromadb",
             "python-dotenv",
         ]
+
+    def get_dev_dependencies(self) -> list[str]:
+        dev: list[str] = []
         if "pytest" in self.extras:
-            base.append("pytest")
-        if "ruff" in self.extras:
-            base.append("ruff")
-        return base
+            dev.append("pytest")
+        dev.extend(dev_dependency_extras(self.extras))
+        return dev
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"

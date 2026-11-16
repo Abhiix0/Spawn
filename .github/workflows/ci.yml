@@ -35,6 +35,9 @@ jobs:
       - name: Run ruff
         run: uv run ruff check .
 
+      - name: Check formatting
+        run: uv run ruff format --check .
+
   package-smoke:
     runs-on: ubuntu-latest
 
@@ -85,6 +88,9 @@ jobs:
           test -f uv.lock
           test -d .venv
           grep -Eq '"uv": *true' .spawn/meta.json
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run pytest
 
   # Windows path-safety check.
   windows:

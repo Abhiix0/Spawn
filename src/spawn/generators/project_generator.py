@@ -38,14 +38,9 @@ if hasattr(signal, "SIGHUP"):
 
 class ProjectGenerator:
     def _apply_quality_extras(self, project_path: Path, extras: list[str]) -> None:
-        dev_deps = []
-        if "mypy" in extras:
-            dev_deps.append("mypy")
-        if "pre-commit" in extras:
-            dev_deps.append("pre-commit")
-        if dev_deps:
-            console.print("[yellow]Installing dev tools...[/yellow]")
-            install_packages(project_path, dev_deps, dev=True)
+        # Dev tool *packages* (mypy, pre-commit, ruff, pytest, ...) are installed
+        # from the template's get_dev_dependencies() in generate(); this method
+        # only writes the tool configuration files that go with those extras.
         if "mypy" in extras:
             add_mypy_config(project_path)
         if "pre-commit" in extras:
@@ -145,6 +140,11 @@ class ProjectGenerator:
                 if deps:
                     console.print("[yellow]Installing dependencies...[/yellow]")
                     install_packages(project_path, deps)
+
+                dev_deps = template.get_dev_dependencies()
+                if dev_deps:
+                    console.print("[yellow]Installing dev tools...[/yellow]")
+                    install_packages(project_path, dev_deps, dev=True)
 
                 template.post_install(project_path)
                 self._apply_quality_extras(project_path, config.extras)

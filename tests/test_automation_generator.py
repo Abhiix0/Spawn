@@ -222,9 +222,16 @@ def test_automation_extras_reach_install_packages(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with _mock_uv_and_install() as (mock_install, _):
         ProjectGenerator().generate(_cfg(extras=["ruff", "pytest"]))
-    args = mock_install.call_args[0][1]
-    assert "ruff" in args
-    assert "pytest" in args
+    # ruff and pytest are dev dependencies, installed with dev=True
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    dev_pkgs = dev_calls[0].args[1]
+    assert "pytest" in dev_pkgs
+    assert any(p.startswith("ruff") for p in dev_pkgs)
+    # Runtime deps must not contain dev tools
+    runtime_calls = [c for c in mock_install.call_args_list if not c.kwargs.get("dev")]
+    runtime_pkgs = runtime_calls[0].args[1]
+    assert "pytest" not in runtime_pkgs
+    assert not any(p.startswith("ruff") for p in runtime_pkgs)
 
 
 # ─── AGENTS.md ───────────────────────────────────────────────────────────

@@ -11,7 +11,15 @@ class BaseTemplate:
     # Each tuple: (relative_path_string, content_template_string)
 
     def get_dependencies(self) -> list[str]:
-        """Return packages to install after uv init. Subclasses override."""
+        """Return runtime packages to install after uv init. Subclasses override."""
+        return []
+
+    def get_dev_dependencies(self) -> list[str]:
+        """Return developer packages to install in the project's dev
+        dependency group (e.g. ``[dependency-groups] dev``). These are kept
+        separate from runtime dependencies so that testing and linting tools
+        do not bloat a generated project's runtime install. Subclasses
+        override this to add framework-specific dev tools such as pytest."""
         return []
 
     def post_install(self, project_path: Path) -> None:

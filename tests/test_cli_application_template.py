@@ -1,7 +1,5 @@
 """Unit tests for CLITemplate — no filesystem, no subprocess."""
 
-from unittest.mock import patch
-
 from spawn.templates.cli_application import CLITemplate
 
 
@@ -75,15 +73,20 @@ def test_cli_argparse_no_dependencies():
 
 def test_cli_argparse_with_pytest_extra():
     t = CLITemplate(framework="argparse", extras=["pytest"])
-    assert "pytest" in t.get_dependencies()
+    assert "pytest" in t.get_dev_dependencies()
+    assert "pytest" not in t.get_dependencies()
 
 
 def test_cli_typer_with_all_extras():
     t = CLITemplate(framework="typer", extras=["ruff", "pytest"])
-    deps = t.get_dependencies()
-    assert "typer" in deps
-    assert "ruff" in deps
-    assert "pytest" in deps
+    runtime = t.get_dependencies()
+    assert "typer" in runtime
+    dev = t.get_dev_dependencies()
+    assert "pytest" in dev
+    assert any(d.startswith("ruff") for d in dev)
+    # Dev tools must not leak into runtime deps
+    assert "pytest" not in runtime
+    assert not any(d.startswith("ruff") for d in runtime)
 
 
 def test_cli_readme_content_contains_project_name():
@@ -161,8 +164,7 @@ def test_cli_post_install_no_extras_always_writes_pytest_section(tmp_path):
     original = '[project]\nname = "demo"\n'
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text(original, encoding="utf-8")
-    with patch("spawn.templates.cli_application.install_packages"):
-        t.post_install(tmp_path)
+    t.post_install(tmp_path)
     content = pyproject.read_text(encoding="utf-8")
     assert "[tool.pytest.ini_options]" in content
     assert 'testpaths = ["tests"]' in content

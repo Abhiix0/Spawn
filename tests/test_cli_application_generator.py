@@ -148,13 +148,18 @@ def test_cli_typer_install_packages_called(
 
     with patch.object(CLITemplate, "post_install"):
         ProjectGenerator().generate(config)
-    mock_install.assert_called_once()
-    args = mock_install.call_args[0][1]
-    assert "typer" in args
+    # typer is a runtime dep; pytest is always a CLI dev dep
+    runtime_calls = [c for c in mock_install.call_args_list if not c.kwargs.get("dev")]
+    assert runtime_calls
+    assert "typer" in runtime_calls[0].args[1]
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    assert dev_calls
+    assert "pytest" in dev_calls[0].args[1]
 
 
+@patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_cli_argparse_no_install_packages_called(mock_uv, tmp_path, monkeypatch):
+def test_cli_argparse_no_runtime_install(mock_uv, mock_install, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
         name="my-cli",
@@ -168,8 +173,12 @@ def test_cli_argparse_no_install_packages_called(mock_uv, tmp_path, monkeypatch)
 
     with patch.object(CLITemplate, "post_install"):
         ProjectGenerator().generate(config)
-    # argparse has no dependencies — install_packages should not be called
-    # (it's not patched here; if called it would raise, failing the test)
+    # argparse has no runtime deps — only the pytest dev dep is installed
+    runtime_calls = [c for c in mock_install.call_args_list if not c.kwargs.get("dev")]
+    assert not runtime_calls
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    assert dev_calls
+    assert "pytest" in dev_calls[0].args[1]
 
 
 @patch("spawn.generators.project_generator.install_packages")

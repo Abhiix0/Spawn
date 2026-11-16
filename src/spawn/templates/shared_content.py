@@ -88,7 +88,12 @@ uv run pytest
   for this project (see `pyproject.toml`).
 """
 
-RUFF_PRECOMMIT_REV = "v0.15.16"
+# Single source of truth for the Ruff version used everywhere a Ruff pin
+# appears: the root project's dev group, generated-project dev dependencies,
+# and the pre-commit hook revision. Keeping them derived from one constant
+# prevents the local hook, CI, and installed package from drifting apart.
+RUFF_VERSION = "0.15.16"
+RUFF_PRECOMMIT_REV = f"v{RUFF_VERSION}"
 
 MIT_LICENSE_CONTENT = """MIT License
 
@@ -127,6 +132,7 @@ PRECOMMIT_CONFIG_CONTENT = (
     f"    rev: {RUFF_PRECOMMIT_REV}\n"
     "    hooks:\n"
     "      - id: ruff\n"
+    "      - id: ruff-format\n"
 )
 
 RUFF_PYPROJECT_SECTION = "\n[tool.ruff]\nline-length = 88\n"
@@ -182,3 +188,24 @@ GITHUB_ACTIONS_CI_PYTEST_STEP = """\
       - name: Test
         run: uv run pytest
 """
+
+
+def dev_dependency_extras(extras: list[str]) -> list[str]:
+    """Return the common dev tools (ruff, mypy, pre-commit) for *extras*.
+
+    These are the dev tools every project type shares. Framework-specific
+    dev tools such as ``pytest`` (and its companions ``httpx`` or
+    ``pytest-django``) are added by each template's ``get_dev_dependencies()``
+    so that testing helpers stay out of the runtime dependency list.
+
+    Ruff is pinned to ``RUFF_VERSION`` so that the installed package, the
+    pre-commit hook revision, and the root project all agree on a version.
+    """
+    dev: list[str] = []
+    if "ruff" in extras:
+        dev.append(f"ruff>={RUFF_VERSION}")
+    if "mypy" in extras:
+        dev.append("mypy")
+    if "pre-commit" in extras:
+        dev.append("pre-commit")
+    return dev

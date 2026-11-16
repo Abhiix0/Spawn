@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -304,7 +303,7 @@ def test_backend_api_extras_reach_template():
 
 
 def test_backend_api_extras_in_dependencies():
-    """ruff, pytest, and httpx must appear in get_dependencies() when selected."""
+    """ruff, pytest, and httpx must appear in dev dependencies when selected."""
     from spawn.core.registry import instantiate_template
 
     config = ProjectConfig(
@@ -314,10 +313,16 @@ def test_backend_api_extras_in_dependencies():
         framework="fastapi",
         extras=["ruff", "pytest"],
     )
-    deps = instantiate_template(config).get_dependencies()
-    assert "ruff" in deps
-    assert "pytest" in deps
-    assert "httpx" in deps
+    template = instantiate_template(config)
+    dev = template.get_dev_dependencies()
+    assert any(d.startswith("ruff") for d in dev)
+    assert "pytest" in dev
+    assert "httpx" in dev
+    # Runtime deps stay clean of dev tools
+    runtime = template.get_dependencies()
+    assert "ruff" not in runtime
+    assert "pytest" not in runtime
+    assert "httpx" not in runtime
 
 
 def test_backend_api_no_extras_excludes_optional_deps():
@@ -331,12 +336,14 @@ def test_backend_api_no_extras_excludes_optional_deps():
         framework="fastapi",
         extras=[],
     )
-    deps = instantiate_template(config).get_dependencies()
+    template = instantiate_template(config)
+    deps = template.get_dependencies()
     assert "ruff" not in deps
     assert "pytest" not in deps
     assert "httpx" not in deps
     assert "fastapi" in deps
     assert "uvicorn[standard]" in deps
+    assert template.get_dev_dependencies() == []
 
 
 @patch("spawn.generators.project_generator.install_packages")
@@ -344,7 +351,7 @@ def test_backend_api_no_extras_excludes_optional_deps():
 def test_generator_passes_extras_to_install_packages(
     mock_uv, mock_install, tmp_path, monkeypatch
 ):
-    """ProjectGenerator must call install_packages with the full dependency list."""
+    """ProjectGenerator must install runtime deps and dev deps (dev=True)."""
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
         name="demo",
@@ -358,18 +365,26 @@ def test_generator_passes_extras_to_install_packages(
     with patch.object(BackendAPITemplate, "post_install"):
         ProjectGenerator().generate(config)
     assert mock_install.called
-    installed = mock_install.call_args[0][1]
-    assert "ruff" in installed
-    assert "pytest" in installed
-    assert "httpx" in installed
+    # Dev tools (pytest, ruff) are installed with dev=True, not as runtime deps
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    runtime_calls = [c for c in mock_install.call_args_list if not c.kwargs.get("dev")]
+    assert dev_calls, "dev dependencies must be installed with dev=True"
+    dev_pkgs = dev_calls[0].args[1]
+    assert "pytest" in dev_pkgs
+    assert "httpx" in dev_pkgs
+    assert any(p.startswith("ruff") for p in dev_pkgs)
+    # Runtime call must not include dev tools
+    assert runtime_calls, "runtime dependencies must be installed"
+    assert "pytest" not in runtime_calls[0].args[1]
+    assert not any(p.startswith("ruff") for p in runtime_calls[0].args[1])
 
 
 @patch("spawn.generators.project_generator.install_packages")
 @patch("spawn.generators.project_generator.initialize_uv")
-def test_argparse_template_never_calls_install_packages(
+def test_argparse_template_no_runtime_deps_only_dev(
     mock_uv, mock_install, tmp_path, monkeypatch
 ):
-    """argparse framework has no dependencies — install_packages must not be called."""
+    """argparse has no runtime deps; only the pytest dev dep may be installed."""
     monkeypatch.chdir(tmp_path)
     config = ProjectConfig(
         name="demo",
@@ -379,7 +394,13 @@ def test_argparse_template_never_calls_install_packages(
     )
     with _patch_post_install():
         ProjectGenerator().generate(config)
-    mock_install.assert_not_called()
+    # No runtime install (argparse ships no runtime deps)
+    runtime_calls = [c for c in mock_install.call_args_list if not c.kwargs.get("dev")]
+    assert not runtime_calls
+    # CLI projects always ship a working test setup, so pytest is a dev dep
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    assert dev_calls
+    assert "pytest" in dev_calls[0].args[1]
 
 
 @patch("spawn.generators.project_generator.install_packages")
@@ -554,11 +575,15 @@ def test_automation_extras_in_dependencies():
     config = ProjectConfig(
         name="demo", template="automation", use_git=False, extras=["ruff", "pytest"]
     )
-    deps = instantiate_template(config).get_dependencies()
-    assert "ruff" in deps
-    assert "pytest" in deps
-    assert "requests" in deps
-    assert "python-dotenv" in deps
+    template = instantiate_template(config)
+    dev = template.get_dev_dependencies()
+    assert any(d.startswith("ruff") for d in dev)
+    assert "pytest" in dev
+    runtime = template.get_dependencies()
+    assert "requests" in runtime
+    assert "python-dotenv" in runtime
+    assert "ruff" not in runtime
+    assert "pytest" not in runtime
 
 
 # ---------------------------------------------------------------------------
@@ -665,11 +690,15 @@ def test_chatbot_pydantic_ai_extras_in_dependencies():
         framework="pydantic-ai",
         extras=["ruff", "pytest"],
     )
-    deps = instantiate_template(config).get_dependencies()
-    assert "pydantic-ai" in deps
-    assert "python-dotenv" in deps
-    assert "ruff" in deps
-    assert "pytest" in deps
+    template = instantiate_template(config)
+    dev = template.get_dev_dependencies()
+    assert any(d.startswith("ruff") for d in dev)
+    assert "pytest" in dev
+    runtime = template.get_dependencies()
+    assert "pydantic-ai" in runtime
+    assert "python-dotenv" in runtime
+    assert "ruff" not in runtime
+    assert "pytest" not in runtime
 
 
 def test_chatbot_openai_sdk_extras_in_dependencies():
@@ -682,11 +711,14 @@ def test_chatbot_openai_sdk_extras_in_dependencies():
         framework="openai-sdk",
         extras=["pytest"],
     )
-    deps = instantiate_template(config).get_dependencies()
-    assert "openai" in deps
-    assert "python-dotenv" in deps
-    assert "pytest" in deps
-    assert "pydantic-ai" not in deps
+    template = instantiate_template(config)
+    dev = template.get_dev_dependencies()
+    assert "pytest" in dev
+    runtime = template.get_dependencies()
+    assert "openai" in runtime
+    assert "python-dotenv" in runtime
+    assert "pytest" not in runtime
+    assert "pydantic-ai" not in runtime
 
 
 # ---------------------------------------------------------------------------
@@ -851,7 +883,9 @@ def test_extras_mypy_installs_and_configures(
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config(extras=["mypy"]))
 
-    mock_install.assert_any_call((Path.cwd() / "demo").resolve(), ["mypy"], dev=True)
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    assert dev_calls
+    assert "mypy" in dev_calls[0].args[1]
     content = (tmp_path / "demo" / "pyproject.toml").read_text(encoding="utf-8")
     assert "[tool.mypy]" in content
 
@@ -865,9 +899,9 @@ def test_extras_precommit_installs_and_writes_config(
     with _patch_post_install():
         ProjectGenerator().generate(_cli_config(extras=["pre-commit"]))
 
-    mock_install.assert_any_call(
-        (Path.cwd() / "demo").resolve(), ["pre-commit"], dev=True
-    )
+    dev_calls = [c for c in mock_install.call_args_list if c.kwargs.get("dev")]
+    assert dev_calls
+    assert "pre-commit" in dev_calls[0].args[1]
     cfg_file = tmp_path / "demo" / ".pre-commit-config.yaml"
     assert cfg_file.is_file()
     assert RUFF_PRECOMMIT_REV in cfg_file.read_text(encoding="utf-8")
