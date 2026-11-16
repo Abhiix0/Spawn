@@ -237,12 +237,14 @@ def test_rag_no_framework_deps_by_default():
 
 def test_rag_pytest_extra():
     t = RAGTemplate(extras=["pytest"])
-    assert "pytest" in t.get_dependencies()
+    assert "pytest" in t.get_dev_dependencies()
+    assert "pytest" not in t.get_dependencies()
 
 
 def test_rag_ruff_extra():
     t = RAGTemplate(extras=["ruff"])
-    assert "ruff" in t.get_dependencies()
+    assert any(d.startswith("ruff") for d in t.get_dev_dependencies())
+    assert not any(d.startswith("ruff") for d in t.get_dependencies())
 
 
 # ─── Readme ──────────────────────────────────────────────────────────────

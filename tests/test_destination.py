@@ -250,7 +250,10 @@ def _make_junction(target: Path, link: Path) -> None:
         pytest.skip("Windows junctions only available on Windows")
     import _winapi
 
-    _winapi.CreateJunction(str(target), str(link))
+    try:
+        _winapi.CreateJunction(str(target), str(link))
+    except OSError as e:
+        pytest.skip(f"Windows junctions not supported or permitted: {e}")
 
 
 def test_generators_reject_existing_regular_dir_and_file(offline):

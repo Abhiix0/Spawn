@@ -10,6 +10,7 @@ from spawn.templates.data_project.ml.content import (
     GITHUB_ACTIONS_CI_RUFF_STEP,
     GITHUB_ACTIONS_CI_PYTEST_STEP,
 )
+from spawn.templates.shared_content import dev_dependency_extras
 
 FOLDERS = ["data", "models", "experiments", "src", "tests"]
 
@@ -50,12 +51,14 @@ class MLProjectTemplate(BaseTemplate):
         return make_readme().format_map(context)
 
     def get_dependencies(self) -> list[str]:
-        base = list(DEPENDENCIES)
+        return list(DEPENDENCIES)
+
+    def get_dev_dependencies(self) -> list[str]:
+        dev: list[str] = []
         if "pytest" in self.extras:
-            base.append("pytest")
-        if "ruff" in self.extras:
-            base.append("ruff")
-        return base
+            dev.append("pytest")
+        dev.extend(dev_dependency_extras(self.extras))
+        return dev
 
     def post_install(self, project_path: Path) -> None:
         from spawn.templates.data_project import _DataProjectPostInstallMixin

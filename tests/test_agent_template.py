@@ -206,12 +206,14 @@ def test_openai_agents_uses_openai_agents_package():
 
 def test_pytest_extra_adds_pytest():
     t = AgentTemplate(extras=["pytest"])
-    assert "pytest" in t.get_dependencies()
+    assert "pytest" in t.get_dev_dependencies()
+    assert "pytest" not in t.get_dependencies()
 
 
 def test_ruff_extra_adds_ruff():
     t = AgentTemplate(extras=["ruff"])
-    assert "ruff" in t.get_dependencies()
+    assert any(d.startswith("ruff") for d in t.get_dev_dependencies())
+    assert not any(d.startswith("ruff") for d in t.get_dependencies())
 
 
 # ─── next_steps ──────────────────────────────────────────────────────────

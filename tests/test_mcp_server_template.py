@@ -81,12 +81,14 @@ def test_mcp_default_dependencies():
 
 def test_mcp_pytest_extra():
     t = MCPServerTemplate(extras=["pytest"])
-    assert "pytest" in t.get_dependencies()
+    assert "pytest" in t.get_dev_dependencies()
+    assert "pytest" not in t.get_dependencies()
 
 
 def test_mcp_ruff_extra():
     t = MCPServerTemplate(extras=["ruff"])
-    assert "ruff" in t.get_dependencies()
+    assert any(d.startswith("ruff") for d in t.get_dev_dependencies())
+    assert not any(d.startswith("ruff") for d in t.get_dependencies())
 
 
 # ─── Readme ──────────────────────────────────────────────────────────────

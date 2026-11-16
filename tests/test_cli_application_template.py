@@ -73,15 +73,20 @@ def test_cli_argparse_no_dependencies():
 
 def test_cli_argparse_with_pytest_extra():
     t = CLITemplate(framework="argparse", extras=["pytest"])
-    assert "pytest" in t.get_dependencies()
+    assert "pytest" in t.get_dev_dependencies()
+    assert "pytest" not in t.get_dependencies()
 
 
 def test_cli_typer_with_all_extras():
     t = CLITemplate(framework="typer", extras=["ruff", "pytest"])
-    deps = t.get_dependencies()
-    assert "typer" in deps
-    assert "ruff" in deps
-    assert "pytest" in deps
+    runtime = t.get_dependencies()
+    assert "typer" in runtime
+    dev = t.get_dev_dependencies()
+    assert "pytest" in dev
+    assert any(d.startswith("ruff") for d in dev)
+    # Dev tools must not leak into runtime deps
+    assert "pytest" not in runtime
+    assert not any(d.startswith("ruff") for d in runtime)
 
 
 def test_cli_readme_content_contains_project_name():
@@ -152,13 +157,17 @@ def test_cli_post_install_adds_ruff_section(tmp_path):
     assert "line-length = 88" in content
 
 
-def test_cli_post_install_no_extras_does_not_modify_pyproject(tmp_path):
+def test_cli_post_install_no_extras_always_writes_pytest_section(tmp_path):
+    """post_install always writes [tool.pytest.ini_options] so pytest works
+    out of the box even without the pytest extra selected."""
     t = CLITemplate(framework="typer", extras=[])
     original = '[project]\nname = "demo"\n'
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text(original, encoding="utf-8")
     t.post_install(tmp_path)
-    assert pyproject.read_text(encoding="utf-8") == original
+    content = pyproject.read_text(encoding="utf-8")
+    assert "[tool.pytest.ini_options]" in content
+    assert 'testpaths = ["tests"]' in content
 
 
 def test_cli_post_install_github_actions_creates_ci_yml(tmp_path):

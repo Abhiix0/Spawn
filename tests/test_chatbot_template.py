@@ -197,18 +197,23 @@ def test_all_variants_include_python_dotenv():
 
 def test_extras_add_deps():
     t = ChatbotTemplate(extras=["pytest", "ruff", "rich"])
-    deps = t.get_dependencies()
-    assert "pytest" in deps
-    assert "ruff" in deps
-    assert "rich" in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest" in dev
+    assert any(d.startswith("ruff") for d in dev)
+    # rich is a runtime dep, not a dev tool
+    runtime = t.get_dependencies()
+    assert "rich" in runtime
+    assert "pytest" not in runtime
+    assert not any(d.startswith("ruff") for d in runtime)
 
 
 def test_no_extras_excludes_optional():
     t = ChatbotTemplate()
     deps = t.get_dependencies()
     assert "pytest" not in deps
-    assert "ruff" not in deps
+    assert not any(d.startswith("ruff") for d in deps)
     assert "rich" not in deps
+    assert t.get_dev_dependencies() == []
 
 
 # ─── Rich extra ───────────────────────────────────────────────────────────

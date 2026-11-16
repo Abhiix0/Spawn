@@ -208,6 +208,8 @@ def answer_question(question: str) -> str:
 # ─── Main ─────────────────────────────────────────────────────────────────
 
 MAIN_CONTENT = """\
+import os
+
 from src.config.settings import configure_llm, load_env
 from src.ingestion.ingest import ingest_documents
 from src.knowledge.index import index_exists
@@ -217,7 +219,8 @@ from src.retrieval.retrieve import answer_question
 def main() -> None:
     load_env()
     configure_llm()
-    print("{project_name} RAG System")
+    app_name = os.getenv("APP_NAME", "{project_name}")
+    print(f"{{app_name}} RAG System")
     print("-" * 40)
     if not index_exists():
         print("No index found. Running ingestion...\\n")

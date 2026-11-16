@@ -2,17 +2,22 @@ INIT_CONTENT = ""
 
 MAIN_CONTENT = """\
 import logging
+import os
+
+from dotenv import load_dotenv
 
 from src.utils.logger import setup_logger
 from src.workflows.report_workflow import run_report_workflow
 
 
 def main() -> None:
+    load_dotenv()
     setup_logger()
+    app_name = os.getenv("APP_NAME", "{project_name}")
     logger = logging.getLogger(__name__)
-    logger.info("Starting {project_name}")
+    logger.info("Starting %s", app_name)
     run_report_workflow()
-    logger.info("{project_name} finished")
+    logger.info("%s finished", app_name)
 
 
 if __name__ == "__main__":

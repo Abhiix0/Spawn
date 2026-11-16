@@ -32,6 +32,13 @@ def show_success(
     table.add_row("[bold cyan]Virtual Env[/bold cyan]", venv_status)
 
     formatted = [step.format(project_name=project_name) for step in next_steps]
+    # When uv is not used, strip the "uv run " prefix so printed commands
+    # actually work in the generated project (no venv, no uv).
+    if not use_uv:
+        formatted = [
+            step[len("uv run ") :] if step.startswith("uv run ") else step
+            for step in formatted
+        ]
     next_steps_content = "\n".join(formatted)
 
     next_steps_text = Text()

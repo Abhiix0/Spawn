@@ -29,6 +29,7 @@ from spawn.templates.backend_api.content import (
     DJANGO_HEALTH_VIEWS_CONTENT,
     DJANGO_HEALTH_URLS_CONTENT,
     DJANGO_HEALTH_TESTS_CONTENT,
+    DJANGO_CONFTEST_CONTENT,
     DJANGO_README_CONTENT,
     DJANGO_AGENTS_MD_CONTENT,
     # Docker
@@ -42,6 +43,7 @@ from spawn.templates.backend_api.content import (
     GITHUB_ACTIONS_CI_PYTEST_STEP,
     GITHUB_ACTIONS_CI_DJANGO_TEST_STEP,
 )
+from spawn.templates.shared_content import dev_dependency_extras
 
 # ---------------------------------------------------------------------------
 # Framework definitions
@@ -117,6 +119,7 @@ DJANGO_FILES = [
     ("apps/health/views.py", DJANGO_HEALTH_VIEWS_CONTENT),
     ("apps/health/urls.py", DJANGO_HEALTH_URLS_CONTENT),
     ("apps/health/tests.py", DJANGO_HEALTH_TESTS_CONTENT),
+    ("conftest.py", DJANGO_CONFTEST_CONTENT),
 ]
 
 DJANGO_DEPS = [
@@ -182,19 +185,21 @@ class BackendAPITemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "flask":
-            base_deps = list(FLASK_DEPS)
-        elif self.framework == "django":
-            base_deps = list(DJANGO_DEPS)
-        else:
-            base_deps = list(FASTAPI_DEPS)
+            return list(FLASK_DEPS)
+        if self.framework == "django":
+            return list(DJANGO_DEPS)
+        return list(FASTAPI_DEPS)
 
+    def get_dev_dependencies(self) -> list[str]:
+        dev: list[str] = []
         if "pytest" in self.extras:
-            base_deps += ["pytest", "httpx"]
-
-        if "ruff" in self.extras:
-            base_deps += ["ruff"]
-
-        return base_deps
+            dev.append("pytest")
+            if self.framework == "django":
+                dev.append("pytest-django")
+            else:
+                dev.append("httpx")
+        dev.extend(dev_dependency_extras(self.extras))
+        return dev
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"
@@ -202,19 +207,40 @@ class BackendAPITemplate(BaseTemplate):
         additions = ""
 
         if "pytest" in self.extras:
-            additions += (
-                "\n[tool.pytest.ini_options]\n"
-                "filterwarnings = [\n"
-                '    "ignore::DeprecationWarning:starlette",\n'
-                '    "ignore::DeprecationWarning:httpx",\n'
-                "]\n"
-            )
+            if self.framework == "django":
+                additions += (
+                    "\n[tool.pytest.ini_options]\n"
+                    'DJANGO_SETTINGS_MODULE = "config.settings"\n'
+                )
+            else:
+                additions += (
+                    "\n[tool.pytest.ini_options]\n"
+                    "filterwarnings = [\n"
+                    '    "ignore::DeprecationWarning:starlette",\n'
+                    '    "ignore::DeprecationWarning:httpx",\n'
+                    "]\n"
+                )
 
         if "ruff" in self.extras:
             additions += "\n[tool.ruff]\nline-length = 88\n"
 
         if additions:
             pyproject.write_text(current + additions, encoding="utf-8")
+
+        # Make manage.py executable on Unix-like systems so users can run
+        # ./manage.py directly in addition to `python manage.py`.
+        if self.framework == "django":
+            manage_py = project_path / "manage.py"
+            if manage_py.exists():
+                try:
+                    import stat
+
+                    current_mode = manage_py.stat().st_mode
+                    manage_py.chmod(
+                        current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+                    )
+                except OSError:
+                    pass  # Windows does not support chmod; silently skip
 
         if "docker" in self.extras:
             if self.framework == "flask":

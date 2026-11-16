@@ -49,13 +49,16 @@ def calculate(expression: str) -> str:
 """
 
 MAIN_CONTENT = """\
+import os
+
 from src.agent.run import run_agent
 from src.config.settings import load_env
 
 
 def main() -> None:
     load_env()
-    print("{project_name} Agent ready. Type 'quit' to exit.\\n")
+    app_name = os.getenv("APP_NAME", "{project_name}")
+    print(f"{{app_name}} Agent ready. Type 'quit' to exit.\\n")
     while True:
         user_input = input("You: ").strip()
         if not user_input:

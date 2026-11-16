@@ -105,9 +105,12 @@ def test_data_analysis_dependencies():
 
 def test_data_analysis_extras():
     t = DataAnalysisTemplate(extras=["pytest", "ruff"])
-    deps = t.get_dependencies()
-    assert "pytest" in deps
-    assert "ruff" in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest" in dev
+    assert any(d.startswith("ruff") for d in dev)
+    runtime = t.get_dependencies()
+    assert "pytest" not in runtime
+    assert not any(d.startswith("ruff") for d in runtime)
 
 
 def test_data_analysis_readme():

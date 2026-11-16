@@ -27,6 +27,7 @@ from spawn.templates.cli_application.content import (
     CLICK_INTERACTIVE_README_CONTENT,
     ARGPARSE_INTERACTIVE_README_CONTENT,
 )
+from spawn.templates.shared_content import dev_dependency_extras
 
 # ---------------------------------------------------------------------------
 # Folder structures
@@ -180,25 +181,30 @@ class CLITemplate(BaseTemplate):
 
     def get_dependencies(self) -> list[str]:
         if self.framework == "click":
-            base: list[str] = ["click"]
-        elif self.framework == "argparse":
-            base = []
-        else:
-            base = ["typer"]
+            return ["click"]
+        if self.framework == "argparse":
+            return []
+        return ["typer"]
 
-        if "pytest" in self.extras:
-            base = base + ["pytest"]
-        if "ruff" in self.extras:
-            base = base + ["ruff"]
-
-        return base
+    def get_dev_dependencies(self) -> list[str]:
+        # CLI projects always ship a working test setup, so pytest is always
+        # a dev dependency — regardless of whether the pytest extra was
+        # selected. This keeps it out of the runtime dependency list while
+        # ensuring `uv run pytest` works out of the box.
+        dev: list[str] = ["pytest"]
+        dev.extend(dev_dependency_extras(self.extras))
+        return dev
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"
         current = pyproject.read_text(encoding="utf-8")
         additions = ""
 
-        if "pytest" in self.extras:
+        # Always write the pytest config so `uv run pytest` works out of the
+        # box. pytest itself is installed as a dev dependency by the generator
+        # (see get_dev_dependencies) rather than here, keeping it out of the
+        # runtime dependency list.
+        if pyproject.exists():
             additions += '\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
 
         if "ruff" in self.extras:

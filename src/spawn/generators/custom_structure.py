@@ -23,7 +23,7 @@ from spawn.generators.destination import (
     safe_join,
 )
 from spawn.generators.project_files import write_mypy_ini
-from spawn.templates.shared_content import PRECOMMIT_CONFIG_CONTENT
+from spawn.templates.shared_content import PRECOMMIT_CONFIG_CONTENT, RUFF_VERSION
 from spawn.utils.console import console
 from spawn.utils.git import initialize_git
 from spawn.utils.uv import initialize_uv, install_packages
@@ -502,7 +502,7 @@ class CustomStructureGenerator:
         """Install dev tools and generate their config files."""
         dev_deps: list[str] = []
         if "ruff" in dev_setup:
-            dev_deps.append("ruff")
+            dev_deps.append(f"ruff>={RUFF_VERSION}")
         if "pytest" in dev_setup:
             dev_deps.append("pytest")
         if "precommit" in dev_setup:

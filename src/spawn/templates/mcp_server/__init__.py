@@ -12,6 +12,7 @@ from spawn.templates.mcp_server.content import (
     make_readme,
     make_agents_md,
 )
+from spawn.templates.shared_content import dev_dependency_extras
 
 MCP_SERVER_FOLDERS = [
     "src",
@@ -51,12 +52,14 @@ class MCPServerTemplate(BaseTemplate):
         return make_agents_md().format_map(context)
 
     def get_dependencies(self) -> list[str]:
-        base = ["mcp"]
+        return ["mcp"]
+
+    def get_dev_dependencies(self) -> list[str]:
+        dev: list[str] = []
         if "pytest" in self.extras:
-            base.append("pytest")
-        if "ruff" in self.extras:
-            base.append("ruff")
-        return base
+            dev.append("pytest")
+        dev.extend(dev_dependency_extras(self.extras))
+        return dev
 
     def post_install(self, project_path: Path) -> None:
         pyproject = project_path / "pyproject.toml"

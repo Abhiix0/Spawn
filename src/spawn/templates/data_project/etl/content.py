@@ -29,6 +29,8 @@ load_dotenv()
 
 
 def run() -> None:
+    app_name = os.getenv("APP_NAME", "{project_name}")
+    print(f"Running {{app_name}} pipeline...")
     input_path = os.getenv("INPUT_PATH", "data/raw.csv")
     output_path = os.getenv("OUTPUT_PATH", "data/cleaned.csv")
 

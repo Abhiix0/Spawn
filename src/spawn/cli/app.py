@@ -302,7 +302,9 @@ def doctor(
         from spawn.utils.doctor import ProjectHealthChecker, run_health_check
 
         if not fix:
-            run_health_check(project_path)
+            exit_code = run_health_check(project_path)
+            if exit_code != 0:
+                raise typer.Exit(exit_code)
             return
 
         from spawn.utils.doctor_fix import apply_fixes, plan_fixes, tool_hints

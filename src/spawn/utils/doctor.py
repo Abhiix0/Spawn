@@ -591,8 +591,16 @@ class ProjectHealthChecker:
         console.print()
 
 
-def run_health_check(project_path: Path | None = None) -> None:
-    """CLI entry point for `spawn doctor`."""
+def run_health_check(project_path: Path | None = None) -> int:
+    """CLI entry point for `spawn doctor`.
+
+    Returns 0 if health check passes (score >= 50%, Fair/Good/Excellent),
+    or 1 if the project score is in 'Needs Attention' (< 50%).
+    """
     checker = ProjectHealthChecker(project_path)
     checks = checker.run_all_checks()
     checker.format_report(checks)
+    score, max_score = checker.calculate_score(checks)
+    pct = int((score / max_score * 100) if max_score > 0 else 0)
+    _, label, _ = checker.get_health_rating(pct)
+    return 1 if label == "Needs Attention" else 0

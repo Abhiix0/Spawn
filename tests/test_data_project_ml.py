@@ -111,9 +111,12 @@ def test_ml_dependencies():
 
 def test_ml_extras():
     t = MLProjectTemplate(extras=["pytest", "ruff"])
-    deps = t.get_dependencies()
-    assert "pytest" in deps
-    assert "ruff" in deps
+    dev = t.get_dev_dependencies()
+    assert "pytest" in dev
+    assert any(d.startswith("ruff") for d in dev)
+    runtime = t.get_dependencies()
+    assert "pytest" not in runtime
+    assert not any(d.startswith("ruff") for d in runtime)
 
 
 def test_ml_readme():

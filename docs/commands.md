@@ -172,7 +172,7 @@ spawn create --config spawn.json
 | `data` | Data Project | — | — | — | Data Analysis, Dashboard, ETL Pipeline, Machine Learning | ruff, pytest, github-actions, pre-commit, mypy |
 | `mcp` | MCP Server | — | — | — | — | ruff, pytest, github-actions, pre-commit, mypy |
 
-> `openai-agents` only supports `openai` and `openrouter` as providers — the list is filtered per framework.
+> Provider options are filtered per framework: `openai-sdk` supports `openai`, `gemini`, `openrouter`, and `groq` (`anthropic` and `ollama` are excluded). `openai-agents` supports `openai` and `openrouter`.
 
 > Custom Structure is interactive-only. It is not available via `--template`.
 
@@ -257,10 +257,10 @@ Run: `uv run python -m src.main`
 
 ? Choose a provider (Use arrow keys)
  » openai
-   anthropic
+   anthropic   ← pydantic-ai, litellm
    gemini
    openrouter
-   ollama
+   ollama      ← pydantic-ai, litellm
    groq
 
 ? Select extras (space to toggle, enter to confirm)
@@ -444,8 +444,8 @@ Scores the current directory (or a given path) for project health. All checks ar
 
 - **Arguments:** `[PATH]`, default `.`.
 - **Options:** `--fix`, `--dry-run`, `--yes` / `-y`, `--license TEXT`; all off/unset by default, and the last three only apply with `--fix`.
-- **Success:** prints the health report (score out of 135, rating, recommendations), exit code 0. A low score is not a failure.
-- **Failure:** a path that does not exist or is not a directory prints `❌ message`, exit code 1. Declining the `--fix` confirmation exits 130.
+- **Success:** prints the health report (score out of 135, rating, recommendations). Exits code 0 when the project health rating is Fair, Good, or Excellent (≥ 50%).
+- **Failure:** a path that does not exist or is not a directory prints `❌ message`, exit code 1. A project whose health rating is 'Needs Attention' (< 50%) exits code 1 (providing an automated gate for CI workflows). Declining the `--fix` confirmation exits 130.
 - **Filesystem:** plain `spawn doctor` is read-only. `spawn doctor --fix` only creates missing files and config; it never overwrites and never installs packages. `--fix --dry-run` writes nothing.
 
 ```bash
@@ -513,10 +513,10 @@ spawn doctor --fix --license mit
 
 | Score | Label |
 |---|---|
-| ≥ 80% | Excellent |
-| 60–79% | Good |
-| 40–59% | Fair |
-| < 40% | Needs Attention |
+| ≥ 90% | Excellent |
+| 70–89% | Good |
+| 50–69% | Fair |
+| < 50% | Needs Attention |
 
 ---
 
@@ -594,7 +594,7 @@ spawn --version
 | Code | Meaning |
 |---|---|
 | 0 | Success (including a valid `--dry-run`, and GitHub publishing skipped) |
-| 1 | Invalid input or config (bad name, option value, config file, unknown template; `spawn doctor` bad path/flags) |
+| 1 | Invalid input or config (bad name, option value, config file, unknown template; `spawn doctor` bad path/flags, or project score in 'Needs Attention' [< 50%]) |
 | 2 | CLI usage error (unknown option, reported by Click) |
 | 3 | Filesystem error (directory already exists, OS error while writing) |
 | 4 | Toolchain error (`git` or `uv` missing or failed) |

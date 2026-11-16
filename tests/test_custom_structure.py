@@ -9,6 +9,7 @@ from spawn.generators.custom_structure import (
     detect_format,
     parse_structure,
 )
+from spawn.templates.shared_content import RUFF_VERSION
 
 # ─── detect_format ────────────────────────────────────────────────────────
 
@@ -552,7 +553,7 @@ def test_install_packages_called_with_dev_flag(tmp_path, monkeypatch):
         )
     mock_install.assert_called_once_with(
         (Path.cwd() / "dev-project").resolve(),
-        ["ruff", "pytest", "pre-commit"],
+        [f"ruff>={RUFF_VERSION}", "pytest", "pre-commit"],
         dev=True,
     )
 

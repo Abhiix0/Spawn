@@ -395,20 +395,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
         run: uv sync
 """
 
 CLI_GITHUB_ACTIONS_CI_RUFF_STEP = """\
-      - name: Run Ruff
+      - name: Lint
         run: uv run ruff check .
 """
 
 CLI_GITHUB_ACTIONS_CI_PYTEST_STEP = """\
-      - name: Run Pytest
+      - name: Test
         run: uv run pytest
 """
 

@@ -216,10 +216,32 @@ def test_doctor_path_is_file_not_directory(tmp_path):
 
 def test_doctor_without_flags_unchanged(tmp_path):
     result = runner.invoke(app, ["doctor", str(tmp_path)])
-    assert result.exit_code == 0
+    # Empty directory scores 0% ("Needs Attention"), exiting 1 to signal CI failure
+    assert result.exit_code == 1
     assert "Project Health Report" in result.output
     assert "→" not in result.output
     assert "Planned fixes" not in result.output
+
+
+def test_doctor_healthy_project_exits_0(tmp_path):
+    (tmp_path / "README.md").write_text("# Demo", encoding="utf-8")
+    (tmp_path / "AGENTS.md").write_text("# Agents", encoding="utf-8")
+    (tmp_path / "LICENSE").write_text("MIT", encoding="utf-8")
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".gitignore").write_text("*.pyc", encoding="utf-8")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_smoke.py").write_text(
+        "def test_ok(): pass", encoding="utf-8"
+    )
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nversion = "0.1.0"\n'
+        '[tool.pytest.ini_options]\ntestpaths = ["tests"]\n'
+        "[tool.ruff]\nline-length = 88\n",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["doctor", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "Project Health Report" in result.output
 
 
 def test_doctor_dry_run_alone_exits_1(tmp_path):

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import signal
+import sys
 from pathlib import Path
 
 from spawn.core.exceptions import FilesystemError, TemplateError
@@ -25,17 +29,18 @@ from spawn.utils.console import console
 from spawn.utils.git import get_git_user_name, initialize_git
 from spawn.utils.uv import initialize_uv, install_packages
 
+# Signals we want to handle for cleanup.  SIGHUP is not available on Windows;
+# we guard with getattr so the module still imports cleanly there.
+_CLEANUP_SIGNALS: list[signal.Signals] = [signal.SIGTERM]
+if hasattr(signal, "SIGHUP"):
+    _CLEANUP_SIGNALS.append(getattr(signal, "SIGHUP"))  # type: ignore[arg-type]
+
 
 class ProjectGenerator:
     def _apply_quality_extras(self, project_path: Path, extras: list[str]) -> None:
-        dev_deps = []
-        if "mypy" in extras:
-            dev_deps.append("mypy")
-        if "pre-commit" in extras:
-            dev_deps.append("pre-commit")
-        if dev_deps:
-            console.print("[yellow]Installing dev tools...[/yellow]")
-            install_packages(project_path, dev_deps, dev=True)
+        # Dev tool *packages* (mypy, pre-commit, ruff, pytest, ...) are installed
+        # from the template's get_dev_dependencies() in generate(); this method
+        # only writes the tool configuration files that go with those extras.
         if "mypy" in extras:
             add_mypy_config(project_path)
         if "pre-commit" in extras:
@@ -62,7 +67,33 @@ class ProjectGenerator:
 
         created = False
         token = None
+        old_handlers: dict[signal.Signals, object] = {}
+
+        def _signal_cleanup(signum: int, frame: object) -> None:
+            """Clean up the partial project and exit with a non-zero status."""
+            if created:
+                cleanup_created(project_path, token=token)
+            # Restore the original handler before re-raising so that callers
+            # higher up the stack (e.g. shells) see the correct signal.
+            sig = signal.Signals(signum)
+            prev = old_handlers.get(sig, signal.SIG_DFL)
+            signal.signal(sig, prev)  # type: ignore[arg-type]
+            # Exit 128 + signum — standard Unix convention for signal termination.
+            sys.exit(128 + signum)
+
         try:
+            # Install cleanup handlers for SIGTERM (and SIGHUP on Unix).
+            # We do this after assert_available but before any filesystem work
+            # so the window where a signal could leave debris is as small as
+            # possible.
+            for sig in _CLEANUP_SIGNALS:
+                try:
+                    old_handlers[sig] = signal.signal(sig, _signal_cleanup)
+                except (OSError, ValueError):
+                    # signal() can fail in non-main threads or on platforms
+                    # that don't support the signal; ignore and continue.
+                    pass
+
             project_path.mkdir()
             created = True
             token = record_ownership(project_path)
@@ -94,19 +125,12 @@ class ProjectGenerator:
                 write_license(project_path, config.license, holder)
 
             gitignore_path = project_path / ".gitignore"
-
-            gitignore_path.write_text(
-                GITIGNORE_CONTENT,
-                encoding="utf-8",
-            )
+            gitignore_path.write_text(GITIGNORE_CONTENT, encoding="utf-8")
 
             if config.use_git:
                 console.print("[yellow]Initializing Git...[/yellow]")
                 initialize_git(project_path)
 
-            # Without uv there is no pyproject.toml, which post_install and the
-            # quality extras rely on (generated Dockerfiles and CI workflows also
-            # run `uv sync` against it). Only the pre-commit config is file-only.
             if not config.use_uv:
                 self._apply_file_only_extras(project_path, config.extras)
             else:
@@ -116,6 +140,11 @@ class ProjectGenerator:
                 if deps:
                     console.print("[yellow]Installing dependencies...[/yellow]")
                     install_packages(project_path, deps)
+
+                dev_deps = template.get_dev_dependencies()
+                if dev_deps:
+                    console.print("[yellow]Installing dev tools...[/yellow]")
+                    install_packages(project_path, dev_deps, dev=True)
 
                 template.post_install(project_path)
                 self._apply_quality_extras(project_path, config.extras)
@@ -131,5 +160,13 @@ class ProjectGenerator:
             if created:
                 cleanup_created(project_path, token=token)
             raise
+
+        finally:
+            # Always restore the previous signal handlers.
+            for sig, prev in old_handlers.items():
+                try:
+                    signal.signal(sig, prev)  # type: ignore[arg-type]
+                except (OSError, ValueError):
+                    pass
 
         return project_path

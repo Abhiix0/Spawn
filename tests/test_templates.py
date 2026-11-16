@@ -46,10 +46,15 @@ def test_backend_api_base_dependencies():
 
 def test_backend_api_extras_add_deps():
     template = BackendAPITemplate(extras=["ruff", "pytest"])
-    deps = template.get_dependencies()
-    assert "ruff" in deps
-    assert "pytest" in deps
-    assert "httpx" in deps
+    dev = template.get_dev_dependencies()
+    assert any(d.startswith("ruff") for d in dev)
+    assert "pytest" in dev
+    assert "httpx" in dev
+    # Runtime deps must stay free of dev tools
+    runtime = template.get_dependencies()
+    assert "ruff" not in runtime
+    assert "pytest" not in runtime
+    assert "httpx" not in runtime
 
 
 def test_backend_api_no_extras_excludes_optional_deps():
@@ -58,6 +63,7 @@ def test_backend_api_no_extras_excludes_optional_deps():
     assert "ruff" not in deps
     assert "pytest" not in deps
     assert "httpx" not in deps
+    assert template.get_dev_dependencies() == []
 
 
 def test_backend_api_readme_content_contains_project_name():

@@ -120,16 +120,19 @@ def _doctor(path):
 
 def test_doctor_on_generated_project(archetype):
     _, root = archetype
-    assert _doctor(root) == 0
+    # Bare offline archetypes lack git repo, CI, etc. and score < 50% (Needs Attention -> exit 1)
+    assert _doctor(root) == 1
 
 
 def test_doctor_on_static_fixtures():
+    # Broken / partial repos score < 50% (Needs Attention -> exit 1)
     for name in ("non_spawn_python_repo", "broken_meta", "meta_unknown_intent"):
-        assert _doctor(STATIC / name) == 0
+        assert _doctor(STATIC / name) == 1
 
 
 def test_doctor_on_empty_dir(tmp_path):
-    assert _doctor(tmp_path) == 0
+    # Empty directory scores 0% (Needs Attention -> exit 1)
+    assert _doctor(tmp_path) == 1
 
 
 def test_doctor_on_nonexistent_path(tmp_path):

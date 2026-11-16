@@ -113,7 +113,23 @@ def test_with_uv_all_extras_still_applied(offline, slug):
     dev_calls = [
         c for c in offline["install_packages"].call_args_list if c.kwargs.get("dev")
     ]
-    assert dev_calls[0].args[1] == ["mypy", "pre-commit"]
+    assert dev_calls
+    all_dev = dev_calls[0].args[1]
+    # All dev tools selected via extras land in the dev group, not runtime deps
+    assert "pytest" in all_dev
+    assert "mypy" in all_dev
+    assert "pre-commit" in all_dev
+    assert any(p.startswith("ruff") for p in all_dev)
+    # Runtime deps must not be polluted by dev tools
+    runtime_calls = [
+        c for c in offline["install_packages"].call_args_list if not c.kwargs.get("dev")
+    ]
+    if runtime_calls:
+        runtime_pkgs = runtime_calls[0].args[1]
+        assert "pytest" not in runtime_pkgs
+        assert not any(p.startswith("ruff") for p in runtime_pkgs)
+        assert "mypy" not in runtime_pkgs
+        assert "pre-commit" not in runtime_pkgs
     if slug == "backend-api":
         assert (project / "Dockerfile").is_file()
         assert (project / ".dockerignore").is_file()

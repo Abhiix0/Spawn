@@ -39,7 +39,11 @@ def install_packages(
     if not packages:
         return
 
-    cmd = ["uv", "add"] + (["--dev"] if dev else []) + packages
+    # Use "--" to separate uv flags from package arguments so that any
+    # package name or version specifier starting with "-" (e.g. an
+    # option-like value such as "--index-url=...") is treated as a
+    # positional argument by uv rather than as a flag.
+    cmd = ["uv", "add"] + (["--dev"] if dev else []) + ["--"] + packages
 
     try:
         subprocess.run(
