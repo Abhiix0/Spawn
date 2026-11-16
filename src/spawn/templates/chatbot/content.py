@@ -370,13 +370,16 @@ def get_llm_response(messages: list[dict], system_prompt: str) -> str:
 # ─── Main content ─────────────────────────────────────────────────────────
 
 MAIN_CONTENT_NO_RICH = """\
+import os
+
 from src.chatbot.chat import get_response
 from src.config.settings import load_env
 
 
 def main() -> None:
     load_env()
-    print("Chatbot ready. Type 'quit' to exit.\\n")
+    app_name = os.getenv("APP_NAME", "{project_name}")
+    print(f"{{app_name}} ready. Type 'quit' to exit.\\n")
     while True:
         user_input = input("You: ").strip()
         if not user_input:
@@ -392,6 +395,8 @@ if __name__ == "__main__":
 """
 
 MAIN_CONTENT_RICH = """\
+import os
+
 from rich.console import Console
 from rich.panel import Panel
 
@@ -403,7 +408,8 @@ console = Console()
 
 def main() -> None:
     load_env()
-    console.print(Panel.fit("[bold cyan]Chatbot[/bold cyan] — type [dim]quit[/dim] to exit"))
+    app_name = os.getenv("APP_NAME", "{project_name}")
+    console.print(Panel.fit(f"[bold cyan]{{app_name}}[/bold cyan] — type [dim]quit[/dim] to exit"))
     while True:
         user_input = console.input("[bold yellow]You:[/bold yellow] ").strip()
         if not user_input:

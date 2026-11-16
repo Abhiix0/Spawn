@@ -35,7 +35,10 @@ def test_no_stale_exit_code_text():
 
 def test_no_load_project_references():
     files = [*(ROOT / "docs").rglob("*.md")]
-    files += [ROOT / n for n in ("README.md", "CLAUDE.md", "CONTRIBUTING.md")]
+    for n in ("README.md", "CLAUDE.md", "CONTRIBUTING.md"):
+        p = ROOT / n
+        if p.is_file():
+            files.append(p)
     offenders = [
         str(f.relative_to(ROOT))
         for f in files
