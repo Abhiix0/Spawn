@@ -3,6 +3,24 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.1.2  2026-11-23
+
+### Security
+
+- Reject option-like project names, validate config values strictly, and pass dependency arguments to uv safely.
+- Reject symlinks and junctions in doctor repair paths; signal interruption restores handlers and cleans only the generated directory.
+
+### Fixed
+
+- Correct backend Dockerfiles, Django test setup, and default CLI testing configuration in generated projects.
+- Make `spawn doctor` return non-zero for unhealthy or invalid projects, with matching command documentation.
+
+### Changed
+
+- Keep Ruff configuration consistent across generated templates and place development tools in the development dependency group.
+- Update packaging metadata and source distribution contents for a complete release build.
+- Clarify which generated extras are skipped when `--no-uv` is selected.
+
 ## v1.1.1 — 2026
 
 ### Fixed
