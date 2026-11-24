@@ -379,6 +379,8 @@ from_dict(d: dict)  -> InspectionReport     # raises ReportDecodeError
 
 `to_json()` returns UTF-8 JSON ending with `\n`. Byte-identical for equal
 reports with the same `generated_at`. `ensure_ascii=False`.
+Filesystem names containing surrogate escapes are emitted with U+FFFD for
+each unrepresentable code point. Normal Unicode filenames are unchanged.
 
 ### `target` serialisation — portable root label
 

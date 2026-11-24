@@ -79,7 +79,9 @@ def validate_inspection_root(root: str | Path | InspectionTarget) -> InspectionT
         else:
             raise OSError("Cannot anchor this repository filesystem")
     except (OSError, RuntimeError, ValueError, TypeError) as exc:
-        raise InspectionError(f"Cannot access inspection root {root!s}: {exc}") from exc
+        raise InspectionError(
+            "Cannot access inspection root. Check that the path names a readable directory."
+        ) from exc
     return InspectionTarget(path=resolved)
 
 
@@ -191,7 +193,7 @@ def discover_repository(
             try:
                 root_fd = stack.enter_context(open_directory(target.path))
             except OSError as exc:
-                raise InspectionError(f"Cannot open inspection root: {exc}") from exc
+                raise InspectionError("Cannot open inspection root.") from exc
         while pending:
             parts = pending.pop()
             rel_dir = "/".join(parts)
@@ -240,9 +242,7 @@ def discover_repository(
                     pending.extend(reversed(child_directories))
             except OSError as exc:
                 if not parts:
-                    raise InspectionError(
-                        f"Cannot scan inspection root: {exc}"
-                    ) from exc
+                    raise InspectionError("Cannot scan inspection root.") from exc
                 skipped.append(rel_dir)
                 diagnostics.append(_diagnostic(exc, rel_dir))
     return DiscoveryInventory(

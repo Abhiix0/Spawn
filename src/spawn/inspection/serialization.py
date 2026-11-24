@@ -24,6 +24,7 @@ spawn.generators, spawn.templates, or spawn.core.registry.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +50,7 @@ from spawn.core.project import ProjectMetadata
 # ---------------------------------------------------------------------------
 
 _SUPPORTED_MAJOR: int = int(SCHEMA_VERSION.split(".")[0])
+_SURROGATES = re.compile(r"[\ud800-\udfff]")
 
 
 class ReportDecodeError(InspectionError):
@@ -99,7 +101,10 @@ def to_json(report: InspectionReport, *, indent: int = 2) -> str:
     str
         A UTF-8 JSON string ending with a newline.
     """
-    return json.dumps(report.to_dict(), indent=indent, ensure_ascii=False) + "\n"
+    text = json.dumps(report.to_dict(), indent=indent, ensure_ascii=False)
+    # Keep ordinary Unicode verbatim. Filesystem surrogate escapes have no
+    # Unicode scalar value and cannot be emitted in interoperable UTF-8 JSON.
+    return _SURROGATES.sub("\ufffd", text) + "\n"
 
 
 def from_dict(d: dict[str, Any]) -> InspectionReport:
