@@ -12,7 +12,7 @@ from spawn.inspection.entry_points import (
     PythonEntryPoints,
     discover_python_entry_points,
 )
-from spawn.inspection.models import InspectionReport
+from spawn.inspection.models import DiscoveryInventory, InspectionReport
 from spawn.inspection.orchestrator import ANALYZERS, _inspect_inventory
 
 
@@ -21,6 +21,7 @@ class PythonOnboarding:
     inspection: InspectionReport
     entry_points: PythonEntryPoints
     workflows: DevelopmentWorkflows
+    inventory: DiscoveryInventory
 
 
 def inspect_python_onboarding(path: str | Path) -> PythonOnboarding:
@@ -32,4 +33,5 @@ def inspect_python_onboarding(path: str | Path) -> PythonOnboarding:
         _inspect_inventory(target, inventory, ANALYZERS),
         entry_points,
         discover_development_workflows(target, inventory, entry_points),
+        inventory,
     )

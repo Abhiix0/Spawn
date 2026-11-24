@@ -10,6 +10,7 @@ import ast
 import keyword
 import re
 import tomllib
+import warnings
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import PurePosixPath
@@ -453,7 +454,11 @@ def discover_python_entry_points(
                 if isinstance(scripts, dict):
                     projects[path] = scripts
                 continue
-            tree = ast.parse(content)
+            # Report parser failures through the projection, without printing
+            # interpreter warnings derived from the repository's source text.
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SyntaxWarning)
+                tree = ast.parse(content)
         except UnicodeDecodeError:
             remaining -= MAX_FILE_SIZE
             skipped.append(path)

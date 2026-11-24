@@ -8,6 +8,7 @@
 | `spawn create` | Scaffold a new project (interactive or non-interactive) |
 | `spawn doctor` | Score a project directory's health out of 135 |
 | `spawn inspect` | Inspect a repository and report what it contains (read-only) |
+| `spawn onboard` | Find entry points, developer commands, and key files (read-only) |
 | `spawn version` | Print the installed version (also `spawn --version`) |
 
 ---
@@ -26,6 +27,7 @@ Commands
   doctor    Check the health of a project directory
   version   Show the installed version
   inspect   Inspect a repository (read-only)
+  onboard   Find entry points and developer commands
 
 Run spawn COMMAND --help for details on a command.
 ```
@@ -576,6 +578,26 @@ See [Supported technologies](inspection/supported-technologies.md#limitations) f
 
 ---
 
+## `spawn onboard`
+
+```bash
+spawn onboard [PATH] [--json] [--verbose] [--no-color]
+```
+
+The path defaults to the current directory. The terminal view shows a compact overview, suggested commands, key files and folders, and notes. `--verbose` reveals evidence and alternate commands, and expands stderr diagnostic summaries to individual codes with relative paths. `--no-color` and `NO_COLOR` disable terminal styling. Redirected output is plain text.
+
+`--json` emits one object on stdout with the complete set of projected alternatives. `--verbose` only changes diagnostic detail on stderr in JSON mode. See the [onboarding report contract](onboarding-report.md).
+
+| Exit | Meaning |
+| --- | --- |
+| `0` | Complete or partial report, including empty repositories and recoverable warnings |
+| `2` | Invalid command-line syntax or options |
+| `7` | Invalid, unreadable, or non-directory root, or fatal discovery failure |
+| `10` | Unexpected onboarding failure |
+| `130` | Interrupted |
+
+Onboarding reads static evidence and leaves the repository untouched. Suggested commands are for review. Their tools, dependencies, and runtime behavior have not been verified.
+
 ## `spawn version`
 
 Prints the installed version. `spawn --version` prints the same line. No other arguments or options; exit code 0; writes nothing.
@@ -600,7 +622,7 @@ spawn --version
 | 4 | Toolchain error (`git` or `uv` missing or failed) |
 | 5 | Generation / template error |
 | 6 | Publish error (GitHub publishing failed) |
-| 7 | Inspection error (`spawn inspect`: invalid or unreadable path, or a failed inspection) |
+| 7 | Inspection error (`spawn inspect` or `spawn onboard`: invalid or unreadable path, or failed discovery) |
 | 10 | Unexpected error (re-run with `SPAWN_DEBUG=1` for a traceback) |
 | 130 | Cancelled (Ctrl+C, EOF, or declining the final prompt) |
 

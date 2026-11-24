@@ -1,0 +1,21 @@
+Spawn / Onboard  api-demo
+
+Overview
+  Languages   Python
+  Frameworks  FastAPI [detected]
+
+Start here
+  Start       python -m uvicorn app.main:app  [candidate]
+  Install     uv sync --locked  [candidate]
+  Test        python -m pytest  [candidate]
+  Lint        ruff check .  [candidate]
+  Format      ruff format .  [candidate]
+
+Explore
+  Entry       app.main:app [detected]  (app/main.py:2)
+  Folders     app/, tests/
+  Config      README.md, pyproject.toml, uv.lock
+
+Notes
+  Review suggestions before running them.
+  1 alternative. Use --verbose for evidence.
