@@ -137,7 +137,7 @@ def _child(parent, name: str, *, directory: bool):
 
 
 @contextmanager
-def _directory(root: Path, parts: tuple[str, ...]):
+def open_root(root: Path):
     # A local drive root has no unchecked ancestor. Reject other namespaces
     # if they cannot be anchored using the same guarantees.
     anchor = root.anchor
@@ -154,18 +154,28 @@ def _directory(root: Path, parts: tuple[str, ...]):
     )
     if volume == wt.HANDLE(-1).value:
         raise ct.WinError(ct.get_last_error())
-    handles = [volume]
     try:
-        for name in (*root.parts[1:], *parts):
-            handles.append(_child(handles[-1], name, directory=True))
+        with _directory(volume, root.parts[1:]) as handle:
+            yield handle
+    finally:
+        _close(volume)
+
+
+@contextmanager
+def _directory(parent: int, parts: tuple[str, ...]):
+    handles = [parent]
+    try:
+        for name in parts:
+            handle = _child(handles[-1], name, directory=True)
+            handles.append(handle.value)
         yield handles[-1]
     finally:
-        for handle in reversed(handles):
+        for handle in reversed(handles[1:]):
             _close(handle)
 
 
 @contextmanager
-def open_file(root: Path, parts: tuple[str, ...]):
+def open_file(root: int, parts: tuple[str, ...]):
     with _directory(root, parts[:-1]) as parent:
         handle = _child(parent, parts[-1], directory=False)
         try:
@@ -178,7 +188,7 @@ def open_file(root: Path, parts: tuple[str, ...]):
 
 
 def check_directory(root: Path) -> None:
-    with _directory(root, ()):
+    with open_root(root):
         pass
 
 
@@ -193,7 +203,7 @@ class _Entry:
 
 
 def list_directory(root: Path, parts: tuple[str, ...]):
-    with _directory(root, parts) as directory:
+    with open_root(root) as parent, _directory(parent, parts) as directory:
         buffer = ct.create_string_buffer(64 * 1024)
         result = []
         while _info(directory, 14, buffer, ct.sizeof(buffer)):  # FileFullDirectoryInfo

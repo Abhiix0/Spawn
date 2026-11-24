@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from spawn.inspection._reading import repository_reads
 from spawn.inspection.development_workflows import (
     DevelopmentWorkflows,
     discover_development_workflows,
@@ -28,10 +29,11 @@ def inspect_python_onboarding(path: str | Path) -> PythonOnboarding:
     """Discover once and share the inventory across three independent results."""
     target = validate_inspection_root(path)
     inventory = discover_repository(target)
-    entry_points = discover_python_entry_points(target, inventory)
-    return PythonOnboarding(
-        _inspect_inventory(target, inventory, ANALYZERS),
-        entry_points,
-        discover_development_workflows(target, inventory, entry_points),
-        inventory,
-    )
+    with repository_reads(target.path):
+        entry_points = discover_python_entry_points(target, inventory)
+        return PythonOnboarding(
+            _inspect_inventory(target, inventory, ANALYZERS),
+            entry_points,
+            discover_development_workflows(target, inventory, entry_points),
+            inventory,
+        )

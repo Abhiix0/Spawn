@@ -78,6 +78,8 @@ def _python_imported_frameworks(text: str) -> set[str]:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")  # inspected code may emit SyntaxWarning
         tree = ast.parse(text)
+    if "import" not in text:
+        return set()
     names: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

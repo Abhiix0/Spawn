@@ -24,13 +24,33 @@ The [FastAPI fixture](../tests/fixtures/static/onboarding/api-demo.json) contain
 
 ## Large-tree benchmark
 
-Run `uv run python tools/measure_onboarding_baseline.py` from the checkout. The
-harness times inspection and the installed `spawn onboard --json` command on
-the same 2,000-file fixture, then compares the tree digest. On Windows with
-CPython 3.12, inspection took 1.852273 seconds and onboarding took 3.132218
-seconds, including CLI startup. The digest matched. Onboarding was partial
-because the entry-point analysis reached its file limit.
+Run `uv run python tools/measure_onboarding_baseline.py` from the checkout.
+The harness reports medians from three runs of each command on the Phase 0
+2,000-file fixture. A second workload adds 2,000 files under `node_modules`
+and 2,000 under a locally excluded scratch directory. The CLI measurements
+include process startup.
 
-The [Phase 0 measurements](baseline/phase-0.md) recorded 1.993037 and
-2.967307 seconds for inspection alone on this fixture. These are observations
-from separate runs.
+Paired Linux Docker measurements on CPython 3.12.16 against `f2bb27f`, in seconds.
+
+| Workload | Inspection core | Inspect CLI (JSON) | Onboard CLI (human) | Onboard CLI (JSON) |
+| --- | ---: | ---: | ---: | ---: |
+| 2,000 files, before | 0.789 | 1.762 | 2.877 | 2.833 |
+| 2,000 files, after | 0.429 | 1.069 | 1.218 | 1.498 |
+| With excluded trees, before | 0.863 | 2.454 | 3.655 | 2.602 |
+| With excluded trees, after | 0.324 | 0.924 | 1.214 | 1.177 |
+
+The tree digests matched in all runs. Inspection stayed complete. Onboarding
+stayed partial because entry-point analysis reached its existing file limit.
+The excluded workload went from 4,001 visible files to 2,001 after pruning
+the local scratch directory. The built-in exclusion for `node_modules` applied
+in both runs.
+
+In the live Windows checkout, both onboarding modes had previously timed out
+at 30 seconds. The stabilized checkout completed human onboarding in 11.96
+seconds and JSON onboarding in 7.96 seconds. Inspection JSON completed in
+8.46 seconds. The local scratch directory was skipped.
+
+The [Phase 0 measurements](baseline/phase-0.md) recorded 1.993037 and 2.967307
+seconds for inspection alone on Windows. Phase 2 recorded 3.132218 seconds
+for the onboarding JSON CLI on Windows. Host load and platform differ across
+these observations.

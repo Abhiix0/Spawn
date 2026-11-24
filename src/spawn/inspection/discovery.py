@@ -15,6 +15,7 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Iterable
 
+from spawn.inspection._git_exclusions import root_exclusions
 from spawn.inspection._reading import DIR_FLAGS, HAS_DIR_FDS, open_directory
 from spawn.inspection.exceptions import InspectionError
 from spawn.inspection.models import Diagnostic, DiscoveryInventory, InspectionTarget
@@ -174,6 +175,8 @@ def discover_repository(
     ``excluded_directories=None`` uses the default ignore set; passing an
     iterable *replaces* it (pass ``()`` to disable default exclusions).
     Exclusions match directory basenames case-insensitively at any depth.
+    The default also prunes literal top-level Git-local directory exclusions
+    when a supported index confirms they contain no tracked paths.
 
     The root must be readable; invalid roots raise ``InspectionError``. Errors
     below the root are recoverable and become ``Diagnostic`` entries. Deliberate
@@ -199,6 +202,13 @@ def discover_repository(
             rel_dir = "/".join(parts)
             try:
                 with _directory_entries(target.path, parts, root_fd) as entries:
+                    local_excluded = (
+                        root_exclusions(target.path)
+                        if excluded_directories is None
+                        and not parts
+                        and any(entry.name == ".git" for entry in entries)
+                        else set()
+                    )
                     child_directories: list[tuple[str, ...]] = []
                     for entry in entries:
                         child_parts = (*parts, entry.name)
@@ -217,7 +227,10 @@ def discover_repository(
                                     )
                                 )
                             elif stat.S_ISDIR(mode):
-                                if entry.name.casefold() in excluded:
+                                if (
+                                    entry.name.casefold() in excluded
+                                    or entry.name in local_excluded
+                                ):
                                     skipped.append(rel_path)
                                 else:
                                     directories.append(rel_path)

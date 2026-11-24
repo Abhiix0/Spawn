@@ -52,7 +52,7 @@ from pathlib import Path
 
 from spawn.core.exceptions import ConfigError
 from spawn.core.project import parse_project_metadata
-from spawn.inspection._reading import read_inventory_text
+from spawn.inspection._reading import read_inventory_text, repository_reads
 from spawn.inspection.base import Analyzer
 from spawn.inspection.dependencies import DependencyAnalyzer
 from spawn.inspection.discovery import discover_repository, validate_inspection_root
@@ -131,7 +131,8 @@ def _inspect(path: str | Path, analyzers: Sequence[Analyzer]) -> InspectionRepor
             diagnostics=(failure,),
         )
 
-    return _inspect_inventory(target, inventory, analyzers)
+    with repository_reads(target.path):
+        return _inspect_inventory(target, inventory, analyzers)
 
 
 def _inspect_inventory(

@@ -36,6 +36,10 @@ inventory = discover_repository("./existing-project")
   common third-party dependency/build directories.  This is **not** a full
   `.gitignore` parser: files such as `.spawn/meta.json` and configuration
   under `.github` remain visible to evidence-based analyzers.
+- With default exclusions, discovery also prunes literal top-level directories
+  listed in `.git/info/exclude` when a supported Git index shows no tracked
+  paths inside them. A negation, unreadable metadata, or an unsupported index
+  leaves this optimization disabled. Discovery does not run Git.
 - Custom exclusions replace the defaults: `discover_repository(path,
   excluded_directories={"private", "target"})`. Pass `()` to include the
   default-excluded directories; a single string such as `"private"` is
