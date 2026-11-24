@@ -9,6 +9,7 @@ from rich.cells import cell_len
 from rich.console import Console
 from rich.text import Text
 
+from spawn.inspection.development_workflows import DevelopmentCommand
 from spawn.inspection.models import Evidence
 from spawn.onboarding import OnboardingReport, Technology
 from spawn.utils.theme import ACCENT_COLOR, ERROR_COLOR, SUCCESS_COLOR, WARNING_COLOR
@@ -137,6 +138,24 @@ def _overview(console: Console, report: OnboardingReport, verbose: bool) -> int:
     return hidden
 
 
+def _prefer_django_server(commands: list[DevelopmentCommand]) -> None:
+    """Keep a manage.py module invocation behind its server command."""
+    if not commands:
+        return
+    first = commands[0]
+    if not first.argv or len(first.argv) != 3 or first.argv[:2] != ("python", "-m"):
+        return
+    paths = {item.path for item in first.evidence}
+    for index, row in enumerate(commands[1:], 1):
+        if (
+            row.argv == ("python", "manage.py", "runserver")
+            and row.status == first.status
+            and any(item.path in paths for item in row.evidence)
+        ):
+            commands.insert(0, commands.pop(index))
+            break
+
+
 def _commands(
     console: Console, report: OnboardingReport, verbose: bool
 ) -> tuple[int, int, int]:
@@ -156,7 +175,9 @@ def _commands(
     for category, label in _CATEGORIES:
         rows = [row for row in report.commands if row.category == category]
         known = [row for row in rows if row.argv]
-        if category == "install":
+        if category == "start":
+            _prefer_django_server(known)
+        elif category == "install":
             known.sort(
                 key=lambda row: (
                     row.status != "explicit",

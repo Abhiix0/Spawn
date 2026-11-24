@@ -282,6 +282,40 @@ def test_declared_and_candidate_commands_show_distinct_markers(repo):
     assert "Runtime not checked." in result.stdout
 
 
+def test_django_compact_run_prefers_server_without_reordering_json(tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "example"\ndependencies = ["django"]\n', encoding="utf-8"
+    )
+    (tmp_path / "manage.py").write_text(
+        "import os\nimport sys\n"
+        "from django.core.management import execute_from_command_line\n"
+        'os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n'
+        'if __name__ == "__main__":\n    execute_from_command_line(sys.argv)\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config/settings.py").write_text(
+        "INSTALLED_APPS = []\n", encoding="utf-8"
+    )
+
+    args = ["onboard", str(tmp_path)]
+    compact = runner.invoke(app, args)
+    verbose = runner.invoke(app, [*args, "--verbose"])
+    machine = runner.invoke(app, [*args, "--json"])
+    assert compact.exit_code == verbose.exit_code == machine.exit_code == 0
+    assert re.search(
+        r"^  ~ Run +python manage.py runserver$", compact.stdout, re.MULTILINE
+    )
+    assert "python -m manage" not in compact.stdout
+    assert "python -m manage" in verbose.stdout
+    assert "python manage.py runserver" in verbose.stdout
+    assert [
+        command["argv"]
+        for command in json.loads(machine.stdout)["commands"]
+        if command["category"] == "start"
+    ] == [["python", "-m", "manage"], ["python", "manage.py", "runserver"]]
+
+
 def test_offline_no_execution_no_writes_and_secret_values(repo, monkeypatch):
     canary = "SPAWN_ONBOARD_FAKE_CREDENTIAL"
     (repo / ".env").write_text(f"SECRET={canary}\n", encoding="utf-8")
