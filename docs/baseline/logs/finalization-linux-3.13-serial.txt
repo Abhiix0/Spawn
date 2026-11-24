@@ -1,0 +1,189 @@
+﻿Docker python:3.13-bookworm
+set -ex; cp -a /snapshot /work; cd /work; python -m pip install uv==0.11.11; uv sync --locked --all-groups; uv run --locked pytest -ra; uv run --locked ruff check .; uv run --locked ruff format --check .; uv run --locked python -m compileall -q src tests tools; if [ "$1" = "3.12" ]; then uv build; bash .github/scripts/smoke.sh 1.1.2; fi
+Unable to find image 'python:3.13-bookworm' locally
+3.13-bookworm: Pulling from library/python
+fcc9bd0c49e2: Pulling fs layer
+f61ce94431ab: Pulling fs layer
+27053d3dc955: Pulling fs layer
+fcc9bd0c49e2: Download complete
+c3561e97f9fc: Download complete
+5925d08b9703: Download complete
+f61ce94431ab: Download complete
+f61ce94431ab: Pull complete
+27053d3dc955: Download complete
+27053d3dc955: Pull complete
+fcc9bd0c49e2: Pull complete
+Digest: sha256:cc55e4ded9c95f6ce2133b3d096db43f214d280c2a8af65d83e246c8fa7d168c
+Status: Downloaded newer image for python:3.13-bookworm
++ cp -a /snapshot /work
++ cd /work
++ python -m pip install uv==0.11.11
+Collecting uv==0.11.11
+  Downloading uv-0.11.11-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+Downloading uv-0.11.11-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (24.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 24.6/24.6 MB 4.7 MB/s  0:00:05
+Installing collected packages: uv
+Successfully installed uv-0.11.11
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+System.Management.Automation.RemoteException
+[notice] A new release of pip is available: 26.2.2 -> 26.3
+[notice] To update, run: pip install --upgrade pip
++ uv sync --locked --all-groups
+Downloading cpython-3.12.13-linux-x86_64-gnu (download) (32.5MiB)
+ Downloaded cpython-3.12.13-linux-x86_64-gnu (download)
+Using CPython 3.12.13
+Creating virtual environment at: .venv
+Resolved 19 packages in 4ms
+   Building spawnio @ file:///work
+Downloading pygments (1.2MiB)
+Downloading ruff (10.8MiB)
+ Downloaded pygments
+ Downloaded ruff
+      Built spawnio @ file:///work
+Prepared 18 packages in 4.25s
+Installed 18 packages in 30ms
+ + annotated-doc==0.0.4
+ + coverage==7.15.4
+ + iniconfig==2.3.0
+ + markdown-it-py==4.2.0
+ + mdurl==0.1.2
+ + packaging==26.2
+ + pluggy==1.6.0
+ + prompt-toolkit==3.0.53
+ + pygments==2.20.0
+ + pytest==9.0.3
+ + pytest-cov==7.1.0
+ + questionary==2.1.1
+ + rich==15.0.0
+ + ruff==0.15.16
+ + shellingham==1.5.4
+ + spawnio==1.1.2 (from file:///work)
+ + typer==0.26.7
+ + wcwidth==0.8.2
++ uv run --locked pytest -ra
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collected 2150 items
+
+tests/fixtures/static/non_spawn_python_repo/tests/test_x.py .            [  0%]
+tests/test_agent_generator.py ......................                     [  1%]
+tests/test_agent_template.py ........................................... [  3%]
+................                                                         [  3%]
+tests/test_app.py ..................................                     [  5%]
+tests/test_automation_generator.py .........................             [  6%]
+tests/test_automation_template.py .........                              [  6%]
+tests/test_boundaries.py .                                               [  7%]
+tests/test_chatbot_generator.py ...........................              [  8%]
+tests/test_chatbot_template.py ......................................... [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+...                                                                      [ 17%]
+tests/test_cli_application_generator.py ..............                   [ 17%]
+tests/test_cli_application_template.py ..........................        [ 18%]
+tests/test_config_strict_validation.py ..................                [ 19%]
+tests/test_console.py .                                                  [ 19%]
+tests/test_create_flags.py ...............................               [ 21%]
+tests/test_custom_structure.py ......................................... [ 23%]
+................................                                         [ 24%]
+tests/test_custom_structure_integration.py ....                          [ 24%]
+tests/test_data_project_analysis.py ...................                  [ 25%]
+tests/test_data_project_dashboard.py ..................                  [ 26%]
+tests/test_data_project_etl.py .......................                   [ 27%]
+tests/test_data_project_gitignore.py .............                       [ 28%]
+tests/test_data_project_ml.py ......................                     [ 29%]
+tests/test_destination.py ........................................ss...s [ 31%]
+ss..                                                                     [ 31%]
+tests/test_docs.py ...                                                   [ 31%]
+tests/test_doctor.py ................................................... [ 34%]
+..................                                                       [ 34%]
+tests/test_doctor_fix.py ........                                        [ 35%]
+tests/test_doctor_fix_symlink.py .......                                 [ 35%]
+tests/test_errors.py ..................................                  [ 37%]
+tests/test_fixtures.py ................................................. [ 39%]
+....                                                                     [ 39%]
+tests/test_generated_lint.py .                                           [ 39%]
+tests/test_generator.py ................................................ [ 41%]
+....                                                                     [ 42%]
+tests/test_git.py ...................                                    [ 42%]
+tests/test_github_publisher.py ......                                    [ 43%]
+tests/test_github_validators.py ...........                              [ 43%]
+tests/test_inspect_cli.py ........................                       [ 44%]
+tests/test_inspection_dependencies.py .................................. [ 46%]
+.                                                                        [ 46%]
+tests/test_inspection_discovery.py .......................s............. [ 48%]
+..                                                                       [ 48%]
+tests/test_inspection_false_positives.py ...                             [ 48%]
+tests/test_inspection_frameworks.py .....................F.............. [ 50%]
+..................                                                       [ 50%]
+tests/test_inspection_languages.py .................                     [ 51%]
+tests/test_inspection_models.py ........................................ [ 53%]
+............................                                             [ 54%]
+tests/test_inspection_orchestrator.py .................................. [ 56%]
+.............                                                            [ 57%]
+tests/test_inspection_regression.py .................................... [ 58%]
+........................................................................ [ 62%]
+.......................................s..x......                        [ 64%]
+tests/test_inspection_sample.py ........................................ [ 66%]
+..............                                                           [ 66%]
+tests/test_inspection_serialization.py ................................. [ 68%]
+.............................                                            [ 69%]
+tests/test_inspection_tooling.py ....................................... [ 71%]
+........................................................................ [ 74%]
+...............                                                          [ 75%]
+tests/test_mcp_server_generator.py ...........                           [ 76%]
+tests/test_mcp_server_template.py ..................                     [ 77%]
+tests/test_models.py ............                                        [ 77%]
+tests/test_noninteractive.py .............................               [ 78%]
+tests/test_phase0_baseline.py .......                                    [ 79%]
+tests/test_phase2_backend_docker.py ..................                   [ 80%]
+tests/test_phase2_cli_testing.py ..........                              [ 80%]
+tests/test_phase2_django.py ...............                              [ 81%]
+tests/test_phase2_no_uv_guidance.py ........                             [ 81%]
+tests/test_phase3_tooling_dependencies.py .............................. [ 83%]
+...........................................................              [ 85%]
+tests/test_phase4_packaging_doctor.py .........                          [ 86%]
+tests/test_pipeline.py .........                                         [ 86%]
+tests/test_planning.py ....................................              [ 88%]
+tests/test_project.py ...................                                [ 89%]
+tests/test_project_files.py ................................             [ 90%]
+tests/test_prompts.py ..........................                         [ 91%]
+tests/test_rag_generator.py ......................                       [ 92%]
+tests/test_rag_template.py .........................................     [ 94%]
+tests/test_registry.py ........................                          [ 95%]
+tests/test_signal_cleanup.py ......                                      [ 96%]
+tests/test_templates.py ............................                     [ 97%]
+tests/test_uv.py ........                                                [ 97%]
+tests/test_uv_safe_args.py ........                                      [ 98%]
+tests/test_validators.py ........................                        [ 99%]
+tests/test_validators_option_names.py ..............                     [100%]
+
+=================================== FAILURES ===================================
+____________________ test_large_valid_python_parses_quickly ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_large_valid_python_parses0')
+
+    def test_large_valid_python_parses_quickly(tmp_path):
+        line = b"x = 1\n"
+        _write_bytes(tmp_path, "big.py", line * (MAX_FILE_SIZE // len(line)))
+        start = time.perf_counter()
+        result = run(tmp_path)
+>       assert time.perf_counter() - start < 5.0
+E       assert (330365.628266462 - 330358.123609152) < 5.0
+E        +  where 330365.628266462 = <built-in function perf_counter>()
+E        +    where <built-in function perf_counter> = time.perf_counter
+
+tests/test_inspection_frameworks.py:227: AssertionError
+=========================== short test summary info ============================
+SKIPPED [2] tests/test_destination.py:250: Windows junctions only available on Windows
+SKIPPED [1] tests/test_destination.py:465: Windows junctions only available on Windows
+SKIPPED [1] tests/test_destination.py:489: Windows junctions only available on Windows
+SKIPPED [1] tests/test_destination.py:518: Windows junctions only available on Windows
+SKIPPED [1] tests/test_inspection_discovery.py:254: Windows directory junction test
+SKIPPED [1] tests/test_inspection_regression.py:367: needs POSIX permissions and a non-root user
+XFAIL tests/test_inspection_regression.py::test_non_utf8_filename - production bug: undecodable names reach to_json as lone surrogates (structure.top_level_files); to_json(...) is not valid UTF-8 (see #60 report)
+FAILED tests/test_inspection_frameworks.py::test_large_valid_python_parses_quickly
+============ 1 failed, 2141 passed, 7 skipped, 1 xfailed in 28.76s =============
+exit=1

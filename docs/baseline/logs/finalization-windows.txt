@@ -1,0 +1,186 @@
+﻿Phase 0 finalization — Windows
+
+> uv sync --locked --all-groups --python 3.12
+Using CPython 3.12.13
+Creating virtual environment at: .venv/phase0-3.12
+Resolved 19 packages in 6ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 19 packages in 1.48s
+ + annotated-doc==0.0.4
+ + colorama==0.4.6
+ + coverage==7.15.4
+ + iniconfig==2.3.0
+ + markdown-it-py==4.2.0
+ + mdurl==0.1.2
+ + packaging==26.2
+ + pluggy==1.6.0
+ + prompt-toolkit==3.0.53
+ + pygments==2.20.0
+ + pytest==9.0.3
+ + pytest-cov==7.1.0
+ + questionary==2.1.1
+ + rich==15.0.0
+ + ruff==0.15.16
+ + shellingham==1.5.4
+ + spawnio==1.1.2 (from file:///D:/Abhiix0/Flagship%20Projects/Spawn)
+ + typer==0.26.7
+ + wcwidth==0.8.2
+exit=0
+
+> uv run --locked --python 3.12 pytest -ra
+============================= test session starts =============================
+platform win32 -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: D:\Abhiix0\Flagship Projects\Spawn
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collected 2150 items
+
+tests\fixtures\static\non_spawn_python_repo\tests\test_x.py .            [  0%]
+tests\test_agent_generator.py ......................                     [  1%]
+tests\test_agent_template.py ........................................... [  3%]
+................                                                         [  3%]
+tests\test_app.py ..................................                     [  5%]
+tests\test_automation_generator.py .........................             [  6%]
+tests\test_automation_template.py .........                              [  6%]
+tests\test_boundaries.py .                                               [  7%]
+tests\test_chatbot_generator.py ...........................              [  8%]
+tests\test_chatbot_template.py ......................................... [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+...                                                                      [ 17%]
+tests\test_cli_application_generator.py ..............                   [ 17%]
+tests\test_cli_application_template.py ..........................        [ 18%]
+tests\test_config_strict_validation.py ..................                [ 19%]
+tests\test_console.py .                                                  [ 19%]
+tests\test_create_flags.py ...............................               [ 21%]
+tests\test_custom_structure.py ......................................... [ 23%]
+................................                                         [ 24%]
+tests\test_custom_structure_integration.py ....                          [ 24%]
+tests\test_data_project_analysis.py ...................                  [ 25%]
+tests\test_data_project_dashboard.py ..................                  [ 26%]
+tests\test_data_project_etl.py .......................                   [ 27%]
+tests\test_data_project_gitignore.py .............                       [ 28%]
+tests\test_data_project_ml.py ......................                     [ 29%]
+tests\test_destination.py ..........s...........s...............ss...... [ 31%]
+..s.                                                                     [ 31%]
+tests\test_docs.py ...                                                   [ 31%]
+tests\test_doctor.py ................................................... [ 34%]
+..................                                                       [ 34%]
+tests\test_doctor_fix.py ........                                        [ 35%]
+tests\test_doctor_fix_symlink.py ..sssss                                 [ 35%]
+tests\test_errors.py ..................................                  [ 37%]
+tests\test_fixtures.py ................................................. [ 39%]
+....                                                                     [ 39%]
+tests\test_generated_lint.py .                                           [ 39%]
+tests\test_generator.py ................................................ [ 41%]
+....                                                                     [ 42%]
+tests\test_git.py ...................                                    [ 42%]
+tests\test_github_publisher.py ......                                    [ 43%]
+tests\test_github_validators.py ...........                              [ 43%]
+tests\test_inspect_cli.py .............s..........                       [ 44%]
+tests\test_inspection_dependencies.py .................................. [ 46%]
+.                                                                        [ 46%]
+tests\test_inspection_discovery.py ...s...............ssss.sssss.s..ss.. [ 48%]
+s.                                                                       [ 48%]
+tests\test_inspection_false_positives.py ...                             [ 48%]
+tests\test_inspection_frameworks.py .....................F.............. [ 50%]
+..................                                                       [ 50%]
+tests\test_inspection_languages.py .................                     [ 51%]
+tests\test_inspection_models.py ........................................ [ 53%]
+............................                                             [ 54%]
+tests\test_inspection_orchestrator.py ............s..................... [ 56%]
+.............                                                            [ 57%]
+tests\test_inspection_regression.py .................................... [ 58%]
+........................................................................ [ 62%]
+......................................ss..s......                        [ 64%]
+tests\test_inspection_sample.py ........................................ [ 66%]
+..............                                                           [ 66%]
+tests\test_inspection_serialization.py ................................. [ 68%]
+.............................                                            [ 69%]
+tests\test_inspection_tooling.py ....................................... [ 71%]
+..............................................................s......... [ 74%]
+...............                                                          [ 75%]
+tests\test_mcp_server_generator.py ...........                           [ 76%]
+tests\test_mcp_server_template.py ..................                     [ 77%]
+tests\test_models.py ............                                        [ 77%]
+tests\test_noninteractive.py .............................               [ 78%]
+tests\test_phase0_baseline.py .s.....                                    [ 79%]
+tests\test_phase2_backend_docker.py ..................                   [ 80%]
+tests\test_phase2_cli_testing.py ..........                              [ 80%]
+tests\test_phase2_django.py .............s.                              [ 81%]
+tests\test_phase2_no_uv_guidance.py ........                             [ 81%]
+tests\test_phase3_tooling_dependencies.py .............................. [ 83%]
+...........................................................              [ 85%]
+tests\test_phase4_packaging_doctor.py .........                          [ 86%]
+tests\test_pipeline.py .........                                         [ 86%]
+tests\test_planning.py ....................................              [ 88%]
+tests\test_project.py ...................                                [ 89%]
+tests\test_project_files.py ................................             [ 90%]
+tests\test_prompts.py ..........................                         [ 91%]
+tests\test_rag_generator.py ......................                       [ 92%]
+tests\test_rag_template.py .........................................     [ 94%]
+tests\test_registry.py ........................                          [ 95%]
+tests\test_signal_cleanup.py ..sss.                                      [ 96%]
+tests\test_templates.py ............................                     [ 97%]
+tests\test_uv.py ........                                                [ 97%]
+tests\test_uv_safe_args.py ........                                      [ 98%]
+tests\test_validators.py ........................                        [ 99%]
+tests\test_validators_option_names.py ..............                     [100%]
+
+================================== FAILURES ===================================
+___________________ test_large_valid_python_parses_quickly ____________________
+
+tmp_path = WindowsPath('C:/Users/Abhinav Sai G/AppData/Local/Temp/pytest-of-Abhinav Sai G/pytest-10/test_large_valid_python_parses0')
+
+    def test_large_valid_python_parses_quickly(tmp_path):
+        line = b"x = 1\n"
+        _write_bytes(tmp_path, "big.py", line * (MAX_FILE_SIZE // len(line)))
+        start = time.perf_counter()
+        result = run(tmp_path)
+>       assert time.perf_counter() - start < 5.0
+E       assert (843750.8647939 - 843741.7263677) < 5.0
+E        +  where 843750.8647939 = <built-in function perf_counter>()
+E        +    where <built-in function perf_counter> = time.perf_counter
+
+tests\test_inspection_frameworks.py:227: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_destination.py:76: symlinks unavailable
+SKIPPED [1] tests\test_destination.py:113: symlinks unavailable
+SKIPPED [1] tests\test_destination.py:285: symlinks unavailable
+SKIPPED [1] tests\test_destination.py:306: symlinks unavailable
+SKIPPED [1] tests\test_destination.py:554: symlinks unavailable
+SKIPPED [1] tests\test_doctor_fix_symlink.py:33: Symlink creation requires elevated privileges on Windows: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\outside_target.txt' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_symlink_escaping_root_rej0\\.gitignore'
+SKIPPED [1] tests\test_doctor_fix_symlink.py:33: Symlink creation requires elevated privileges on Windows: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\outside_dir' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_nested_symlink_escaping_r0\\subdir'
+SKIPPED [1] tests\test_doctor_fix_symlink.py:33: Symlink creation requires elevated privileges on Windows: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_dangling_symlink_rejected0\\nonexistent_target' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_dangling_symlink_rejected0\\.gitignore'
+SKIPPED [1] tests\test_doctor_fix_symlink.py:33: Symlink creation requires elevated privileges on Windows: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_symlink_inside_root_allow0\\real_readme.md' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_symlink_inside_root_allow0\\README.md'
+SKIPPED [1] tests\test_doctor_fix_symlink.py:33: Symlink creation requires elevated privileges on Windows: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\escape_target.md' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_plan_apply_symlink_escape0\\project\\README.md'
+SKIPPED [1] tests\test_inspect_cli.py:188: filesystem rejects filename
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_root_symlink_loop_is_reje0\\loop' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_root_symlink_loop_is_reje0\\loop'
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_file_symlink_never_in_inv0\\inside.txt' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_file_symlink_never_in_inv0\\linked.txt'
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_directory_symlink_outside0\\outside' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_directory_symlink_outside0\\root\\escape'
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_internal_directory_symlin0\\real' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_internal_directory_symlin0\\alias'
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_broken_and_loop_symlinks_0\\absent' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_broken_and_loop_symlinks_0\\broken'
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_root_symlink_resolves_onc0\\actual' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_root_symlink_resolves_onc0\\linked'
+SKIPPED [1] tests\test_inspection_discovery.py:299: dirfd-specific failure simulation
+SKIPPED [1] tests\test_inspection_discovery.py:314: dirfd-specific failure simulation
+SKIPPED [1] tests\test_inspection_discovery.py:333: dirfd-specific race simulation
+SKIPPED [1] tests\test_inspection_discovery.py:350: FIFO not supported
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_diagnostics_sorted_stably0\\missing-z' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_diagnostics_sorted_stably0\\z'
+SKIPPED [1] tests\test_inspection_discovery.py:447: O_NOFOLLOW directory descriptors not available
+SKIPPED [1] tests\test_inspection_discovery.py:214: Symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_path_based_fallback_keeps0\\nested' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_path_based_fallback_keeps0\\alias'
+SKIPPED [1] tests\test_inspection_discovery.py:515: Backslash is a directory separator on Windows
+SKIPPED [1] tests\test_inspection_orchestrator.py:211: symlinks unavailable
+SKIPPED [1] tests\test_inspection_regression.py:358: symlinks unavailable
+SKIPPED [1] tests\test_inspection_regression.py:367: needs POSIX permissions and a non-root user
+SKIPPED [1] tests\test_inspection_regression.py:401: non-UTF-8 names need POSIX
+SKIPPED [1] tests\test_inspection_tooling.py:298: symlinks unavailable
+SKIPPED [1] tests\test_phase0_baseline.py:63: symlinks unavailable: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_symlink_to_external_canar0\\external-canary.txt' -> 'C:\\Users\\Abhinav Sai G\\AppData\\Local\\Temp\\pytest-of-Abhinav Sai G\\pytest-10\\test_symlink_to_external_canar0\\secret_canary\\external.txt'
+SKIPPED [1] tests\test_phase2_django.py:138: chmod not applicable on Windows
+SKIPPED [1] tests\test_signal_cleanup.py:77: Signal tests require a Unix-like platform
+SKIPPED [1] tests\test_signal_cleanup.py:128: Signal tests require a Unix-like platform
+SKIPPED [1] tests\test_signal_cleanup.py:163: SIGHUP only available on Unix
+FAILED tests/test_inspection_frameworks.py::test_large_valid_python_parses_quickly
+=========== 1 failed, 2114 passed, 35 skipped in 363.97s (0:06:03) ============
+exit=1

@@ -42,6 +42,25 @@ uv run pytest --cov=src/spawn --cov-report=term-missing
 - **Offline rule:** tests must not use the network, real `git` or real `uv`; use `no_toolchain`.
 - **Adding an archetype:** add an entry to `tests/fixtures/archetypes.py`, run once with `SPAWN_UPDATE_TREES=1` to create its golden tree, and review it.
 
+### Phase baseline and inspection safety
+
+The Phase 0 corpus adds a secret-canary project, a non-executed Python payload,
+an external symlink case, and a deterministic 2,000-file tree. These fixtures
+are inspected as data; tests must never execute their contents. The inspection
+JSON sample and `tests/fixtures/static/inspect_exit_codes.json` are compatibility
+goldens. Update them only after reviewing an intentional contract change.
+
+Run the inspection measurement from the repository root with:
+
+```bash
+uv run python tools/measure_inspection_baseline.py
+```
+
+It reports elapsed time, report validity and whether the temporary fixture tree
+was unchanged. Phase 0 commands, exit codes and captured output are recorded in
+[`docs/baseline/phase-0.md`](docs/baseline/phase-0.md) and
+[`docs/baseline/logs/`](docs/baseline/logs/).
+
 ---
 
 ## Linting and formatting
