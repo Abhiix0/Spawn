@@ -135,7 +135,7 @@ Running `spawn` with no arguments shows the banner, the installed version, and t
 
 ```
 SPAWN — scaffold your next project
-v1.1.2
+v1.2.0
 
 Commands
   create    Scaffold a new project
@@ -784,10 +784,10 @@ spawn doctor --fix --license mit
 
 ```bash
 spawn version
-# → Spawn v1.1.2
+# → Spawn v1.2.0
 
 spawn --version
-# → Spawn v1.1.2
+# → Spawn v1.2.0
 ```
 
 ### `spawn onboard`

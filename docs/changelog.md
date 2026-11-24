@@ -3,6 +3,27 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.2.0
+
+### Added
+
+- `spawn onboard [PATH]` summarizes a repository's technology, entry points, development commands, and key files in a compact terminal report. `--verbose` shows alternative commands and additional evidence.
+- `spawn onboard [PATH] --json` emits a versioned onboarding report with command argument arrays, working directories, and evidence. It has a separate schema from `spawn inspect --json`.
+- Static Python entry-point discovery recognizes FastAPI and Starlette ASGI apps, Flask apps and factories, conventional Django projects, Python console scripts, and module entry points when source or configuration supports them.
+- Development workflow discovery suggests install, run, test, lint, and format commands. It distinguishes repository declarations, inferred candidates, and unresolved commands. Onboarding analyzes repositories locally and read-only without running suggested commands.
+
+### Security
+
+- Inspect and onboard use bounded, handle-relative file access to reject external symlinks, Windows junctions, and links substituted after discovery.
+
+### Fixed
+
+- Inspection JSON remains valid UTF-8 when filesystem names contain undecodable bytes. Invalid-root errors omit local absolute paths.
+
+### Changed
+
+- Inspection and onboarding reuse bounded file reads within each report and can prune literal, untracked top-level directories from supported Git-local exclusions.
+
 ## v1.1.2  2026-11-23
 
 ### Security
