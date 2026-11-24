@@ -133,6 +133,15 @@ def _inspect(path: str | Path, analyzers: Sequence[Analyzer]) -> InspectionRepor
             diagnostics=(failure,),
         )
 
+    return _inspect_inventory(target, inventory, analyzers)
+
+
+def _inspect_inventory(
+    target: InspectionTarget,
+    inventory: DiscoveryInventory,
+    analyzers: Sequence[Analyzer],
+) -> InspectionReport:
+    name = target.path.name or None
     diagnostics = list(inventory.diagnostics)
     metadata = None
     if _META_PATH in inventory.files:
