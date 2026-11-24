@@ -7,6 +7,8 @@ import tomllib
 from collections import defaultdict
 from pathlib import Path
 
+from spawn.inspection._reading import read_inventory_text
+
 from spawn.inspection.models import (
     AnalysisStatus,
     AnalyzerResult,
@@ -19,7 +21,6 @@ from spawn.inspection.models import (
     DiscoveryInventory,
 )
 
-MAX_FILE_SIZE = 1_000_000
 
 # Ambiguous extensions (.h, .m, .vue, .svelte) are intentionally excluded.
 EXTENSIONS = {
@@ -79,15 +80,6 @@ MANIFESTS = {
     "build.gradle": ("java", "Gradle build manifest"),
     "build.gradle.kts": ("kotlin", "Kotlin Gradle build manifest"),
 }
-
-
-def read_text_bounded(path: Path) -> str | None:
-    """Read at most MAX_FILE_SIZE bytes as UTF-8; None when the file is larger."""
-    with path.open("rb") as fh:
-        data = fh.read(MAX_FILE_SIZE + 1)
-    if len(data) > MAX_FILE_SIZE:
-        return None
-    return data.decode("utf-8-sig")
 
 
 def table(data: object, key: str) -> dict:
@@ -155,7 +147,7 @@ class LanguageDetector:
         if path.name not in {"pyproject.toml", "package.json"}:
             return
         try:
-            text = read_text_bounded(target.path / rel)
+            text = read_inventory_text(target.path, rel)
             if text is None:
                 diagnostics.append(
                     Diagnostic(

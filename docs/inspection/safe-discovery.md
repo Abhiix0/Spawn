@@ -44,15 +44,15 @@ inventory = discover_repository("./existing-project")
   IO errors are associated with a `Diagnostic` including a relative `path`.
   Deliberate directory exclusions appear in `skipped` **without diagnostics**,
   to avoid giving every normal repository a `PARTIAL` status just for `.git`.
-  Discovery never opens ordinary files; file-content readability is the
-  consuming analyzer's responsibility.
+  Analyzers open ordinary inventory files through the bounded repository reader.
 - On POSIX systems with supported dirfd operations, scanning starts from an
   anchored root descriptor; nested directories are re-opened relative to it
-  with `O_NOFOLLOW`. This closes the typical symlink-swap escape race and
-  avoids file-descriptor exhaustion. On platforms without these APIs the
-  implementation verifies directories remain under the resolved root and
-  rejects junctions/symlinks before descending. That path-based fallback is
-  **not race-proof** against an attacker concurrently changing directories.
+  with `O_NOFOLLOW`. The bounded reader also opens each directory component and
+  the final file without following links. On Windows, local drive paths use
+  handle-relative opens of one component at a time, rejecting reparse points
+  on the opened handle. Directory enumeration uses that same type of handle.
+  If the filesystem or platform cannot provide these operations, inspection
+  fails closed.
   A symlink swap detected during descriptor-based descent yields
   `discovery.symlink_race`, including Linux systems where `O_DIRECTORY` reports
   `ENOTDIR` rather than `ELOOP`.  As with any filesystem walk, concurrent
@@ -114,7 +114,7 @@ POSIX tests simulate `ELOOP` and exercise an actual directory-to-symlink swap.
 
 **Safety boundary:** discovery inventory paths are not stable file handles.
 On supported POSIX platforms, the walker protects descent with directory
-descriptors and `O_NOFOLLOW`; the path-based fallback is not race-proof.
+descriptors and `O_NOFOLLOW` or Windows handle-relative I/O.
 Downstream analyzers reopening discovered paths must implement their own
 file-open safety checks if concurrent hostile filesystem changes matter.
 

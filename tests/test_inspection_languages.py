@@ -1,12 +1,14 @@
 """Contract-level tests for static language detection (#55)."""
 
+import os
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from spawn.inspection.discovery import discover_repository
-from spawn.inspection.languages import MAX_FILE_SIZE, LanguageDetector
+from spawn.inspection._reading import MAX_FILE_SIZE
+from spawn.inspection.languages import LanguageDetector
 from spawn.inspection.models import (
     AnalysisStatus,
     DetectionState,
@@ -106,7 +108,7 @@ def test_manifest_read_is_bounded(tmp_path, monkeypatch):
     target = InspectionTarget(tmp_path.resolve())
     inventory = discover_repository(target)
     sizes = []
-    real_open = Path.open
+    real_open = os.fdopen
 
     def spy(self, *args, **kwargs):
         fh = real_open(self, *args, **kwargs)
@@ -119,7 +121,7 @@ def test_manifest_read_is_bounded(tmp_path, monkeypatch):
         fh.read = read
         return fh
 
-    monkeypatch.setattr(Path, "open", spy)
+    monkeypatch.setattr(os, "fdopen", spy)
     LanguageDetector().run(target, inventory)
     assert sizes == [MAX_FILE_SIZE + 1]
 
@@ -159,7 +161,7 @@ def test_unexpected_exception_yields_failed_result(tmp_path, monkeypatch):
     def boom(*args, **kwargs):
         raise RuntimeError(str(tmp_path))
 
-    monkeypatch.setattr("spawn.inspection.languages.read_text_bounded", boom)
+    monkeypatch.setattr("spawn.inspection.languages.read_inventory_text", boom)
     result = LanguageDetector().run(target, inventory)
     assert result.status is AnalysisStatus.FAILED
     assert [f.subject for f in result.findings] == ["go"]
@@ -176,7 +178,7 @@ def test_diagnostics_do_not_leak_paths(tmp_path, monkeypatch):
     def deny(self, *args, **kwargs):
         raise OSError(f"cannot open {tmp_path}")
 
-    monkeypatch.setattr(Path, "open", deny)
+    monkeypatch.setattr("spawn.inspection.languages.read_inventory_text", deny)
     diagnostic = LanguageDetector().run(target, inventory).diagnostics[0]
     assert diagnostic.code == "language.malformed_manifest"
     assert str(tmp_path) not in diagnostic.message

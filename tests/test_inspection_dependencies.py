@@ -397,10 +397,12 @@ def test_size_boundary(tmp_path):
     assert [e.path for e in deps(result)["pkg"].evidence] == ["ok/requirements.txt"]
 
 
-def test_read_is_bounded_to_limit_plus_one(tmp_path):
+def test_read_is_bounded_to_limit_plus_one(tmp_path, monkeypatch):
+    import os
+
     write(tmp_path, "f.txt", b"x" * 50)
     seen = []
-    real_open = Path.open
+    real_open = os.fdopen
 
     class Spy:
         def __init__(self, fh):
@@ -416,11 +418,8 @@ def test_read_is_bounded_to_limit_plus_one(tmp_path):
             seen.append(n)
             return self.fh.read(n)
 
-    Path.open = lambda self, *a, **k: Spy(real_open(self, *a, **k))
-    try:
-        assert reading_module.read_text_limited(tmp_path / "f.txt", 10) is None
-    finally:
-        Path.open = real_open
+    monkeypatch.setattr(os, "fdopen", lambda *a, **k: Spy(real_open(*a, **k)))
+    assert reading_module.read_inventory_text(tmp_path.resolve(), "f.txt", 10) is None
     assert seen == [11]
 
 

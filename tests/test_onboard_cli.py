@@ -97,15 +97,16 @@ def test_fatal_discovery_exits_7(repo, monkeypatch):
 def test_unreadable_root_exits_7(repo, monkeypatch):
     import os
 
-    scandir = os.scandir
+    from spawn.inspection import discovery
 
-    def deny(path):
-        if path == repo.resolve():
-            raise PermissionError("private permission detail")
-        return scandir(path)
+    def deny(*args):
+        raise PermissionError("private permission detail")
 
     with monkeypatch.context() as guard:
-        guard.setattr(os, "scandir", deny)
+        if os.name == "nt":
+            guard.setattr(discovery._windows_fs, "check_directory", deny)
+        else:
+            guard.setattr(os, "scandir", deny)
         result = runner.invoke(app, ["onboard", str(repo), "--json"])
     assert result.exit_code == 7
     assert result.stdout == ""

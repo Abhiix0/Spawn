@@ -4,22 +4,21 @@ from __future__ import annotations
 
 import os
 import stat
-from contextlib import ExitStack
+from contextlib import contextmanager
 from pathlib import Path
 from typing import BinaryIO
 
+if os.name == "nt":
+    from spawn.inspection import _windows_fs
+
 MAX_FILE_SIZE = 1_000_000
-
-
-def read_text_limited(path: Path, limit: int = MAX_FILE_SIZE) -> str | None:
-    """Read at most ``limit + 1`` bytes; return None when the file exceeds ``limit``.
-
-    Decodes strictly as UTF-8 (a BOM is accepted). Raises ``OSError`` when the
-    file cannot be read and ``UnicodeDecodeError`` when it is not UTF-8; other
-    encodings are never guessed.
-    """
-    with path.open("rb") as fh:
-        return _read_utf8(fh, limit)
+HAS_DIR_FDS = (
+    os.open in os.supports_dir_fd
+    and hasattr(os, "O_NOFOLLOW")
+    and hasattr(os, "O_DIRECTORY")
+    and hasattr(os, "O_NONBLOCK")
+)
+DIR_FLAGS = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_DIRECTORY", 0)
 
 
 def _read_utf8(fh: BinaryIO, limit: int) -> str | None:
@@ -29,44 +28,40 @@ def _read_utf8(fh: BinaryIO, limit: int) -> str | None:
     return data.decode("utf-8-sig")
 
 
-def read_inventory_text(root: Path, relative: str) -> str | None:
-    """Read an inventory file, refusing links and nonregular files.
+@contextmanager
+def open_directory(root: Path, parts: tuple[str, ...] = ()):
+    """Open a POSIX directory without reparsing any component of its path."""
+    if not HAS_DIR_FDS or not root.is_absolute() or ".." in root.parts:
+        raise OSError("Cannot anchor this repository filesystem")
+    fd = os.open(root.anchor, DIR_FLAGS)
+    try:
+        components = (*root.parts[1:], *parts)
+        for index, component in enumerate(components):
+            flags = DIR_FLAGS
+            if index < len(components) - 1:
+                flags |= getattr(os, "O_PATH", 0)
+            next_fd = os.open(component, flags, dir_fd=fd)
+            os.close(fd)
+            fd = next_fd
+        yield fd
+    finally:
+        os.close(fd)
 
-    POSIX descriptor-relative opens also prevent descendant link swaps.
-    On other platforms the checks assume the tree is stable during the read.
-    """
-    parts = relative.split("/")
-    if any(
-        part in ("", ".", "..") or any(c in part for c in ("\\", ":", "\0"))
-        for part in parts
-    ):
-        raise ValueError("Expected a repository-relative inventory file")
 
-    if (
-        os.open in os.supports_dir_fd
-        and hasattr(os, "O_NOFOLLOW")
-        and hasattr(os, "O_DIRECTORY")
-    ):
-        flags = os.O_RDONLY | os.O_NOFOLLOW
-        with ExitStack() as stack:
-            fd = os.open(root, flags | os.O_DIRECTORY)
-            stack.callback(os.close, fd)
-            for part in parts[:-1]:
-                fd = os.open(part, flags | os.O_DIRECTORY, dir_fd=fd)
-                stack.callback(os.close, fd)
-            fd = os.open(parts[-1], flags | os.O_NONBLOCK, dir_fd=fd)
-            with os.fdopen(fd, "rb") as fh:
-                if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
-                    raise OSError("Inventory file is no longer a regular file")
-                return _read_utf8(fh, MAX_FILE_SIZE)
-
-    path = root
-    for index, part in enumerate(parts):
-        path /= part
-        info = path.lstat()
-        expected = stat.S_ISREG if index == len(parts) - 1 else stat.S_ISDIR
-        if not expected(info.st_mode) or (
-            getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-        ):
-            raise OSError("Inventory path is no longer a regular file or directory")
-    return read_text_limited(path)
+def read_inventory_text(
+    root: Path, relative: str, limit: int = MAX_FILE_SIZE
+) -> str | None:
+    """Read bounded UTF-8 from an anchored regular file, refusing links."""
+    parts = tuple(relative.split("/"))
+    if any(part in ("", ".", "..") or "\0" in part for part in parts):
+        raise OSError("Expected a repository-relative inventory file")
+    if os.name == "nt":
+        with _windows_fs.open_file(root, parts) as stream:
+            return _read_utf8(stream, limit)
+    with open_directory(root, parts[:-1]) as parent:
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+        fd = os.open(parts[-1], flags, dir_fd=parent)
+        with os.fdopen(fd, "rb") as stream:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                raise OSError("Inventory file is no longer a regular file")
+            return _read_utf8(stream, limit)

@@ -9,7 +9,8 @@ import tomllib
 import warnings
 from pathlib import Path
 
-from spawn.inspection.languages import read_text_bounded, table
+from spawn.inspection._reading import read_inventory_text
+from spawn.inspection.languages import table
 from spawn.inspection.models import (
     AnalysisStatus,
     AnalyzerResult,
@@ -212,7 +213,7 @@ class FrameworkDetector:
         ):
             return
         try:
-            text = read_text_bounded(target.path / rel)
+            text = read_inventory_text(target.path, rel)
         except (OSError, UnicodeError) as exc:
             diagnostics.append(
                 Diagnostic(

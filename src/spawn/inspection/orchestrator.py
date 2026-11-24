@@ -1,9 +1,8 @@
 """Inspection orchestrator and report assembly (#58).
 
 ``run_inspection(path)`` validates the root, discovers the repository once,
-runs the analyzers, and assembles one ``InspectionReport``.  It never writes
-to the target and never touches the filesystem after discovery, except for
-one ``stat`` and one bounded read of ``.spawn/meta.json``.
+runs the analyzers, and assembles one ``InspectionReport``. It never writes
+to the target. Analyzers and the metadata loader use bounded, anchored reads.
 
 Semantics (contract sections 3, 4, 6, 7, 10, 11):
 
@@ -48,12 +47,12 @@ Semantics (contract sections 3, 4, 6, 7, 10, 11):
 
 from __future__ import annotations
 
-import os
 from collections.abc import Sequence
 from pathlib import Path
 
 from spawn.core.exceptions import ConfigError
-from spawn.core.project import read_project_metadata
+from spawn.core.project import parse_project_metadata
+from spawn.inspection._reading import read_inventory_text
 from spawn.inspection.base import Analyzer
 from spawn.inspection.dependencies import DependencyAnalyzer
 from spawn.inspection.discovery import discover_repository, validate_inspection_root
@@ -85,7 +84,6 @@ ANALYZERS: tuple[Analyzer, ...] = (
 )
 
 _META_PATH = ".spawn/meta.json"
-_MAX_META_BYTES = 1_000_000
 
 
 def _diag(code: str, message: str, severity: str, path=None, fatal=False):
@@ -146,10 +144,11 @@ def _inspect_inventory(
     metadata = None
     if _META_PATH in inventory.files:
         try:
-            if os.stat(target.path / _META_PATH).st_size > _MAX_META_BYTES:
+            text = read_inventory_text(target.path, _META_PATH)
+            if text is None:
                 raise ConfigError("oversized")
-            metadata = read_project_metadata(target.path)
-        except (ConfigError, OSError):
+            metadata = parse_project_metadata(text)
+        except (ConfigError, OSError, ValueError):
             diagnostics.append(
                 _diag(
                     "orchestrator.meta_unreadable",
