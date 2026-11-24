@@ -86,17 +86,25 @@ def test_json_is_exactly_the_report(repo):
     assert _stable(data) == _stable(expected)
 
 
-def test_json_error_goes_to_stderr(tmp_path):
-    result = runner.invoke(app, ["inspect", str(tmp_path / "missing"), "--json"])
+@pytest.mark.parametrize("name", ["missing-audit-canary", "file-audit-canary"])
+def test_json_error_goes_to_stderr_without_local_paths(tmp_path, name):
+    path = tmp_path / name
+    if name.startswith("file"):
+        path.touch()
+    result = runner.invoke(app, ["inspect", str(path), "--json"])
     assert result.exit_code == 7
     assert result.stdout == ""
-    assert "missing" in result.stderr
+    assert "readable directory" in result.stderr
+    assert str(tmp_path) not in result.stderr
+    assert name not in result.stderr
 
 
 def test_human_error_exit_7(tmp_path):
     result = runner.invoke(app, ["inspect", str(tmp_path / "missing")])
     assert result.exit_code == 7
     assert "❌" in result.output
+    assert "readable directory" in " ".join(result.output.split())
+    assert str(tmp_path) not in result.output
 
 
 def test_file_instead_of_directory(repo):

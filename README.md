@@ -79,6 +79,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **spawn doctor** | Scores your project's health out of 100, with per-category breakdowns and a prioritized next step |
 | **spawn doctor --fix** | Fixes missing files and config automatically — never overwrites, never installs packages |
 | **spawn inspect** | Static, read-only summary of a repository: languages, frameworks, dependencies, package managers, tooling and layout, as text or JSON |
+| **spawn onboard** | Quick read-only guide to a repository's entry points, developer commands and key files |
 
 ---
 
@@ -134,13 +135,14 @@ Running `spawn` with no arguments shows the banner, the installed version, and t
 
 ```
 SPAWN — scaffold your next project
-v1.1.2
+v1.2.0
 
 Commands
   create    Scaffold a new project
   doctor    Check the health of a project directory
   version   Show the installed version
   inspect   Inspect a repository (read-only)
+  onboard   Find entry points and developer commands
 
 Run spawn COMMAND --help for details on a command.
 ```
@@ -782,11 +784,78 @@ spawn doctor --fix --license mit
 
 ```bash
 spawn version
-# → Spawn v1.1.2
+# → Spawn v1.2.0
 
 spawn --version
-# → Spawn v1.1.2
+# → Spawn v1.2.0
 ```
+
+### `spawn onboard`
+
+Run these commands from an unfamiliar repository to find likely starting points and developer commands.
+
+```bash
+spawn onboard
+spawn onboard ./services/api --verbose
+spawn onboard ./services/api --json
+spawn onboard . --no-color
+```
+
+```text
+SPAWN / ONBOARD
+api-demo
+
+PROJECT OVERVIEW
+    Languages      Python
+    Frameworks     FastAPI
+
+START HERE
+  ~ Run            python -m uvicorn app.main:app
+  ~ Install        uv sync --locked
+  ~ Test           python -m pytest
+  ~ Lint           ruff check .
+  ~ Format         ruff format .
+
+ENTRY POINTS
+  + ASGI           app.main:app
+                   app/main.py:2
+
+PROJECT STRUCTURE
+    Directories    app/  tests/
+    Configuration  README.md  pyproject.toml  uv.lock
+
+NOTES
+  ~ 5 candidate commands require verification.
+  1 more result with --verbose.
+
+  + Repository onboarding complete
+```
+
+The JSON report includes the same evidence with argument arrays, relative working directories, and all alternatives. The example shows an excerpt.
+
+```json
+{
+  "schema_version": "1.0",
+  "status": "complete",
+  "repository": {"name": "api-demo", "file_count": 5, "directory_count": 2},
+  "commands": [
+    {
+      "category": "start",
+      "argv": ["python", "-m", "uvicorn", "app.main:app"],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {"path": "app/main.py", "indicator": "Framework constructor in module assignment", "detail": "line 2"}
+      ],
+      "note": "ASGI target inferred from source; Uvicorn must be available in the environment."
+    }
+  ]
+}
+```
+
+Startup discovery supports FastAPI and Starlette ASGI apps, Flask apps and factories, conventional Django projects, Python console scripts, and module entry points. In the terminal, `+` marks declarations and detected entry points, `~` marks candidates, and `?` marks unresolved results. Even declared commands may require tools, dependencies, or configuration. The footer distinguishes complete and partial analysis.
+
+Onboarding is local and read-only. It never runs repository code or suggested commands, installs packages, writes to the target, or uses the network. Reports omit absolute root paths, raw recipe contents, and raw diagnostic messages. Diagnostic details and errors go to stderr. See the [onboarding JSON contract](docs/onboarding-report.md) and [command reference](docs/commands.md#spawn-onboard).
 
 ### `spawn inspect`
 

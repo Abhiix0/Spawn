@@ -399,22 +399,31 @@ def test_uppercase_extensions(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="non-UTF-8 names need POSIX")
-@pytest.mark.xfail(
-    strict=True,
-    raises=UnicodeEncodeError,
-    reason="production bug: undecodable names reach to_json as lone surrogates "
-    "(structure.top_level_files); to_json(...) is not valid UTF-8 (see #60 report)",
-)
 def test_non_utf8_filename(tmp_path):
     root = corpus.materialize("python_project", tmp_path)
     try:
-        with open(os.fsencode(root) + b"/bad\xff.txt", "wb") as fh:
-            fh.write(b"x")
+        with open(os.fsencode(root) + b"/bad\xff.py", "wb") as fh:
+            fh.write(b"import flask\n")
     except (OSError, UnicodeError):
         pytest.skip("filesystem rejects non-UTF-8 names")
     report = run_inspection(root)
     assert validate_report(report) == []
-    to_json(report).encode("utf-8")
+    text = to_json(report)
+    assert "bad\ufffd.py" in text
+    assert (
+        "bad\ufffd.py"
+        in json.loads(text.encode("utf-8"))["structure"]["top_level_files"]
+    )
+
+    runner = CliRunner()
+    for command in ("inspect", "onboard"):
+        human = runner.invoke(app, [command, str(root), "--verbose"])
+        machine = runner.invoke(app, [command, str(root), "--json"])
+        assert human.exit_code == machine.exit_code == 0
+        human.stdout.encode("utf-8")
+        assert isinstance(json.loads(machine.stdout.encode("utf-8")), dict)
+        if command == "inspect":
+            assert "bad?.py" in human.stdout
 
 
 # --- failure paths -----------------------------------------------------------

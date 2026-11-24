@@ -9,7 +9,8 @@ import tomllib
 import warnings
 from pathlib import Path
 
-from spawn.inspection.languages import read_text_bounded, table
+from spawn.inspection._reading import read_inventory_text
+from spawn.inspection.languages import table
 from spawn.inspection.models import (
     AnalysisStatus,
     AnalyzerResult,
@@ -77,6 +78,8 @@ def _python_imported_frameworks(text: str) -> set[str]:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")  # inspected code may emit SyntaxWarning
         tree = ast.parse(text)
+    if "import" not in text:
+        return set()
     names: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -212,7 +215,7 @@ class FrameworkDetector:
         ):
             return
         try:
-            text = read_text_bounded(target.path / rel)
+            text = read_inventory_text(target.path, rel)
         except (OSError, UnicodeError) as exc:
             diagnostics.append(
                 Diagnostic(

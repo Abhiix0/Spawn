@@ -237,7 +237,8 @@ def test_report_unexpected_escapes_rich_markup(monkeypatch, capsys):
 def test_inspect_path_with_markup_returns_exit_7_without_traceback():
     r = runner.invoke(app, ["inspect", "[/red]x"])
     assert r.exit_code == 7
-    assert "[/red]x" in r.output
+    assert "Cannot access inspection root" in r.output
+    assert "[/red]x" not in r.output
     _no_traceback(r)
 
 

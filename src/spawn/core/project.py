@@ -40,11 +40,18 @@ def read_project_metadata(path: Path) -> ProjectMetadata | None:
     if not meta_file.is_file():
         return None
     try:
-        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        return parse_project_metadata(meta_file.read_text(encoding="utf-8"))
+    except ConfigError as exc:
+        raise ConfigError(f"Invalid {meta_file}: expected a JSON object") from exc
     except (OSError, ValueError) as exc:
         raise ConfigError(f"Cannot read {meta_file}: {exc}") from exc
+
+
+def parse_project_metadata(text: str) -> ProjectMetadata:
+    """Load only the recorded fields shared by Doctor and inspection."""
+    meta = json.loads(text)
     if not isinstance(meta, dict):
-        raise ConfigError(f"Invalid {meta_file}: expected a JSON object")
+        raise ConfigError("Expected a JSON object")
 
     return ProjectMetadata(
         intent=meta.get("intent"),

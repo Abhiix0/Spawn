@@ -96,6 +96,15 @@ SPECS: dict[str, Spec] = {
         ".spawn/meta.json": "{oops",
         "pyproject.toml": PYPROJECT,
     },
+    "secret_canary": {
+        "pyproject.toml": PYPROJECT,
+        ".env": "SPAWN_PHASE0_CANARY=do-not-leak-90b73ce9\n",
+        "main.py": (
+            "from pathlib import Path\n"
+            "Path('spawn-phase0-executed.marker').write_text('executed')\n"
+        ),
+        "nested/.env.production": "TOKEN=do-not-leak-90b73ce9\n",
+    },
     "ambiguous_frameworks": {
         "package.json": '{"dependencies": {"express": "^4.0.0"}}',
         "pyproject.toml": '[project]\nname = "m"\ndependencies = ["flask", "fastapi"]\n',
@@ -146,12 +155,25 @@ def _special(root: Path) -> None:
     (root / "realdir" / "inner.txt").write_text("x", encoding="utf-8")
 
 
+def _large_tree(root: Path) -> None:
+    """Create a deterministic 2,000-file source tree for perf baselines."""
+    for index in range(2_000):
+        path = root / "src" / f"pkg_{index // 100:02d}" / f"module_{index:04d}.py"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"VALUE_{index} = {index}\n", encoding="utf-8")
+    (root / "pyproject.toml").write_text(PYPROJECT, encoding="utf-8")
+
+
 BUILDERS: dict[str, Callable[[Path], None]] = {
     "size_limits": _size_limits,
     "special_files": _special,
+    "large_tree": _large_tree,
 }
 
-ARCHETYPES = (*SPECS, *BUILDERS)
+BASELINE_ONLY_ARCHETYPES = ("secret_canary", "large_tree")
+ARCHETYPES = tuple(
+    name for name in (*SPECS, *BUILDERS) if name not in BASELINE_ONLY_ARCHETYPES
+)
 
 
 def materialize(name: str, dest: Path) -> Path:

@@ -64,7 +64,7 @@ import json
 import tomllib
 from pathlib import Path, PurePosixPath
 
-from spawn.inspection._reading import MAX_FILE_SIZE, read_text_limited
+from spawn.inspection._reading import MAX_FILE_SIZE, read_inventory_text
 from spawn.inspection.dependencies import parse_manifest
 from spawn.inspection.models import (
     AnalysisStatus,
@@ -201,7 +201,7 @@ def _configs(base: str, text: str) -> list[tuple[str, str]]:
 def _load(root: Path, rel: str) -> tuple[str | None, str | None]:
     """Return (text, None) or (None, problem_code)."""
     try:
-        text = read_text_limited(root / rel)
+        text = read_inventory_text(root, rel)
     except UnicodeDecodeError:
         return None, "undecodable_file"
     except OSError:

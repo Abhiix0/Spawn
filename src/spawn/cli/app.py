@@ -49,6 +49,7 @@ def main_callback(
     console.print("  [cyan]doctor[/cyan]    Check the health of a project directory")
     console.print("  [cyan]version[/cyan]   Show the installed version")
     console.print("  [cyan]inspect[/cyan]   Inspect a repository (read-only)")
+    console.print("  [cyan]onboard[/cyan]   Find entry points and developer commands")
     console.print(
         "\n[dim]Run [cyan]spawn COMMAND --help[/cyan] for details on a command.[/dim]\n"
     )
@@ -430,6 +431,63 @@ def inspect_command(
             raise
         typer.echo(f"Unexpected error ({type(e).__name__}): {e}", err=True)
         raise typer.Exit(UNEXPECTED_EXIT_CODE)
+
+
+@app.command(name="onboard")
+def onboard_command(
+    path: str = typer.Argument(
+        ".", help="Repository directory. Defaults to current directory."
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Print a versioned JSON report on stdout."
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", help="Show evidence, alternatives, and diagnostic details."
+    ),
+    no_color: bool = typer.Option(
+        False, "--no-color", help="Use plain terminal text without ANSI styling."
+    ),
+) -> None:
+    """Find entry points and developer commands in a repository (read-only)."""
+    from spawn.inspection import InspectionError
+    from spawn.onboarding import build_onboarding_report, onboarding_to_json
+
+    try:
+        report = build_onboarding_report(path)
+        if json_output:
+            sys.stdout.write(onboarding_to_json(report))
+        else:
+            from spawn.cli.onboard_render import onboard_console, render_onboarding
+
+            render_onboarding(report, onboard_console(no_color), verbose=verbose)
+        if report.diagnostics:
+            if verbose:
+                for item in report.diagnostics:
+                    location = f" ({item.path})" if item.path else ""
+                    typer.echo(
+                        f"onboard: {item.severity}: {item.code}{location}", err=True
+                    )
+            else:
+                summary = ", ".join(
+                    f"{count} {level}"
+                    for level, count in report.diagnostic_counts().items()
+                    if count
+                )
+                typer.echo(
+                    f"onboard: {summary}. Use --verbose for diagnostics.", err=True
+                )
+    except InspectionError as exc:
+        typer.echo(
+            "Cannot onboard repository. Check that the path names a readable directory.",
+            err=True,
+        )
+        raise typer.Exit(exc.exit_code) from None
+    except (KeyboardInterrupt, EOFError, typer.Abort):
+        typer.echo("Cancelled.", err=True)
+        raise typer.Exit(130) from None
+    except Exception:
+        typer.echo("Unexpected error while onboarding the repository.", err=True)
+        raise typer.Exit(UNEXPECTED_EXIT_CODE) from None
 
 
 def main():

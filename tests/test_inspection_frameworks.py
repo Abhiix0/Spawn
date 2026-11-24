@@ -1,5 +1,6 @@
 """Contract-level tests for static framework detection (#55)."""
 
+import os
 import re
 import time
 import warnings
@@ -16,7 +17,7 @@ from spawn.inspection.frameworks import (
     FrameworkDetector,
     _dependency_names,
 )
-from spawn.inspection.languages import MAX_FILE_SIZE
+from spawn.inspection._reading import MAX_FILE_SIZE
 from spawn.inspection.models import (
     AnalysisStatus,
     DetectionState,
@@ -255,7 +256,7 @@ def test_reads_are_bounded(tmp_path, monkeypatch):
     target = InspectionTarget(tmp_path.resolve())
     inventory = discover_repository(target)
     sizes = []
-    real_open = Path.open
+    real_open = os.fdopen
 
     def spy(self, *args, **kwargs):
         fh = real_open(self, *args, **kwargs)
@@ -268,7 +269,7 @@ def test_reads_are_bounded(tmp_path, monkeypatch):
         fh.read = read
         return fh
 
-    monkeypatch.setattr(Path, "open", spy)
+    monkeypatch.setattr(os, "fdopen", spy)
     FrameworkDetector().run(target, inventory)
     assert sizes == [MAX_FILE_SIZE + 1]
 
@@ -333,7 +334,7 @@ def test_diagnostics_do_not_leak_paths_or_raw_exception_text(tmp_path, monkeypat
     def deny(self, *args, **kwargs):
         raise OSError(f"cannot open {tmp_path}")
 
-    monkeypatch.setattr(Path, "open", deny)
+    monkeypatch.setattr(fw, "read_inventory_text", deny)
     result = FrameworkDetector().run(target, inventory)
     assert [d.code for d in result.diagnostics] == ["framework.unreadable_file"] * 2
     assert all(str(tmp_path) not in d.message for d in result.diagnostics)

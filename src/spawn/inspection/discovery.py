@@ -11,12 +11,17 @@ from __future__ import annotations
 import errno
 import os
 import stat
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable
 
+from spawn.inspection._git_exclusions import root_exclusions
+from spawn.inspection._reading import DIR_FLAGS, HAS_DIR_FDS, open_directory
 from spawn.inspection.exceptions import InspectionError
 from spawn.inspection.models import Diagnostic, DiscoveryInventory, InspectionTarget
+
+if os.name == "nt":
+    from spawn.inspection import _windows_fs
 
 
 DEFAULT_EXCLUDED_DIRECTORIES = frozenset(
@@ -50,13 +55,7 @@ DEFAULT_EXCLUDED_DIRECTORIES = frozenset(
 
 # Descriptor-relative opens prevent a directory from becoming an out-of-root
 # symlink between an initial stat and a subsequent scandir on POSIX systems.
-_USE_DIR_FDS = (
-    os.scandir in os.supports_fd
-    and os.open in os.supports_dir_fd
-    and hasattr(os, "O_NOFOLLOW")
-    and hasattr(os, "O_DIRECTORY")
-)
-_DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+_USE_DIR_FDS = os.scandir in os.supports_fd and HAS_DIR_FDS
 
 
 def validate_inspection_root(root: str | Path | InspectionTarget) -> InspectionTarget:
@@ -66,15 +65,24 @@ def validate_inspection_root(root: str | Path | InspectionTarget) -> InspectionT
     the approved root.  Descendant symlinks are *never* followed.
     """
     try:
-        supplied = root.path if isinstance(root, InspectionTarget) else Path(root)
-        resolved = supplied.resolve(strict=True)
-        if not resolved.is_dir():
-            raise InspectionError(f"Inspection root is not a directory: {supplied}")
-        # Testing scandir, rather than os.access, handles real ACL permissions.
-        with os.scandir(resolved):
-            pass
+        # Never re-resolve a previously approved root. A replacement link
+        # must be refused by the handle open, not become the new root.
+        resolved = (
+            root.path
+            if isinstance(root, InspectionTarget)
+            else Path(root).resolve(strict=True)
+        )
+        if _USE_DIR_FDS:
+            with open_directory(resolved) as fd, os.scandir(fd):
+                pass
+        elif os.name == "nt":
+            _windows_fs.check_directory(resolved)
+        else:
+            raise OSError("Cannot anchor this repository filesystem")
     except (OSError, RuntimeError, ValueError, TypeError) as exc:
-        raise InspectionError(f"Cannot access inspection root {root!s}: {exc}") from exc
+        raise InspectionError(
+            "Cannot access inspection root. Check that the path names a readable directory."
+        ) from exc
     return InspectionTarget(path=resolved)
 
 
@@ -102,16 +110,14 @@ def _exclusions(names: Iterable[str] | None) -> frozenset[str]:
 
 
 @contextmanager
-def _directory_entries(
-    root: Path, parts: tuple[str, ...], root_fd: int | None
-) -> Iterator[list[os.DirEntry[str]]]:
+def _directory_entries(root: Path, parts: tuple[str, ...], root_fd: int | None):
     """List one directory without following links (fd anchored when possible)."""
     if root_fd is not None:
         fd = os.dup(root_fd)
         try:
             for name in parts:
                 try:
-                    next_fd = os.open(name, _DIR_FLAGS, dir_fd=fd)
+                    next_fd = os.open(name, DIR_FLAGS, dir_fd=fd)
                 except OSError as exc:
                     # On Linux O_DIRECTORY | O_NOFOLLOW can report ENOTDIR
                     # (not ELOOP) when a directory is swapped for a symlink.
@@ -135,20 +141,10 @@ def _directory_entries(
                 yield sorted(entries, key=lambda entry: entry.name)
         finally:
             os.close(fd)
+    elif os.name == "nt":
+        yield _windows_fs.list_directory(root, parts)
     else:
-        directory = root.joinpath(*parts)
-        # Portable fallback (not race-proof against malicious concurrent edits).
-        if directory.is_symlink() or (
-            hasattr(directory, "is_junction") and directory.is_junction()
-        ):
-            raise OSError(errno.ELOOP, "Directory became a link", str(directory))
-        resolved = directory.resolve(strict=True)
-        if not resolved.is_relative_to(root):
-            raise OSError(
-                errno.EPERM, "Directory escapes inspection root", str(directory)
-            )
-        with os.scandir(directory) as entries:
-            yield sorted(entries, key=lambda entry: entry.name)
+        raise OSError("Cannot anchor this repository filesystem")
 
 
 def _diagnostic(exc: OSError, path: str) -> Diagnostic:
@@ -179,6 +175,8 @@ def discover_repository(
     ``excluded_directories=None`` uses the default ignore set; passing an
     iterable *replaces* it (pass ``()`` to disable default exclusions).
     Exclusions match directory basenames case-insensitively at any depth.
+    The default also prunes literal top-level Git-local directory exclusions
+    when a supported index confirms they contain no tracked paths.
 
     The root must be readable; invalid roots raise ``InspectionError``. Errors
     below the root are recoverable and become ``Diagnostic`` entries. Deliberate
@@ -193,17 +191,24 @@ def discover_repository(
     diagnostics: list[Diagnostic] = []
     pending: list[tuple[str, ...]] = [()]
     root_fd: int | None = None
-    try:
+    with ExitStack() as stack:
         if _USE_DIR_FDS:
             try:
-                root_fd = os.open(target.path, _DIR_FLAGS)
+                root_fd = stack.enter_context(open_directory(target.path))
             except OSError as exc:
-                raise InspectionError(f"Cannot open inspection root: {exc}") from exc
+                raise InspectionError("Cannot open inspection root.") from exc
         while pending:
             parts = pending.pop()
             rel_dir = "/".join(parts)
             try:
                 with _directory_entries(target.path, parts, root_fd) as entries:
+                    local_excluded = (
+                        root_exclusions(target.path)
+                        if excluded_directories is None
+                        and not parts
+                        and any(entry.name == ".git" for entry in entries)
+                        else set()
+                    )
                     child_directories: list[tuple[str, ...]] = []
                     for entry in entries:
                         child_parts = (*parts, entry.name)
@@ -222,23 +227,10 @@ def discover_repository(
                                     )
                                 )
                             elif stat.S_ISDIR(mode):
-                                # Junctions are not always reported as symlinks.
-                                absolute = target.path.joinpath(*child_parts)
                                 if (
-                                    hasattr(absolute, "is_junction")
-                                    and absolute.is_junction()
+                                    entry.name.casefold() in excluded
+                                    or entry.name in local_excluded
                                 ):
-                                    skipped.append(rel_path)
-                                    diagnostics.append(
-                                        Diagnostic(
-                                            code="discovery.symlink_skipped",
-                                            message=f"Directory junction not followed: {rel_path}",
-                                            severity="info",
-                                            source="discovery",
-                                            path=rel_path,
-                                        )
-                                    )
-                                elif entry.name.casefold() in excluded:
                                     skipped.append(rel_path)
                                 else:
                                     directories.append(rel_path)
@@ -263,15 +255,9 @@ def discover_repository(
                     pending.extend(reversed(child_directories))
             except OSError as exc:
                 if not parts:
-                    raise InspectionError(
-                        f"Cannot scan inspection root: {exc}"
-                    ) from exc
+                    raise InspectionError("Cannot scan inspection root.") from exc
                 skipped.append(rel_dir)
                 diagnostics.append(_diagnostic(exc, rel_dir))
-    finally:
-        if root_fd is not None:
-            os.close(root_fd)
-
     return DiscoveryInventory(
         files=tuple(sorted(files)),
         directories=tuple(sorted(directories)),

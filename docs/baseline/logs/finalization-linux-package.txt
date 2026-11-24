@@ -1,0 +1,69 @@
+﻿Docker python:3.12-bookworm
+set -e; cp -a /snapshot /work; cd /work; sed -i s/\\r\$// .github/scripts/smoke.sh; python -m pip install uv==0.11.11; uv build; bash .github/scripts/smoke.sh 1.1.2
++ set -e
++ cp -a /snapshot /work
++ cd /work
++ sed -i 's/\r$//' .github/scripts/smoke.sh
++ python -m pip install uv==0.11.11
+Collecting uv==0.11.11
+  Downloading uv-0.11.11-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+Downloading uv-0.11.11-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (24.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 24.6/24.6 MB 4.8 MB/s eta 0:00:00
+Installing collected packages: uv
+Successfully installed uv-0.11.11
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+System.Management.Automation.RemoteException
+[notice] A new release of pip is available: 25.0.1 -> 26.3
+[notice] To update, run: pip install --upgrade pip
++ uv build
+Building source distribution...
+Building wheel from source distribution...
+Successfully built dist/spawnio-1.1.2.tar.gz
+Successfully built dist/spawnio-1.1.2-py3-none-any.whl
++ bash .github/scripts/smoke.sh 1.1.2
+Using CPython 3.12.16 interpreter at: /usr/local/bin/python3.12
+Creating virtual environment at: /tmp/tmp.5B4gH77NBl/venv
+Activate with: source /tmp/tmp.5B4gH77NBl/venv/bin/activate
+Using Python 3.12.16 environment at: /tmp/tmp.5B4gH77NBl/venv
+Resolved 16 packages in 1.21s
+Downloading pygments (1.2MiB)
+Downloading pydantic-core (2.2MiB)
+ Downloaded pygments
+ Downloaded pydantic-core
+Prepared 16 packages in 1.33s
+Installed 16 packages in 33ms
+ + annotated-doc==0.0.7
+ + annotated-types==0.8.0
+ + markdown-it-py==4.3.0
+ + mdurl==0.1.2
+ + prompt-toolkit==3.0.53
+ + pydantic==2.14.4
+ + pydantic-core==2.50.5
+ + pygments==2.21.0
+ + questionary==2.1.1
+ + rich==15.0.0
+ + shellingham==1.5.4
+ + spawnio==1.1.2 (from file:///work/dist/spawnio-1.1.2-py3-none-any.whl)
+ + typer==0.29.2
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.5
+ + wcwidth==0.9.5
+Spawn v1.1.2
+
+╭────────────── ✨ Project Created Successfully ───────────────╮
+│ Project      ci-smoke                                        │
+│ Template     MCP Server                                      │
+│ Git          ○ Disabled                                      │
+│ UV           ○ Skipped                                       │
+│ Virtual Env  ○ Skipped                                       │
+│                                                              │
+│  Next Steps                                                  │
+│   cd ci-smoke                                                │
+│   python -m src.server                                       │
+│   Add this server to Claude Desktop's config (see README.md) │
+│                                                              │
+╰──────────────────────────────────────────────────────────────╯
+
+ℹ GitHub publishing requires Git. Skipping.
+smoke OK
+exit=0

@@ -1,0 +1,197 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2000-01-01T00:00:00+00:00",
+  "status": "complete",
+  "repository": {
+    "name": "api-demo",
+    "file_count": 5,
+    "directory_count": 2
+  },
+  "languages": [
+    {
+      "name": "python",
+      "status": "detected",
+      "evidence": [
+        {
+          "path": "app/main.py",
+          "indicator": ".py source-file extension",
+          "detail": null
+        },
+        {
+          "path": "pyproject.toml",
+          "indicator": "Python project manifest",
+          "detail": null
+        },
+        {
+          "path": "tests/test_api.py",
+          "indicator": ".py source-file extension",
+          "detail": null
+        }
+      ],
+      "evidence_count": 3
+    }
+  ],
+  "frameworks": [
+    {
+      "name": "fastapi",
+      "status": "detected",
+      "evidence": [
+        {
+          "path": "app/main.py",
+          "indicator": "static import/declaration for fastapi",
+          "detail": null
+        },
+        {
+          "path": "pyproject.toml",
+          "indicator": "framework dependency declared in manifest",
+          "detail": null
+        }
+      ],
+      "evidence_count": 2
+    }
+  ],
+  "entry_points": [
+    {
+      "kind": "asgi",
+      "target": "app.main:app",
+      "state": "detected",
+      "evidence": [
+        {
+          "path": "app/main.py",
+          "indicator": "Framework constructor in module assignment",
+          "detail": "line 2"
+        }
+      ],
+      "reason": "Direct constructor assignment"
+    }
+  ],
+  "commands": [
+    {
+      "category": "install",
+      "argv": [
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "."
+      ],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "[project] name",
+          "detail": null
+        }
+      ],
+      "note": "Project metadata suggests a local package install."
+    },
+    {
+      "category": "install",
+      "argv": [
+        "uv",
+        "sync",
+        "--locked"
+      ],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {
+          "path": "uv.lock",
+          "indicator": "Lockfile present",
+          "detail": null
+        }
+      ],
+      "note": "Lockfile suggests this package manager."
+    },
+    {
+      "category": "start",
+      "argv": [
+        "python",
+        "-m",
+        "uvicorn",
+        "app.main:app"
+      ],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {
+          "path": "app/main.py",
+          "indicator": "Framework constructor in module assignment",
+          "detail": "line 2"
+        }
+      ],
+      "note": "ASGI target inferred from source; Uvicorn must be available in the environment."
+    },
+    {
+      "category": "test",
+      "argv": [
+        "python",
+        "-m",
+        "pytest"
+      ],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "[tool.pytest]",
+          "detail": null
+        }
+      ],
+      "note": "pytest is configured or declared; an environment may be needed."
+    },
+    {
+      "category": "lint",
+      "argv": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "[tool.ruff]",
+          "detail": null
+        }
+      ],
+      "note": "Ruff is configured or declared; an environment may be needed."
+    },
+    {
+      "category": "format",
+      "argv": [
+        "ruff",
+        "format",
+        "."
+      ],
+      "cwd": ".",
+      "status": "candidate",
+      "evidence": [
+        {
+          "path": "pyproject.toml",
+          "indicator": "[tool.ruff]",
+          "detail": null
+        }
+      ],
+      "note": "Ruff is configured or declared; an environment may be needed."
+    }
+  ],
+  "structure": {
+    "directories": [
+      "app",
+      "tests"
+    ],
+    "config_files": [
+      "README.md",
+      "pyproject.toml",
+      "uv.lock"
+    ]
+  },
+  "diagnostic_counts": {
+    "info": 0,
+    "warning": 0,
+    "error": 0
+  }
+}

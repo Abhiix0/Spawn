@@ -44,14 +44,13 @@ def test_root_symlink_loop_is_rejected_cleanly(tmp_path):
 
 
 def test_unreadable_root_rejected(tmp_path, monkeypatch):
-    real_scandir = discovery.os.scandir
+    def denial(*args):
+        raise PermissionError(errno.EACCES, "Access denied")
 
-    def denial(path):
-        if Path(path) == tmp_path:
-            raise PermissionError(errno.EACCES, "Access denied")
-        return real_scandir(path)
-
-    monkeypatch.setattr(discovery.os, "scandir", denial)
+    if os.name == "nt":
+        monkeypatch.setattr(discovery._windows_fs, "check_directory", denial)
+    else:
+        monkeypatch.setattr(discovery.os, "scandir", denial)
     with pytest.raises(InspectionError, match="Cannot access"):
         discover_repository(tmp_path)
 
@@ -470,18 +469,12 @@ def test_actual_symlink_swap_cannot_escape_on_posix(tmp_path, monkeypatch):
     assert result.diagnostics[0].code == "discovery.symlink_race"
 
 
-def test_path_based_fallback_keeps_relative_paths_and_skips_links(
-    tmp_path, monkeypatch
-):
-    """Exercise the fallback used on platforms without scandir(dirfd)."""
+@pytest.mark.skipif(os.name == "nt", reason="Windows has a handle-based backend")
+def test_missing_descriptor_support_fails_closed(tmp_path, monkeypatch):
     _file(tmp_path / "nested" / "good.txt")
-    _file(tmp_path / "outside-file.txt")
-    _symlink(tmp_path / "alias", tmp_path / "nested", directory=True)
     monkeypatch.setattr(discovery, "_USE_DIR_FDS", False)
-    result = discover_repository(tmp_path)
-    assert result.files == ("nested/good.txt", "outside-file.txt")
-    assert result.directories == ("nested",)
-    assert result.skipped == ("alias",)
+    with pytest.raises(InspectionError, match="Cannot access inspection root"):
+        discover_repository(tmp_path)
 
 
 def test_deep_nesting_is_iterative_and_stable(tmp_path):

@@ -33,10 +33,10 @@ from __future__ import annotations
 import json
 import re
 import tomllib
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 from typing import NamedTuple
 
-from spawn.inspection._reading import MAX_FILE_SIZE, read_text_limited
+from spawn.inspection._reading import MAX_FILE_SIZE, read_inventory_text
 from spawn.inspection.models import (
     AnalysisStatus,
     AnalyzerResult,
@@ -340,7 +340,7 @@ class DependencyAnalyzer:
                 )
             for rel in manifests:
                 try:
-                    text = read_text_limited(Path(target.path) / rel)
+                    text = read_inventory_text(target.path, rel)
                 except UnicodeDecodeError:
                     warn(
                         "dependency.undecodable_file",

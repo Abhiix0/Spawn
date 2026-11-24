@@ -30,6 +30,7 @@ done
 # inspect must be valid JSON and must not touch the project
 before="$(cd ci-smoke && find . -type f | sort)"
 (cd ci-smoke && "$spawn" inspect . --json) | "$bin/python" -c 'import json,sys; assert "schema_version" in json.load(sys.stdin)'
+(cd ci-smoke && "$spawn" onboard . --json) | "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); assert r["schema_version"] == "1.0" and r["repository"]["name"] == "ci-smoke" and "commands" in r'
 after="$(cd ci-smoke && find . -type f | sort)"
 [ "$before" = "$after" ] || { echo "inspect changed ci-smoke" >&2; exit 1; }
 
@@ -40,4 +41,5 @@ expect_exit() {
 }
 expect_exit 1 "$spawn" create --name x --template nope
 expect_exit 2 "$spawn" create --bogus
+expect_exit 7 "$spawn" onboard missing --json
 echo "smoke OK"
