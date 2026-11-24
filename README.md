@@ -802,27 +802,33 @@ spawn onboard . --no-color
 ```
 
 ```text
-Spawn / Onboard  api-demo
+SPAWN / ONBOARD
+api-demo
 
-Overview
-  Languages   Python
-  Frameworks  FastAPI [detected]
+PROJECT OVERVIEW
+    Languages      Python
+    Frameworks     FastAPI
 
-Start here
-  Start       python -m uvicorn app.main:app  [candidate]
-  Install     uv sync --locked  [candidate]
-  Test        python -m pytest  [candidate]
-  Lint        ruff check .  [candidate]
-  Format      ruff format .  [candidate]
+START HERE
+  ~ Run            python -m uvicorn app.main:app
+  ~ Install        uv sync --locked
+  ~ Test           python -m pytest
+  ~ Lint           ruff check .
+  ~ Format         ruff format .
 
-Explore
-  Entry       app.main:app [detected]  (app/main.py:2)
-  Folders     app/, tests/
-  Config      README.md, pyproject.toml, uv.lock
+ENTRY POINTS
+  + ASGI           app.main:app
+                   app/main.py:2
 
-Notes
-  Review suggestions before running them.
-  1 alternative. Use --verbose for evidence.
+PROJECT STRUCTURE
+    Directories    app/  tests/
+    Configuration  README.md  pyproject.toml  uv.lock
+
+NOTES
+  ~ 5 candidate commands require verification.
+  1 more result with --verbose.
+
+  + Repository onboarding complete
 ```
 
 The JSON report includes the same evidence with argument arrays, relative working directories, and all alternatives. The example shows an excerpt.
@@ -847,7 +853,7 @@ The JSON report includes the same evidence with argument arrays, relative workin
 }
 ```
 
-Startup discovery supports FastAPI and Starlette ASGI apps, Flask apps and factories, conventional Django projects, Python console scripts, and module entry points. `detected` means a declaration was found, `candidate` is an inferred option, and `unknown` means the available evidence did not establish a command. Even detected commands may require tools, dependencies, or configuration.
+Startup discovery supports FastAPI and Starlette ASGI apps, Flask apps and factories, conventional Django projects, Python console scripts, and module entry points. In the terminal, `+` marks declarations and detected entry points, `~` marks candidates, and `?` marks unresolved results. Even declared commands may require tools, dependencies, or configuration. The footer distinguishes complete and partial analysis.
 
 Onboarding is local and read-only. It never runs repository code or suggested commands, installs packages, writes to the target, or uses the network. Reports omit absolute root paths, raw recipe contents, and raw diagnostic messages. Diagnostic details and errors go to stderr. See the [onboarding JSON contract](docs/onboarding-report.md) and [command reference](docs/commands.md#spawn-onboard).
 

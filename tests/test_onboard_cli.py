@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 from fixtures.onboard_repository import materialize
+from rich.cells import cell_len
 from rich.console import Console
 from typer.testing import CliRunner
 
@@ -33,7 +34,7 @@ def test_default_path_and_listing(repo, monkeypatch):
     result = runner.invoke(app, ["onboard"])
     assert result.exit_code == 0
     assert result.stderr == ""
-    assert "Spawn / Onboard  api-demo" in result.stdout
+    assert result.stdout.startswith("SPAWN / ONBOARD\napi-demo\n")
     assert "python -m uvicorn app.main:app" in result.stdout
     assert str(repo) not in result.stdout
     assert (
@@ -115,8 +116,11 @@ def test_unreadable_root_exits_7(repo, monkeypatch):
 def test_empty_root_offers_next_step(tmp_path):
     human = runner.invoke(app, ["onboard", str(tmp_path)])
     assert human.exit_code == 0
-    assert "Check the README or project configuration." in human.stdout
+    assert "No supported commands found." in human.stdout
+    assert "Not detected" in human.stdout
     assert "No supported entry point found" in human.stdout
+    assert "PROJECT STRUCTURE" not in human.stdout
+    assert "NOTES" not in human.stdout
     machine = runner.invoke(app, ["onboard", str(tmp_path), "--json"])
     report = json.loads(machine.stdout)
     assert report["status"] == "complete"
@@ -141,6 +145,10 @@ def test_partial_report_sends_diagnostics_to_stderr(repo):
     assert secret not in result.output + detailed.output
     assert str(repo) not in result.output + detailed.output
     assert "\x1b" not in detailed.stdout
+    terminal = runner.invoke(app, ["onboard", str(repo)])
+    assert terminal.exit_code == 0
+    assert "~ Repository onboarding partial" in terminal.stdout
+    assert "Repository onboarding complete" not in terminal.stdout
 
 
 def test_source_parser_warnings_do_not_escape_as_raw_diagnostics(repo):
@@ -201,6 +209,7 @@ def test_terminal_capture(repo, width, monkeypatch):
         encoding="utf-8"
     )
     assert "\x1b" not in result.stdout
+    assert all(cell_len(line) <= width for line in result.stdout.splitlines())
 
 
 def test_color_and_plain_terminal_share_text(repo, monkeypatch):
@@ -232,6 +241,45 @@ def test_long_module_command_remains_copyable(repo, monkeypatch):
     result = runner.invoke(app, ["onboard", str(repo), "--verbose"])
     assert result.exit_code == 0
     assert f"python -m uvicorn app.{module}:app\n" in result.stdout
+
+
+def test_wrapped_paths_remain_visible_while_compact_lists_show_counts(
+    repo, monkeypatch
+):
+    monkeypatch.setenv("COLUMNS", "60")
+    for index in range(5):
+        (repo / f"folder-{index}").mkdir()
+    nested = repo / ("service" * 10)
+    nested.mkdir()
+    (nested / "requirements.txt").write_text("pytest\n", encoding="utf-8")
+
+    compact = runner.invoke(app, ["onboard", str(repo), "--no-color"])
+    verbose = runner.invoke(app, ["onboard", str(repo), "--no-color", "--verbose"])
+    assert compact.exit_code == verbose.exit_code == 0
+    assert "more results with --verbose." in compact.stdout
+    assert "folder-4/" not in compact.stdout
+    assert "folder-4/" in verbose.stdout
+    unwrapped = re.sub(r"\n {19}", "", verbose.stdout)
+    assert f"{nested.name}/requirements.txt" in unwrapped
+    assert all(cell_len(line) <= 60 for line in verbose.stdout.splitlines())
+
+
+def test_declared_and_candidate_commands_show_distinct_markers(repo):
+    manifest = repo / "pyproject.toml"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8")
+        + '\n[project.scripts]\nserve = "app.main:main"\n',
+        encoding="utf-8",
+    )
+    (repo / "app/main.py").write_text(
+        "from fastapi import FastAPI\napp = FastAPI()\ndef main():\n    pass\n",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["onboard", str(repo), "--no-color"])
+    assert result.exit_code == 0
+    assert re.search(r"^  \+ Run +serve$", result.stdout, re.MULTILINE)
+    assert re.search(r"^  ~ Install +uv sync --locked$", result.stdout, re.MULTILINE)
+    assert "Runtime not checked." in result.stdout
 
 
 def test_offline_no_execution_no_writes_and_secret_values(repo, monkeypatch):

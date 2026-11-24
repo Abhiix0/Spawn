@@ -9,8 +9,9 @@ from rich.cells import cell_len
 from rich.console import Console
 from rich.text import Text
 
+from spawn.inspection.models import Evidence
 from spawn.onboarding import OnboardingReport, Technology
-from spawn.utils.theme import ACCENT_COLOR, PROMPT_COLOR
+from spawn.utils.theme import ACCENT_COLOR, ERROR_COLOR, SUCCESS_COLOR, WARNING_COLOR
 
 _NAMES = {
     "python": "Python",
@@ -24,8 +25,25 @@ _NAMES = {
     "nextjs": "Next.js",
     "nodejs": "Node.js",
 }
-_CATEGORIES = ("start", "install", "test", "lint", "format")
-_LEAD = 14
+_CATEGORIES = (
+    ("start", "Run"),
+    ("install", "Install"),
+    ("test", "Test"),
+    ("lint", "Lint"),
+    ("format", "Format"),
+)
+_ENTRY_LABELS = {
+    "console_script": "CLI",
+    "module": "Module",
+    "asgi": "ASGI",
+    "flask_app": "Flask",
+    "flask_factory": "Flask factory",
+    "django_manage": "Django",
+    "django_asgi": "ASGI",
+    "django_wsgi": "WSGI",
+}
+_MARKER_STYLE = {"+": SUCCESS_COLOR, "~": WARNING_COLOR, "?": WARNING_COLOR}
+_LEAD = 19
 
 
 def onboard_console(no_color: bool) -> Console:
@@ -37,20 +55,35 @@ def _name(technology: Technology) -> str:
     return _NAMES.get(technology.name, technology.name)
 
 
-def _label(value: str) -> Text:
-    return Text(f"  {value:<{_LEAD - 2}}", style=PROMPT_COLOR)
-
-
-def _row(console: Console, label: str, value: str, *, truncate: bool = False) -> None:
-    content = Text(value)
-    if truncate:
-        content.truncate(max(1, console.width - _LEAD), overflow="ellipsis")
-    console.print(_label(label).append_text(content), overflow="fold")
+def _row(
+    console: Console,
+    label: str,
+    value: str | Text,
+    *,
+    marker: str = "",
+    command: bool = False,
+) -> None:
+    content = Text(value) if isinstance(value, str) else value
+    prefix = Text("  ").append(f"{marker or ' '} ", style=_MARKER_STYLE.get(marker))
+    prefix.append(f"{label:<{_LEAD - 4}}")
+    width = max(1, console.width - _LEAD)
+    if command and cell_len(content.plain) > width:
+        prefix.rstrip()
+        console.print(prefix, highlight=False)
+        # The terminal can soft-wrap a long command without changing copied argv.
+        console.print(
+            Text("    ").append_text(content), soft_wrap=True, highlight=False
+        )
+        return
+    for index, line in enumerate(content.wrap(console, width, overflow="fold")):
+        line.rstrip()
+        lead = prefix if index == 0 else Text(" " * _LEAD)
+        console.print(lead.append_text(line), highlight=False)
 
 
 def _section(console: Console, title: str) -> None:
     console.print()
-    console.print(Text(title, style=f"bold {PROMPT_COLOR}"))
+    console.print(Text(title.upper(), style=f"bold {ACCENT_COLOR}"))
 
 
 def _items(paths: tuple[str, ...], priorities: tuple[str, ...]) -> list[str]:
@@ -64,52 +97,63 @@ def _reference(path: str, detail: str | None) -> str:
     return f"{path}:{detail[5:]}" if detail else path
 
 
-def _evidence(console: Console, items, *, total: int | None = None) -> None:
+def _evidence(
+    console: Console, items: tuple[Evidence, ...], *, total: int | None = None
+) -> None:
     for item in items:
         _row(
             console,
             "Evidence",
-            f"{_reference(item.path, item.detail)}  {item.indicator}",
+            Text(
+                f"{_reference(item.path, item.detail)}  {item.indicator}", style="dim"
+            ),
         )
     if total is not None and total > len(items):
         _row(console, "Evidence", f"{total - len(items)} more matching files")
 
 
-def render_onboarding(
-    report: OnboardingReport, console: Console, *, verbose: bool = False
-) -> None:
-    """Show a short path through the repository, with optional evidence and alternatives."""
-    header = Text("Spawn / Onboard", style=f"bold {ACCENT_COLOR}")
-    header.append(f"  {report.name}", style="bold")
-    header.truncate(console.width, overflow="ellipsis")
-    console.print(header)
-
-    _section(console, "Overview")
+def _overview(console: Console, report: OnboardingReport, verbose: bool) -> int:
+    _section(console, "Project overview")
+    hidden = 0
     for label, technologies in (
         ("Languages", report.languages),
         ("Frameworks", report.frameworks),
     ):
         shown = technologies if verbose else technologies[:3]
-        descriptions = [
-            f"{_name(item)} [{item.status}]"
-            if label == "Frameworks" or item.status != "detected"
-            else _name(item)
+        hidden += len(technologies) - len(shown)
+        descriptions = Text(", ").join(
+            Text(_name(item), style=SUCCESS_COLOR)
+            if item.status == "detected"
+            else Text(f"{_name(item)} (candidate)", style=WARNING_COLOR)
             for item in shown
-        ]
-        if len(shown) < len(technologies):
-            descriptions.append(f"+{len(technologies) - len(shown)} more")
-        _row(console, label, ", ".join(descriptions) or "unknown", truncate=not verbose)
+        )
+        _row(
+            console, label, descriptions if shown else Text("Not detected", style="dim")
+        )
         if verbose:
             for item in shown:
                 _row(console, "Source", _name(item))
                 _evidence(console, item.evidence, total=item.evidence_count)
+    return hidden
 
+
+def _commands(
+    console: Console, report: OnboardingReport, verbose: bool
+) -> tuple[int, int, int]:
     _section(console, "Start here")
     hidden = 0
+    candidates = 0
+    declared = 0
+    any_command = any(row.argv for row in report.commands)
     start_known = any(row.category == "start" and row.argv for row in report.commands)
-    if not start_known:
-        _row(console, "Start", "unknown. Check the README or project configuration.")
-    for category in _CATEGORIES:
+    if not any_command:
+        message = "No supported commands found."
+        if "README.md" in report.config_files:
+            message += " See README.md."
+        console.print(Text(f"  {message}", style="dim"))
+    elif not start_known:
+        _row(console, "Run", Text("Not detected", style="dim"))
+    for category, label in _CATEGORIES:
         rows = [row for row in report.commands if row.category == category]
         known = [row for row in rows if row.argv]
         if category == "install":
@@ -121,50 +165,58 @@ def render_onboarding(
                     ),
                 )
             )
-        hidden += max(0, len(known) - 1)
-        for row in rows if verbose else known[:1]:
-            status = "detected" if row.status == "explicit" else row.status.value
+        shown = rows if verbose else known[:1]
+        if not verbose:
+            hidden += max(0, len(known) - 1) + sum(
+                row.argv is None and bool(row.evidence) for row in rows
+            )
+        for index, row in enumerate(shown):
+            purpose = label if index == 0 else ""
             if row.argv is None:
                 if start_known or category != "start":
-                    _row(console, category.capitalize(), "unknown")
+                    _row(console, purpose, "Not resolved", marker="?")
             else:
-                command = " ".join(row.argv)
-                label = category.capitalize()
-                status_text = f"[{status}]"
-                if (
-                    _LEAD + cell_len(command) + cell_len(status_text) + 2
-                    <= console.width
-                ):
-                    console.print(
-                        _label(label)
-                        .append(command)
-                        .append(f"  {status_text}", style="dim")
-                    )
-                else:
-                    _row(console, label, status_text)
-                    # Preserve a long command as one copyable line; the terminal can wrap it.
-                    console.print(Text(f"  {command}"), soft_wrap=True)
+                explicit = row.status == "explicit"
+                declared += explicit
+                candidates += not explicit
+                _row(
+                    console,
+                    purpose,
+                    Text(" ".join(row.argv), style="bold"),
+                    marker="+" if explicit else "~",
+                    command=True,
+                )
                 if row.cwd != ".":
-                    _row(console, "Run from", row.cwd, truncate=not verbose)
+                    _row(console, "", Text(f"From {row.cwd}", style="dim"))
             if verbose:
-                _row(console, "Why", row.note)
+                _row(console, "Why", Text(row.note, style="dim"))
                 _evidence(console, row.evidence)
+    return hidden, candidates, declared
 
-    _section(console, "Explore")
+
+def _entry_points(console: Console, report: OnboardingReport, verbose: bool) -> int:
+    _section(console, "Entry points")
     entries = report.entry_points if verbose else report.entry_points[:2]
     for entry in entries:
-        ref = _reference(entry.evidence[0].path, entry.evidence[0].detail)
+        detected = entry.state == "detected"
         _row(
             console,
-            "Entry",
-            f"{entry.target} [{entry.state.value}]  ({ref})",
-            truncate=not verbose,
+            _ENTRY_LABELS.get(entry.kind, "Entry"),
+            entry.target if detected else f"{entry.target} (unresolved)",
+            marker="+" if detected else "?",
         )
         if verbose:
-            _row(console, "Why", entry.reason)
+            _row(console, "Why", Text(entry.reason, style="dim"))
             _evidence(console, entry.evidence)
+        elif entry.evidence:
+            first = entry.evidence[0]
+            _row(console, "", Text(_reference(first.path, first.detail), style="dim"))
     if not entries:
-        _row(console, "Entry", "No supported entry point found.")
+        console.print(Text("  No supported entry point found.", style="dim"))
+    return len(report.entry_points) - len(entries)
+
+
+def _structure(console: Console, report: OnboardingReport, verbose: bool) -> int:
     directories = _items(
         report.directories, ("src", "app", "apps", "tests", "config", "docs")
     )
@@ -172,35 +224,63 @@ def render_onboarding(
         report.config_files,
         ("README.md", "pyproject.toml", "uv.lock", "Makefile", "manage.py"),
     )
+    if directories or configs:
+        _section(console, "Project structure")
+    hidden = 0
     for label, paths, suffix in (
-        ("Folders", directories, "/"),
-        ("Config", configs, ""),
+        ("Directories", directories, "/"),
+        ("Configuration", configs, ""),
     ):
-        if not paths:
-            continue
-        if verbose:
-            for item in paths:
-                _row(console, label, item + suffix)
-        else:
-            _row(
-                console,
-                label,
-                ", ".join(item + suffix for item in paths[:4]),
-                truncate=True,
-            )
+        shown = paths if verbose else paths[:4]
+        hidden += len(paths) - len(shown)
+        if shown:
+            _row(console, label, "  ".join(path + suffix for path in shown))
+    return hidden
 
-    _section(console, "Notes")
-    console.print(Text("  Review suggestions before running them."), overflow="fold")
-    if report.status == "partial":
-        console.print(
-            Text("  Partial report. Some evidence could not be analyzed."),
-            overflow="fold",
-        )
-    if not verbose:
-        suffix = "" if hidden == 1 else "s"
-        note = (
-            f"{hidden} alternative{suffix}. Use --verbose for evidence."
-            if hidden
-            else "Use --verbose for evidence and details."
-        )
-        console.print(Text(f"  {note}"))
+
+def _footer(console: Console, status: str) -> None:
+    marker, color, message = {
+        "complete": ("+", SUCCESS_COLOR, "Repository onboarding complete"),
+        "partial": ("~", WARNING_COLOR, "Repository onboarding partial"),
+        "failed": ("!", ERROR_COLOR, "Repository onboarding failed"),
+    }[status]
+    console.print()
+    console.print(Text(f"  {marker} {message}", style=color))
+
+
+def render_onboarding(
+    report: OnboardingReport, console: Console, *, verbose: bool = False
+) -> None:
+    """Render the onboarding projection without changing discovery order."""
+    console.print(Text("SPAWN / ONBOARD", style=f"bold {ACCENT_COLOR}"))
+    console.print(Text(report.name, style="bold", overflow="fold"), highlight=False)
+    hidden = _overview(console, report, verbose)
+    hidden_commands, candidates, declared = _commands(console, report, verbose)
+    hidden += hidden_commands + _entry_points(console, report, verbose)
+    hidden += _structure(console, report, verbose)
+
+    if candidates or declared or hidden or report.status == "partial":
+        _section(console, "Notes")
+        if declared:
+            console.print(
+                Text("  + Declared commands. Runtime not checked.", style="dim")
+            )
+        if candidates:
+            description = "command requires" if candidates == 1 else "commands require"
+            console.print(
+                Text(
+                    f"  ~ {candidates} candidate {description} verification.",
+                    style=WARNING_COLOR,
+                )
+            )
+        if hidden:
+            noun = "result" if hidden == 1 else "results"
+            console.print(Text(f"  {hidden} more {noun} with --verbose.", style="dim"))
+        if report.status == "partial":
+            console.print(
+                Text(
+                    "  Some evidence could not be analyzed. See diagnostics.",
+                    style="dim",
+                )
+            )
+    _footer(console, report.status)

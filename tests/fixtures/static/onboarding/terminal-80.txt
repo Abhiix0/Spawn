@@ -1,21 +1,27 @@
-Spawn / Onboard  api-demo
+SPAWN / ONBOARD
+api-demo
 
-Overview
-  Languages   Python
-  Frameworks  FastAPI [detected]
+PROJECT OVERVIEW
+    Languages      Python
+    Frameworks     FastAPI
 
-Start here
-  Start       python -m uvicorn app.main:app  [candidate]
-  Install     uv sync --locked  [candidate]
-  Test        python -m pytest  [candidate]
-  Lint        ruff check .  [candidate]
-  Format      ruff format .  [candidate]
+START HERE
+  ~ Run            python -m uvicorn app.main:app
+  ~ Install        uv sync --locked
+  ~ Test           python -m pytest
+  ~ Lint           ruff check .
+  ~ Format         ruff format .
 
-Explore
-  Entry       app.main:app [detected]  (app/main.py:2)
-  Folders     app/, tests/
-  Config      README.md, pyproject.toml, uv.lock
+ENTRY POINTS
+  + ASGI           app.main:app
+                   app/main.py:2
 
-Notes
-  Review suggestions before running them.
-  1 alternative. Use --verbose for evidence.
+PROJECT STRUCTURE
+    Directories    app/  tests/
+    Configuration  README.md  pyproject.toml  uv.lock
+
+NOTES
+  ~ 5 candidate commands require verification.
+  1 more result with --verbose.
+
+  + Repository onboarding complete
