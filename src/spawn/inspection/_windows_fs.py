@@ -202,7 +202,7 @@ class _Entry:
         return self
 
 
-def list_directory(root: Path, parts: tuple[str, ...]):
+def list_directory(root: Path, parts: tuple[str, ...], remaining: int | None = None):
     with open_root(root) as parent, _directory(parent, parts) as directory:
         buffer = ct.create_string_buffer(64 * 1024)
         result = []
@@ -224,6 +224,8 @@ def list_directory(root: Path, parts: tuple[str, ...]):
                             else stat.S_IFREG
                         )
                     result.append(_Entry(name, mode))
+                    if remaining is not None and len(result) > remaining:
+                        return result
                 if not entry.next_offset:
                     break
                 offset += entry.next_offset
