@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from spawn.inspection import _reading
+from spawn.inspection.discovery import DEFAULT_EXCLUDED_DIRECTORIES
 from spawn.inspection.models import (
     AnalysisStatus,
     DetectionState,
@@ -65,6 +66,8 @@ class _Inputs:
     root: Path
     files: tuple[str, ...]
     members: frozenset[str]
+    directories: frozenset[str]
+    folded_paths: frozenset[str]
     skipped: tuple[str, ...]
     gaps: tuple[str | None, ...]
     inspection: InspectionReport
@@ -98,23 +101,54 @@ class RuleContext:
         if prefix is not None and not safe_evidence_path(prefix):
             raise ValueError("Invalid diagnostics coverage scope")
         self.spend(1 + len(self._inputs.gaps) + len(self._inputs.skipped))
-        covered = not any(
-            path is None
-            or prefix is None
-            or path == prefix
-            or path.startswith(prefix + "/")
-            or prefix.startswith(path + "/")
-            for path in self._inputs.gaps
-        )
+        if prefix is not None:
+            prefix = prefix.casefold()
+
+        def overlaps(path: str | None) -> bool:
+            if path is None or prefix is None:
+                return True
+            path = path.casefold()
+            return (
+                path == prefix
+                or path.startswith(prefix + "/")
+                or prefix.startswith(path + "/")
+            )
+
+        covered = not any(overlaps(path) for path in self._inputs.gaps)
         if prefix is not None:
             covered = covered and not any(
-                prefix == path or prefix.startswith(path + "/")
+                prefix == path.casefold() or prefix.startswith(path.casefold() + "/")
                 for path in self._inputs.skipped
             )
         self._checked |= covered
         if not covered:
             self._gap = Reason.COVERAGE_INCOMPLETE
         return covered
+
+    def path_kind(self, path: str) -> str | None:
+        """Return file, directory, or covered absence. Unclear paths return None."""
+        self.spend()
+        if not safe_evidence_path(path) or any(
+            part.casefold() in DEFAULT_EXCLUDED_DIRECTORIES for part in path.split("/")
+        ):
+            return None
+        if path in self._inputs.members:
+            return "file"
+        if path in self._inputs.directories:
+            return "directory"
+        # A different spelling is ambiguous across filesystem case semantics,
+        # including when only an ancestor has a different spelling.
+        prefix = path
+        while prefix:
+            self.spend()
+            if (
+                prefix.casefold() in self._inputs.folded_paths
+                and prefix not in self._inputs.directories
+                and prefix not in self._inputs.members
+            ):
+                return None
+            prefix = prefix.rpartition("/")[0]
+        return "missing" if self.inventory_covers(path) else None
 
     def read_text(
         self, path: str, *, limit: int = _reading.MAX_FILE_SIZE
@@ -124,9 +158,7 @@ class RuleContext:
             raise ValueError("Invalid diagnostics file size limit")
         self.spend()
         self._budget.charge(files=1, size=limit + 1, work=0)
-        # Reserve against both budgets before any file access, including cache
-        # hits. This gives repeated requests deterministic request-based limits.
-        self._aggregate.charge(files=1, size=limit + 1, work=0)
+        # The active repository reader reserves the aggregate budget once.
         if not safe_evidence_path(path) or path not in self._inputs.members:
             self._gap = Reason.EVIDENCE_MISSING
             return None
@@ -192,6 +224,3 @@ def _validate_registry(rules: tuple[Rule, ...]) -> tuple[Rule, ...]:
     if len({rule.rule_id for rule in rules}) != len(rules):
         raise ValueError("Duplicate diagnostics rule ID")
     return tuple(sorted(rules, key=lambda rule: rule.rule_id))
-
-
-RULES: tuple[Rule, ...] = ()

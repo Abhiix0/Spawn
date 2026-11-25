@@ -5,6 +5,7 @@ import warnings
 from pathlib import Path
 
 from spawn.inspection._reading import repository_reads
+from spawn.inspection.base import Analyzer
 from spawn.inspection.discovery import (
     DiscoveryLimitExceeded,
     discover_repository,
@@ -14,6 +15,7 @@ from spawn.inspection.exceptions import InspectionError
 from spawn.inspection.models import AnalysisStatus
 from spawn.inspection.orchestrator import ANALYZERS, _inspect_inventory
 
+from .checks import RULES
 from .models import (
     Coverage,
     DiagnosticsReport,
@@ -25,7 +27,6 @@ from .models import (
     sensitive_path,
 )
 from .rules import (
-    RULES,
     Rule,
     RuleContext,
     WorkLimits,
@@ -51,14 +52,6 @@ def _evaluate(rule: Rule, context: RuleContext, budget: _Budget) -> RuleOutcome:
         result = rule.evaluate(context)
     except _LimitReached:
         return _limited(rule, Outcome.UNKNOWN)
-    except OSError as exc:
-        # The active shared reader raises its private budget signal as an
-        # OSError subclass. Keep generic rule I/O failures isolated.
-        if type(exc).__name__ == "_LimitReached":
-            return _limited(rule, Outcome.UNKNOWN)
-        return RuleOutcome(
-            rule.rule_id, rule.category, Outcome.FAILED, Reason.RULE_CRASHED
-        )
     except Exception:
         return RuleOutcome(
             rule.rule_id, rule.category, Outcome.FAILED, Reason.RULE_CRASHED
@@ -113,7 +106,7 @@ def _validate_evidence(rule: Rule, context: RuleContext, result: RuleOutcome) ->
 
 def run_diagnostics(path: str | Path) -> DiagnosticsReport:
     """Run the internal registry against a validated local checkout."""
-    return _run(path, RULES)
+    return _run(path, RULES, analyzers=())
 
 
 def _run(
@@ -122,6 +115,7 @@ def _run(
     *,
     max_entries: int = _MAX_ENTRIES,
     limits: WorkLimits = _AGGREGATE,
+    analyzers: tuple[Analyzer, ...] = ANALYZERS,
 ) -> DiagnosticsReport:
     rules = _validate_registry(rules)
     try:
@@ -151,6 +145,7 @@ def _run(
         if not sensitive_path(path) and not safe_evidence_path(path)
     )
     members = frozenset(inventory.files)
+    directories = frozenset(inventory.directories)
     budget = _Budget(limits)
 
     def charge(relative: str, size: int) -> None:
@@ -160,11 +155,13 @@ def _run(
 
     with repository_reads(target.path, charge=charge), warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        inspection = _inspect_inventory(target, inventory, ANALYZERS)
+        inspection = _inspect_inventory(target, inventory, analyzers)
         inputs = _Inputs(
             target.path,
             inventory.files,
             members,
+            directories,
+            frozenset(path.casefold() for path in members | directories),
             inventory.skipped,
             (*unsafe, *(item.path for item in inventory.diagnostics)),
             inspection,
