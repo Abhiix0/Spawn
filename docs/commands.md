@@ -9,6 +9,7 @@
 | `spawn doctor` | Score a project directory's health out of 135 |
 | `spawn inspect` | Inspect a repository and report what it contains (read-only) |
 | `spawn onboard` | Find entry points, developer commands, and key files (read-only) |
+| `spawn diagnose` | Check a repository for static configuration issues (read-only) |
 | `spawn version` | Print the installed version (also `spawn --version`) |
 
 ---
@@ -28,6 +29,7 @@ Commands
   version   Show the installed version
   inspect   Inspect a repository (read-only)
   onboard   Find entry points and developer commands
+  diagnose  Check for static repository configuration issues
 
 Run spawn COMMAND --help for details on a command.
 ```
@@ -611,6 +613,41 @@ spawn --version
 
 ---
 
+## `spawn diagnose`
+
+```text
+spawn diagnose [PATH] [--json] [--verbose] [--no-color] [--fail-on warning|error]
+```
+
+The default path is the current directory. Diagnose reports static Python
+configuration issues and the coverage of the checks it ran. Use `--verbose`
+for rule IDs and coverage reasons. Use `--no-color` for plain terminal text.
+The [rule catalog](diagnostics-report.md#python-checks) explains the evidence
+and supported configurations.
+
+Use `--json` for a single UTF-8 schema 1.0 object with a trailing newline.
+`--verbose` and `--no-color` leave JSON bytes unchanged. Complete analysis
+and partial analysis both emit a report. Fatal root or discovery errors leave
+stdout empty and print a generic message to stderr. Reports with zero findings
+can still be incomplete or have no applicable checks.
+
+By default, complete analysis exits 0 even with findings. The optional
+threshold exits 8 for complete analysis with a warning or error at
+`--fail-on warning`, or with an error at `--fail-on error`. Partial
+analysis always exits 9, including when it finds issues above the threshold.
+
+```bash
+status=0
+spawn diagnose . --json --fail-on warning > diagnostics.json || status=$?
+case "$status" in
+  0) echo "Analysis complete" ;;
+  8) echo "Review findings in diagnostics.json" >&2 ;;
+  9) echo "Review incomplete coverage in diagnostics.json" >&2 ;;
+  *) echo "Diagnose failed with exit $status" >&2 ;;
+esac
+exit "$status"
+```
+
 ## Exit codes
 
 | Code | Meaning |
@@ -622,7 +659,9 @@ spawn --version
 | 4 | Toolchain error (`git` or `uv` missing or failed) |
 | 5 | Generation / template error |
 | 6 | Publish error (GitHub publishing failed) |
-| 7 | Inspection error (`spawn inspect` or `spawn onboard`: invalid or unreadable path, or failed discovery) |
+| 7 | Invalid or unreadable repository path, or failed discovery (inspect, onboard, diagnose) |
+| 8 | Diagnose completed with a finding at or above the requested threshold |
+| 9 | Diagnose produced a partial report |
 | 10 | Unexpected error (re-run with `SPAWN_DEBUG=1` for a traceback) |
 | 130 | Cancelled (Ctrl+C, EOF, or declining the final prompt) |
 

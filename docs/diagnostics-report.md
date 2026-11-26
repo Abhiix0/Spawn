@@ -4,7 +4,8 @@ Diagnostics schema **1.0** describes proved static repository issues and the
 coverage of the rules that check for them. A repository issue is separate from
 an inspection finding (an observed fact) and an inspection diagnostic (analysis
 health). Diagnostics do not participate in project configuration or doctor
-scoring. The registry has no CLI entry point.
+scoring. The [diagnose command](commands.md#spawn-diagnose) renders this report
+as terminal text or JSON.
 
 ## Outcomes and completeness
 

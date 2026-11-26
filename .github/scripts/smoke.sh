@@ -42,4 +42,14 @@ expect_exit() {
 expect_exit 1 "$spawn" create --name x --template nope
 expect_exit 2 "$spawn" create --bogus
 expect_exit 7 "$spawn" onboard missing --json
+
+mkdir -p diagnose-smoke/tests diagnose-partial
+printf '[project]\nname = "diagnose-smoke"\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n' > diagnose-smoke/pyproject.toml
+(cd diagnose-smoke && "$spawn" diagnose --json) |
+  "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); assert r["schema_version"] == "1.0" and r["status"] == "complete" and r["is_clean"]'
+printf '[project]\nname = "diagnose-smoke"\n[tool.pytest.ini_options]\ntestpaths = ["missing"]\n' > diagnose-smoke/pyproject.toml
+expect_exit 8 "$spawn" diagnose diagnose-smoke --json --fail-on warning
+printf '[project]\nname = "diagnose-partial"\n[tool.pytest.ini_options]\ntestpaths = ["tests/*"]\n' > diagnose-partial/pyproject.toml
+expect_exit 9 "$spawn" diagnose diagnose-partial --json --fail-on warning
+expect_exit 7 "$spawn" diagnose missing --json
 echo "smoke OK"
