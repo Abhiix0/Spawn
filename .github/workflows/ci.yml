@@ -30,13 +30,16 @@ jobs:
         run: uv sync --all-groups --python ${{ matrix.python-version }}
 
       - name: Run tests
-        run: uv run pytest
+        run: |
+          uv run --python ${{ matrix.python-version }} python -V
+          uv run --python ${{ matrix.python-version }} python -c "import sys; assert sys.version_info[:2] == tuple(map(int, sys.argv[1].split('.')))" ${{ matrix.python-version }}
+          uv run --python ${{ matrix.python-version }} pytest
 
       - name: Run ruff
-        run: uv run ruff check .
+        run: uv run --python ${{ matrix.python-version }} ruff check .
 
       - name: Check formatting
-        run: uv run ruff format --check .
+        run: uv run --python ${{ matrix.python-version }} ruff format --check .
 
   package-smoke:
     runs-on: ubuntu-latest

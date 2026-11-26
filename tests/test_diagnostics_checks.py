@@ -8,12 +8,12 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from fixtures.onboard_repository import FILES
 
 from spawn.diagnostics import service
 from spawn.diagnostics.models import Evidence, Outcome, Severity
 from spawn.diagnostics.serialization import to_json
 from spawn.inspection import _reading
-from tests.fixtures.onboard_repository import FILES
 
 _PROJECT = '[project]\nname = "demo"\n'
 _FLASK = _PROJECT + 'dependencies = ["flask"]\n'

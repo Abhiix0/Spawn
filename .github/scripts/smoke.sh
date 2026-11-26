@@ -12,6 +12,9 @@ uv pip install --python "$work/venv" "$root"/dist/*.whl
 spawn="$bin/spawn"
 version_out="$("$spawn" version)"
 echo "$version_out"
+[ "$("$spawn" --version)" = "$version_out" ] || { echo "Version commands disagree" >&2; exit 1; }
+installed="$("$bin/python" -c 'from importlib.metadata import version; print(version("spawnio"))')"
+[ "${version_out##*v}" = "$installed" ] || { echo "CLI and wheel versions disagree" >&2; exit 1; }
 if [ -n "${1:-}" ]; then
   built="${version_out##*v}"
   if [ "$built" != "$1" ]; then
@@ -26,13 +29,15 @@ cd "$work"
 for f in README.md AGENTS.md .spawn/meta.json; do
   test -f "ci-smoke/$f" || { echo "missing ci-smoke/$f" >&2; exit 1; }
 done
+"$bin/python" -c 'import json,sys; assert json.load(open("ci-smoke/.spawn/meta.json", encoding="utf-8"))["spawn_version"] == sys.argv[1]' "$installed"
 
 # inspect must be valid JSON and must not touch the project
 before="$(cd ci-smoke && find . -type f | sort)"
+"$spawn" doctor ci-smoke > /dev/null
 (cd ci-smoke && "$spawn" inspect . --json) | "$bin/python" -c 'import json,sys; assert "schema_version" in json.load(sys.stdin)'
 (cd ci-smoke && "$spawn" onboard . --json) | "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); assert r["schema_version"] == "1.0" and r["repository"]["name"] == "ci-smoke" and "commands" in r'
 after="$(cd ci-smoke && find . -type f | sort)"
-[ "$before" = "$after" ] || { echo "inspect changed ci-smoke" >&2; exit 1; }
+[ "$before" = "$after" ] || { echo "Read-only commands changed ci-smoke" >&2; exit 1; }
 
 expect_exit() {
   want="$1"; shift
