@@ -3,6 +3,19 @@
 All notable changes to Spawn are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## v1.3.0
+
+### Added
+
+- `spawn diagnose` reports five static Python configuration checks, with
+  repository-relative evidence, suggested next steps, and explicit coverage.
+- `spawn diagnose --json` emits schema 1.0. `--fail-on` lets CI enforce a
+  warning or error threshold. Partial coverage has its own exit status.
+
+### Fixed
+
+- Select and verify the requested Python version explicitly in the CI matrix.
+
 ## v1.2.0
 
 ### Added

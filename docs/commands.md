@@ -21,7 +21,7 @@ Running `spawn` with no arguments prints the ASCII banner, the installed version
 ```
 <ASCII SPAWN banner — "scaffold your next project">
 
-v1.2.0
+v1.3.0
 
 Commands
   create    Scaffold a new project
@@ -606,9 +606,9 @@ Prints the installed version. `spawn --version` prints the same line. No other a
 
 ```bash
 spawn version
-# Spawn v1.2.0
+# Spawn v1.3.0
 spawn --version
-# Spawn v1.2.0
+# Spawn v1.3.0
 ```
 
 ---

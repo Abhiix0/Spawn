@@ -33,7 +33,6 @@ done
 
 # inspect must be valid JSON and must not touch the project
 before="$(cd ci-smoke && find . -type f | sort)"
-"$spawn" doctor ci-smoke > /dev/null
 (cd ci-smoke && "$spawn" inspect . --json) | "$bin/python" -c 'import json,sys; assert "schema_version" in json.load(sys.stdin)'
 (cd ci-smoke && "$spawn" onboard . --json) | "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); assert r["schema_version"] == "1.0" and r["repository"]["name"] == "ci-smoke" and "commands" in r'
 after="$(cd ci-smoke && find . -type f | sort)"
@@ -49,7 +48,11 @@ expect_exit 2 "$spawn" create --bogus
 expect_exit 7 "$spawn" onboard missing --json
 
 mkdir -p diagnose-smoke/tests diagnose-partial
-printf '[project]\nname = "diagnose-smoke"\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n' > diagnose-smoke/pyproject.toml
+printf '[project]\nname = "diagnose-smoke"\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\n[tool.ruff]\nline-length = 88\n' > diagnose-smoke/pyproject.toml
+for f in README.md AGENTS.md LICENSE CHANGELOG.md .gitignore; do
+  touch "diagnose-smoke/$f"
+done
+"$spawn" doctor diagnose-smoke > /dev/null
 (cd diagnose-smoke && "$spawn" diagnose --json) |
   "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); assert r["schema_version"] == "1.0" and r["status"] == "complete" and r["is_clean"]'
 printf '[project]\nname = "diagnose-smoke"\n[tool.pytest.ini_options]\ntestpaths = ["missing"]\n' > diagnose-smoke/pyproject.toml

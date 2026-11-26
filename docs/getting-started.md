@@ -49,20 +49,22 @@ After installation, `spawn` is available anywhere on your machine.
 
 ```bash
 spawn version
-# Spawn v1.2.0
+# Spawn v1.3.0
 ```
 
 Or just run `spawn` with no arguments to see the command overview:
 
 ```
 SPAWN — scaffold your next project
-v1.2.0
+v1.3.0
 
 Commands
   create    Scaffold a new project
   doctor    Check the health of a project directory
   version   Show the installed version
   inspect   Inspect a repository (read-only)
+  onboard   Find entry points and developer commands
+  diagnose  Check for static repository configuration issues
 
 Run spawn COMMAND --help for details on a command.
 ```

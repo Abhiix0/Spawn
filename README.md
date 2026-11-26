@@ -80,6 +80,7 @@ It's repetitive. It's inconsistent. And you haven't written a single line of *re
 | **spawn doctor --fix** | Fixes missing files and config automatically — never overwrites, never installs packages |
 | **spawn inspect** | Static, read-only summary of a repository: languages, frameworks, dependencies, package managers, tooling and layout, as text or JSON |
 | **spawn onboard** | Quick read-only guide to a repository's entry points, developer commands and key files |
+| **spawn diagnose** | Read-only Python configuration checks with evidence and suggested next steps |
 
 ---
 
@@ -135,7 +136,7 @@ Running `spawn` with no arguments shows the banner, the installed version, and t
 
 ```
 SPAWN — scaffold your next project
-v1.2.0
+v1.3.0
 
 Commands
   create    Scaffold a new project
@@ -143,6 +144,7 @@ Commands
   version   Show the installed version
   inspect   Inspect a repository (read-only)
   onboard   Find entry points and developer commands
+  diagnose  Check for static repository configuration issues
 
 Run spawn COMMAND --help for details on a command.
 ```
@@ -784,10 +786,10 @@ spawn doctor --fix --license mit
 
 ```bash
 spawn version
-# → Spawn v1.2.0
+# → Spawn v1.3.0
 
 spawn --version
-# → Spawn v1.2.0
+# → Spawn v1.3.0
 ```
 
 ### `spawn onboard`
@@ -856,6 +858,18 @@ The JSON report includes the same evidence with argument arrays, relative workin
 Startup discovery supports FastAPI and Starlette ASGI apps, Flask apps and factories, conventional Django projects, Python console scripts, and module entry points. In the terminal, `+` marks declarations and detected entry points, `~` marks candidates, and `?` marks unresolved results. Even declared commands may require tools, dependencies, or configuration. The footer distinguishes complete and partial analysis.
 
 Onboarding is local and read-only. It never runs repository code or suggested commands, installs packages, writes to the target, or uses the network. Reports omit absolute root paths, raw recipe contents, and raw diagnostic messages. Diagnostic details and errors go to stderr. See the [onboarding JSON contract](docs/onboarding-report.md) and [command reference](docs/commands.md#spawn-onboard).
+
+### `spawn diagnose`
+
+```bash
+spawn diagnose .
+spawn diagnose . --json --fail-on warning
+```
+
+Diagnose shows what it could check and where it found a static configuration
+issue. In JSON mode, exit 8 means the requested threshold was met and exit 9
+means analysis was incomplete. See the [command reference](docs/commands.md#spawn-diagnose)
+and [rule catalog](docs/diagnostics-report.md#python-checks).
 
 ### `spawn inspect`
 
