@@ -65,7 +65,7 @@ testpaths = ["{target}"]
                     evidence(name + ".py"),
                     evidence("pyproject.toml", key="project.scripts"),
                 ],
-                [evidence("pyproject.toml", key="tool.pytest.ini-options.testpaths")],
+                [evidence("pyproject.toml", key="tool.pytest.ini_options.testpaths")],
                 [evidence("Makefile", 3)],
             )
             expected = dict(

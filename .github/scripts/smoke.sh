@@ -56,6 +56,8 @@ done
 (cd diagnose-smoke && "$spawn" diagnose --json) |
   "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); assert r["schema_version"] == "1.0" and r["status"] == "complete" and r["is_clean"]'
 printf '[project]\nname = "diagnose-smoke"\n[tool.pytest.ini_options]\ntestpaths = ["missing"]\n' > diagnose-smoke/pyproject.toml
+"$spawn" diagnose diagnose-smoke --json |
+  "$bin/python" -c 'import json,sys; r=json.load(sys.stdin); row=next(x for x in r["outcomes"] if x["rule_id"] == "py-test-001"); assert row["findings"][0]["evidence"] == [{"path": "pyproject.toml", "line": None, "key": "tool.pytest.ini_options.testpaths"}]'
 expect_exit 8 "$spawn" diagnose diagnose-smoke --json --fail-on warning
 printf '[project]\nname = "diagnose-partial"\n[tool.pytest.ini_options]\ntestpaths = ["tests/*"]\n' > diagnose-partial/pyproject.toml
 expect_exit 9 "$spawn" diagnose diagnose-partial --json --fail-on warning

@@ -866,9 +866,11 @@ spawn diagnose .
 spawn diagnose . --json --fail-on warning
 ```
 
-Diagnose shows what it could check and where it found a static configuration
-issue. In JSON mode, exit 8 means the requested threshold was met and exit 9
-means analysis was incomplete. See the [command reference](docs/commands.md#spawn-diagnose)
+Diagnose checks five supported Python configuration patterns and shows evidence
+for each issue it finds. A partial report can contain zero findings and still
+leave checks unresolved. With `--fail-on`, exit 8 means the requested threshold
+was met and exit 9 means analysis was incomplete and the threshold was not met.
+See the [command reference](docs/commands.md#spawn-diagnose)
 and [rule catalog](docs/diagnostics-report.md#python-checks).
 
 ### `spawn inspect`

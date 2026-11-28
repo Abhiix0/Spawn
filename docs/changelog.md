@@ -14,7 +14,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Select and verify the requested Python version explicitly in the CI matrix.
+- Report the exact TOML key `tool.pytest.ini_options.testpaths` for missing
+  pytest paths.
+- Gate publishing on tests, Ruff lint, and Ruff formatting on Windows and
+  Linux with Python 3.12 and 3.13 for the release commit.
 
 ## v1.2.0
 

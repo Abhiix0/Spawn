@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches: [main]
   pull_request:
@@ -11,14 +12,17 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -27,21 +31,23 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --all-groups --python ${{ matrix.python-version }}
+        run: uv sync --locked --all-groups --python ${{ matrix.python-version }}
 
       - name: Run tests
+        shell: bash
         run: |
-          uv run --python ${{ matrix.python-version }} python -V
-          uv run --python ${{ matrix.python-version }} python -c "import sys; assert sys.version_info[:2] == tuple(map(int, sys.argv[1].split('.')))" ${{ matrix.python-version }}
-          uv run --python ${{ matrix.python-version }} pytest
+          uv run --locked --python ${{ matrix.python-version }} python -V
+          uv run --locked --python ${{ matrix.python-version }} python -c "import sys; assert sys.version_info[:2] == tuple(map(int, sys.argv[1].split('.')))" ${{ matrix.python-version }}
+          uv run --locked --python ${{ matrix.python-version }} pytest
 
       - name: Run ruff
-        run: uv run --python ${{ matrix.python-version }} ruff check .
+        run: uv run --locked --python ${{ matrix.python-version }} ruff check .
 
       - name: Check formatting
-        run: uv run --python ${{ matrix.python-version }} ruff format --check .
+        run: uv run --locked --python ${{ matrix.python-version }} ruff format --check .
 
   package-smoke:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -61,6 +67,7 @@ jobs:
 
   # Not required: needs network, real git and real uv.
   integration:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -94,22 +101,3 @@ jobs:
           uv run ruff check .
           uv run ruff format --check .
           uv run pytest
-
-  # Windows path-safety check.
-  windows:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        run: uv python install 3.12
-
-      - name: Install dependencies
-        run: uv sync --all-groups
-
-      - name: Run tests
-        run: uv run pytest

@@ -17,6 +17,7 @@ from .models import (
     IssueDescription,
     Reason,
     RuleOutcome,
+    _evidence_key,
     _identifier,
     safe_evidence_path,
 )
@@ -215,7 +216,7 @@ class Rule:
         if type(self.evidence_keys) is not tuple:
             raise ValueError("Invalid diagnostics evidence keys")
         for key in self.evidence_keys:
-            _identifier(key)
+            _evidence_key(key)
 
 
 def _validate_registry(rules: tuple[Rule, ...]) -> tuple[Rule, ...]:

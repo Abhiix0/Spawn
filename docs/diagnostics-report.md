@@ -82,7 +82,7 @@ conclusion, including when another declaration in that rule is understood.
 | Rule | Evidence and example | Remediation |
 | --- | --- | --- |
 | `py-entry-001` | A script such as `demo = "cli:main"` refers to a declared flat setuptools module whose parsed top level contains only plain functions and an optional docstring, with no `main` binding. The report cites the scripts table and module, grouping missing attributes in the same module. | Correct the target or define the intended function. |
-| `py-test-001` | A literal entry such as `testpaths = ["unit"]` in `tool.pytest.ini_options` names no file or directory in the inventory. One issue covers the affected list. | Restore the path, update the list, or remove its stale entry. |
+| `py-test-001` | A literal entry such as `testpaths = ["unit"]` in `tool.pytest.ini_options` names no file or directory in the inventory. One issue cites `tool.pytest.ini_options.testpaths` for the affected list. | Restore the path, update the list, or remove its stale entry. |
 | `py-test-002` | A standalone root Makefile `test` recipe such as `pytest -c unit.ini` names a file absent from the root inventory. The recipe line is the evidence. | Restore the config file or correct the option. |
 | `py-deps-001` | A literal `-r requirements/dev.txt` or `--requirement=requirements/dev.txt` in root `requirements.txt` names a missing file. Each missing include gets its own line reference. | Restore the file or correct the include. |
 | `py-container-001` | A declared FastAPI, Starlette, Flask, or Django project has a supported Dockerfile whose final Python stage ends with an explicit `USER root` or `USER 0`. The final USER line is the evidence. | Select an unprivileged account and grant it the required file access. |
@@ -92,7 +92,10 @@ conclusion, including when another declaration in that rule is understood.
   reexports, annotations, dynamic hooks, conditional definitions, alternate
   layouts, and unresolved targets cause abstention.
 - Testpaths checks require no competing root pytest configuration and use the
-  literal list from the manifest. The finding describes a stale declaration.
+  literal list from the manifest. Per-entry locations are deferred because
+  schema 1.0 evidence keys are fixed per rule and there is no array-index
+  selector. Coverage for scaffolds created with `--no-uv` remains limited
+  to settings present in the generated files. Broader coverage is deferred.
 - The Makefile check covers `make -f Makefile test` from the repository root
   with a single literal recipe, optional `.PHONY: test`, and either `pytest`
   or `python -m pytest`. Variables, shell operators, extra arguments, included

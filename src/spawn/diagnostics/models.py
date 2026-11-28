@@ -9,6 +9,7 @@ from enum import StrEnum
 
 SCHEMA_VERSION = "1.0"
 _SLUG = re.compile(r"[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*", re.ASCII)
+_EVIDENCE_KEY = re.compile(r"[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*", re.ASCII)
 _SECRET = re.compile(
     r"(?i)(?:\b(?:gh[pousr]_|github_pat_|sk-|xox[baprs]-|AIza)[a-z0-9_-]{12,}"
     r"|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b|-----BEGIN [A-Z ]*PRIVATE KEY-----"
@@ -39,11 +40,15 @@ _SENSITIVE_NAMES = {
 _DEVICES = re.compile(r"(?i)(?:con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])")
 
 
-def _identifier(value: str) -> None:
-    if type(value) is not str or len(value) > 96 or not _SLUG.fullmatch(value):
+def _identifier(value: str, pattern: re.Pattern[str] = _SLUG) -> None:
+    if type(value) is not str or len(value) > 96 or not pattern.fullmatch(value):
         raise ValueError("Invalid diagnostics identifier")
     if _SECRET.search(value):
         raise ValueError("Unsafe diagnostics identifier")
+
+
+def _evidence_key(value: str) -> None:
+    _identifier(value, _EVIDENCE_KEY)
 
 
 def _safe_text(value: str, maximum: int) -> bool:
@@ -175,7 +180,7 @@ class Evidence:
         ):
             raise ValueError("Invalid diagnostics line")
         if self.key is not None:
-            _identifier(self.key)
+            _evidence_key(self.key)
             if self.line is not None:
                 raise ValueError("Evidence accepts one location selector")
 

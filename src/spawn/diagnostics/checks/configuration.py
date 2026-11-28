@@ -8,7 +8,7 @@ from ..models import Evidence, Reason
 from ..rules import RuleContext
 from ._common import OUTSIDE_SCOPE, Unclear, check, kind, literal, read, table
 
-_TESTPATHS_KEY = "tool.pytest.ini-options.testpaths"
+_TESTPATHS_KEY = "tool.pytest.ini_options.testpaths"
 _PYTEST_COMMAND = re.compile(
     r"\t@?(?:pytest|python -m pytest) (?:-c |--config-file[ =])([^ \t]+)"
 )

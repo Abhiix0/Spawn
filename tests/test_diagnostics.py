@@ -193,11 +193,23 @@ def test_reject_unsafe_evidence_paths(value):
 
 @pytest.mark.parametrize(
     "kwargs",
-    [{"line": True}, {"line": -1}, {"line": 1, "key": "setting"}, {"key": "key=value"}],
+    [
+        {"line": True},
+        {"line": -1},
+        {"line": 1, "key": "setting"},
+        {"key": "key=value"},
+        {"key": "setting[0]"},
+        {"key": "ghp_abcdefghijklmnopqrstuvwxyz"},
+    ],
 )
 def test_validate_location_selectors(kwargs):
     with pytest.raises(ValueError):
         Evidence("config.ini", **kwargs)
+
+
+def test_rule_ids_still_reject_underscores():
+    with pytest.raises(ValueError, match="Invalid diagnostics identifier"):
+        RuleOutcome("py_test-001", "testing", Outcome.PASS, Reason.CONDITION_ABSENT)
 
 
 @pytest.mark.parametrize(

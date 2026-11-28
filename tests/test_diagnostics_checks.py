@@ -1,6 +1,7 @@
 """Exercise the shipping registry against repositories treated strictly as data."""
 
 import hashlib
+import json
 import os
 import socket
 import struct
@@ -12,7 +13,7 @@ from fixtures.onboard_repository import FILES
 
 from spawn.diagnostics import service
 from spawn.diagnostics.models import Evidence, Outcome, Severity
-from spawn.diagnostics.serialization import to_json
+from spawn.diagnostics.serialization import from_json, to_json
 from spawn.inspection import _reading
 
 _PROJECT = '[project]\nname = "demo"\n'
@@ -47,7 +48,7 @@ _CASES = [
         {"pyproject.toml": _PROJECT + _PATHS + '["lost", "tests/*"]'},
         {"pyproject.toml": _PROJECT + _PATHS + "["},
         {"pyproject.toml": _PROJECT},
-        (Evidence("pyproject.toml", key="tool.pytest.ini-options.testpaths"),),
+        (Evidence("pyproject.toml", key="tool.pytest.ini_options.testpaths"),),
         "Check the testpaths list",
     ),
     (
@@ -141,6 +142,26 @@ def test_catalog(
     else:
         assert not row.findings
         assert bool(row.scope_evidence) == (expected is Outcome.NOT_APPLICABLE)
+
+
+def test_testpaths_evidence_json(tmp_path):
+    materialize(
+        tmp_path, {"pyproject.toml": _PROJECT + _PATHS + '["missing-private-path"]'}
+    )
+    report = service.run_diagnostics(tmp_path)
+    payload = to_json(report)
+    wire = json.loads(payload)
+    assert wire["schema_version"] == "1.0"
+    row = next(row for row in wire["outcomes"] if row["rule_id"] == "py-test-001")
+    assert row["findings"][0]["evidence"] == [
+        {
+            "path": "pyproject.toml",
+            "line": None,
+            "key": "tool.pytest.ini_options.testpaths",
+        }
+    ]
+    assert "missing-private-path" not in payload
+    assert from_json(payload) == report
 
 
 @pytest.mark.parametrize(
