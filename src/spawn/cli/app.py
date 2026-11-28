@@ -1,5 +1,6 @@
 import os
 import sys
+from enum import StrEnum
 from pathlib import Path
 
 import typer
@@ -50,6 +51,9 @@ def main_callback(
     console.print("  [cyan]version[/cyan]   Show the installed version")
     console.print("  [cyan]inspect[/cyan]   Inspect a repository (read-only)")
     console.print("  [cyan]onboard[/cyan]   Find entry points and developer commands")
+    console.print(
+        "  [cyan]diagnose[/cyan]  Check for static repository configuration issues"
+    )
     console.print(
         "\n[dim]Run [cyan]spawn COMMAND --help[/cyan] for details on a command.[/dim]\n"
     )
@@ -488,6 +492,75 @@ def onboard_command(
     except Exception:
         typer.echo("Unexpected error while onboarding the repository.", err=True)
         raise typer.Exit(UNEXPECTED_EXIT_CODE) from None
+
+
+class DiagnoseThreshold(StrEnum):
+    WARNING = "warning"
+    ERROR = "error"
+
+
+DIAGNOSE_FINDINGS_EXIT_CODE = 8
+DIAGNOSE_PARTIAL_EXIT_CODE = 9
+
+
+@app.command(name="diagnose")
+def diagnose_command(
+    path: str = typer.Argument(
+        ".", help="Repository directory. Defaults to current directory."
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Print the versioned JSON report."
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", help="Show rule IDs and coverage reasons."
+    ),
+    no_color: bool = typer.Option(False, "--no-color", help="Disable ANSI styling."),
+    fail_on: DiagnoseThreshold | None = typer.Option(
+        None,
+        "--fail-on",
+        help="Exit 8 on complete analysis with a finding at or above this severity.",
+    ),
+) -> None:
+    """Check for static repository configuration issues (read-only)."""
+    from spawn.inspection import InspectionError
+
+    try:
+        from spawn.diagnostics.models import ReportStatus, Severity
+        from spawn.diagnostics.service import run_diagnostics
+
+        report = run_diagnostics(path)
+        if report.status is ReportStatus.FAILED:
+            raise InspectionError("Diagnostic discovery failed")
+
+        if json_output:
+            from spawn.diagnostics.serialization import to_json
+
+            sys.stdout.buffer.write(to_json(report).encode("utf-8"))
+        else:
+            from spawn.cli.diagnose_render import diagnose_console, render_diagnose
+
+            render_diagnose(report, path, diagnose_console(no_color), verbose=verbose)
+    except InspectionError:
+        typer.echo(
+            "Cannot diagnose repository. Check that it is a readable directory.",
+            err=True,
+        )
+        raise typer.Exit(7) from None
+    except (KeyboardInterrupt, EOFError, typer.Abort):
+        typer.echo("Cancelled.", err=True)
+        raise typer.Exit(130) from None
+    except Exception:
+        typer.echo("Unexpected error while diagnosing the repository.", err=True)
+        raise typer.Exit(UNEXPECTED_EXIT_CODE) from None
+
+    if report.status is ReportStatus.PARTIAL:
+        raise typer.Exit(DIAGNOSE_PARTIAL_EXIT_CODE)
+    if fail_on is not None:
+        severities = report.severity_counts
+        if severities[Severity.ERROR] or (
+            fail_on is DiagnoseThreshold.WARNING and severities[Severity.WARNING]
+        ):
+            raise typer.Exit(DIAGNOSE_FINDINGS_EXIT_CODE)
 
 
 def main():

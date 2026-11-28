@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import stat
+from collections.abc import Callable
 from contextlib import ExitStack, contextmanager
 from contextvars import ContextVar
 from pathlib import Path
@@ -87,14 +88,19 @@ def _read_from_root(handle: int, parts: tuple[str, ...], limit: int) -> str | No
 
 
 class _InspectionReads:
-    def __init__(self, root: Path, stack: ExitStack):
+    def __init__(
+        self, root: Path, stack: ExitStack, charge: Callable[[str, int], None] | None
+    ):
         self.root = root
         self.stack = stack
         self.handle: int | None = None
         self.cache: dict[tuple[str, int], str | None] = {}
         self.remaining = _CACHE_BYTES
+        self.charge = charge
 
     def read(self, relative: str, parts: tuple[str, ...], limit: int) -> str | None:
+        if self.charge is not None:
+            self.charge(relative, limit + 1)
         key = (relative, limit)
         if key in self.cache:
             return self.cache[key]
@@ -114,10 +120,10 @@ _ACTIVE_READS = ContextVar[_InspectionReads | None]("inspection_reads", default=
 
 
 @contextmanager
-def repository_reads(root: Path):
+def repository_reads(root: Path, *, charge: Callable[[str, int], None] | None = None):
     """Share bounded, successfully checked reads within one analysis."""
     with ExitStack() as stack:
-        token = _ACTIVE_READS.set(_InspectionReads(root, stack))
+        token = _ACTIVE_READS.set(_InspectionReads(root, stack, charge))
         try:
             yield
         finally:

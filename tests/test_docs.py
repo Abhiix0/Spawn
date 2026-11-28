@@ -3,6 +3,7 @@
 import re
 from pathlib import Path
 
+from spawn.cli.app import DIAGNOSE_FINDINGS_EXIT_CODE, DIAGNOSE_PARTIAL_EXIT_CODE
 from spawn.cli.errors import UNEXPECTED_EXIT_CODE
 from spawn.core import exceptions
 from spawn.inspection import exceptions as inspection_exceptions
@@ -26,6 +27,7 @@ def test_exit_codes_table_matches_code():
         if isinstance(cls, type) and issubclass(cls, exceptions.SpawnError)
     }
     expected |= {0, 2, 130, UNEXPECTED_EXIT_CODE}
+    expected |= {DIAGNOSE_FINDINGS_EXIT_CODE, DIAGNOSE_PARTIAL_EXIT_CODE}
     assert _documented_codes() == expected
 
 

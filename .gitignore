@@ -30,3 +30,7 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+# Local Phase 1 verification environments
+.uv-cache-local/
+.venv-recovery/
+.tmp-diagnostics/

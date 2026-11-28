@@ -11,9 +11,10 @@ from __future__ import annotations
 import errno
 import os
 import stat
+from collections.abc import Callable, Iterable
 from contextlib import ExitStack, contextmanager
+from itertools import islice
 from pathlib import Path
-from typing import Iterable
 
 from spawn.inspection._git_exclusions import root_exclusions
 from spawn.inspection._reading import DIR_FLAGS, HAS_DIR_FDS, open_directory
@@ -56,6 +57,10 @@ DEFAULT_EXCLUDED_DIRECTORIES = frozenset(
 # Descriptor-relative opens prevent a directory from becoming an out-of-root
 # symlink between an initial stat and a subsequent scandir on POSIX systems.
 _USE_DIR_FDS = os.scandir in os.supports_fd and HAS_DIR_FDS
+
+
+class DiscoveryLimitExceeded(InspectionError):
+    """The caller's entry budget ran out before a complete inventory existed."""
 
 
 def validate_inspection_root(root: str | Path | InspectionTarget) -> InspectionTarget:
@@ -110,7 +115,12 @@ def _exclusions(names: Iterable[str] | None) -> frozenset[str]:
 
 
 @contextmanager
-def _directory_entries(root: Path, parts: tuple[str, ...], root_fd: int | None):
+def _directory_entries(
+    root: Path,
+    parts: tuple[str, ...],
+    root_fd: int | None,
+    remaining: int | None = None,
+):
     """List one directory without following links (fd anchored when possible)."""
     if root_fd is not None:
         fd = os.dup(root_fd)
@@ -138,11 +148,14 @@ def _directory_entries(root: Path, parts: tuple[str, ...], root_fd: int | None):
                 os.close(fd)
                 fd = next_fd
             with os.scandir(fd) as entries:
-                yield sorted(entries, key=lambda entry: entry.name)
+                selected = (
+                    entries if remaining is None else islice(entries, remaining + 1)
+                )
+                yield sorted(selected, key=lambda entry: entry.name)
         finally:
             os.close(fd)
     elif os.name == "nt":
-        yield _windows_fs.list_directory(root, parts)
+        yield _windows_fs.list_directory(root, parts, remaining)
     else:
         raise OSError("Cannot anchor this repository filesystem")
 
@@ -169,6 +182,8 @@ def discover_repository(
     root: str | Path | InspectionTarget,
     *,
     excluded_directories: Iterable[str] | None = None,
+    max_entries: int | None = None,
+    include_path: Callable[[str], bool] | None = None,
 ) -> DiscoveryInventory:
     """Return a sorted ``DiscoveryInventory`` using the approved #53 model.
 
@@ -182,14 +197,20 @@ def discover_repository(
     below the root are recoverable and become ``Diagnostic`` entries. Deliberate
     exclusions are listed in ``skipped`` without diagnostics: treating normal
     ignore rules as failures would incorrectly mark every Git repository PARTIAL.
+    A bounded caller receives DiscoveryLimitExceeded instead of a subset when
+    the total entry budget is exceeded. An optional path screen excludes files
+    and prunes subtrees before inspecting individual entries.
     """
     excluded = _exclusions(excluded_directories)
+    if max_entries is not None and (type(max_entries) is not int or max_entries < 0):
+        raise ValueError("Invalid repository entry limit")
     target = validate_inspection_root(root)
     files: list[str] = []
     directories: list[str] = []
     skipped: list[str] = []
     diagnostics: list[Diagnostic] = []
     pending: list[tuple[str, ...]] = [()]
+    remaining = max_entries
     root_fd: int | None = None
     with ExitStack() as stack:
         if _USE_DIR_FDS:
@@ -201,7 +222,14 @@ def discover_repository(
             parts = pending.pop()
             rel_dir = "/".join(parts)
             try:
-                with _directory_entries(target.path, parts, root_fd) as entries:
+                limit = () if remaining is None else (remaining,)
+                with _directory_entries(target.path, parts, root_fd, *limit) as entries:
+                    if remaining is not None:
+                        remaining -= len(entries)
+                        if remaining < 0:
+                            raise DiscoveryLimitExceeded(
+                                "Repository entry limit exceeded"
+                            )
                     local_excluded = (
                         root_exclusions(target.path)
                         if excluded_directories is None
@@ -213,6 +241,9 @@ def discover_repository(
                     for entry in entries:
                         child_parts = (*parts, entry.name)
                         rel_path = "/".join(child_parts)
+                        if include_path is not None and not include_path(rel_path):
+                            skipped.append(rel_path)
+                            continue
                         try:
                             mode = entry.stat(follow_symlinks=False).st_mode
                             if stat.S_ISLNK(mode):
